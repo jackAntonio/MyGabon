@@ -13,8 +13,6 @@ class AppTheme {
         brightness: Brightness.light,
       ).copyWith(
         secondary: AppColors.secondary,
-        background: AppColors.background,
-        onBackground: AppColors.text,
         surface: Colors.white,
         onSurface: AppColors.text,
       ),
@@ -76,8 +74,6 @@ class AppTheme {
         onSecondary: Colors.black,
         error: Colors.redAccent,
         onError: Colors.white,
-        background: AppColors.darkBackground,
-        onBackground: AppColors.darkText,
         surface: AppColors.darkSurface,
         onSurface: AppColors.darkText,
       ),
