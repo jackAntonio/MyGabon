@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/colors.dart';
 
 /// Simple chat bubble for UI-only chat screen.
 class ChatBubble extends StatelessWidget {
@@ -10,18 +11,24 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
-    final color = isMe ? Colors.green[200] : Colors.grey[200];
+    final color = isMe ? AppColors.primary.withOpacity(0.8) : Colors.grey[700];
 
     return Align(
       alignment: alignment,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+          ],
         ),
-        child: Text(text),
+        child: Text(
+          text,
+          style: TextStyle(color: isMe ? Colors.white : Colors.white),
+        ),
       ),
     );
   }

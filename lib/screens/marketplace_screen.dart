@@ -4,6 +4,7 @@ import '../widgets/product_card.dart';
 /// Marketplace screen displaying a list of products for sale.
 import 'package:provider/provider.dart';
 import '../providers/marketplace_provider.dart';
+import '../widgets/skeleton_loader.dart';
 
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({Key? key}) : super(key: key);
@@ -18,29 +19,53 @@ class MarketplaceScreen extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: 'Search products...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                ],
               ),
-              onChanged: provider.search,
+              child: TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: 'Search products...',
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onChanged: provider.search,
+              ),
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.8,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: provider.products.length,
-              itemBuilder: (context, index) {
-                return ProductCard(product: provider.products[index]);
-              },
-            ),
+            child: provider.isLoading
+                ? GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: 4,
+                    itemBuilder: (context, index) {
+                      return SkeletonLoader(height: 180, borderRadius: BorderRadius.circular(16));
+                    },
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: provider.products.length,
+                    itemBuilder: (context, index) {
+                      return ProductCard(product: provider.products[index]);
+                    },
+                  ),
           ),
         ],
       ),

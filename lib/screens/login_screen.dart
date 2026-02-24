@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../utils/colors.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/custom_textfield.dart';
@@ -26,40 +27,47 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              if (_error != null)
-                Text(_error!, style: const TextStyle(color: Colors.red)),
-              CustomTextField(
-                label: 'Email or Phone',
-                validator: Validators.validateNotEmpty,
-                onSaved: (v) => _emailOrPhone = v,
-              ),
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Password',
-                obscureText: true,
-                validator: Validators.validateNotEmpty,
-                onSaved: (v) => _password = v,
-              ),
-              const SizedBox(height: 24),
-              _loading
-                  ? const CircularProgressIndicator()
-                  : CustomButton(
-                      label: 'Login',
-                      onPressed: _submit,
-                    ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/register');
-                },
-                child: const Text('Don\'t have an account? Register'),
-              ),
-            ],
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Welcome back', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 24),
+                if (_error != null)
+                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                CustomTextField(
+                  label: 'Email or Phone',
+                  validator: Validators.validateNotEmpty,
+                  onSaved: (v) => _emailOrPhone = v,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Password',
+                  obscureText: true,
+                  validator: Validators.validateNotEmpty,
+                  onSaved: (v) => _password = v,
+                ),
+                const SizedBox(height: 24),
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : CustomButton(
+                        label: 'Login',
+                        onPressed: _submit,
+                      ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/register');
+                  },
+                  child: const Text('Don\'t have an account? Register'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
