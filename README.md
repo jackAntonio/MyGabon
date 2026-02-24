@@ -151,7 +151,268 @@ lib/
     theme.dart
 ```
 
-## Getting Started
+## 🔐 Security & Anti-Fraud Features
+
+GabonConnect includes a comprehensive security, verification, and anti-fraud system:
+
+### User Verification
+
+- **Phone Number Verification**:
+  - OTP (One-Time Password) verification via SMS
+  - 6-digit codes with 5-minute expiry
+  - Max 5 attempts per OTP
+  - Integration ready with SMS services (Twilio, AWS SNS)
+
+- **ID Verification**:
+  - Optional ID document verification (Passport, National ID, Driver License)
+  - Verified user badges on profiles
+  - Encrypted ID number storage
+
+### Trust & Reputation System
+
+- **User Ratings & Reviews**:
+  - 5-star rating system
+  - Detailed review comments (10-500 characters)
+  - Review tags (professional, friendly, reliable, etc.)
+  - Recommendation percentage tracking
+  - Top-rated user lists
+  - Automatic review spam cleanup (180+ days)
+
+- **Verified Badges**:
+  - Phone-verified badge (checkmark icon)
+  - ID-verified badge  
+  - Visual trust indicators on user profiles and listings
+
+### Fraud Detection & Prevention
+
+- **Transaction Risk Analysis**:
+  - Real-time fraud risk scoring (Safe, Low, Moderate, High, Critical)
+  - Analyzes: account age, transaction amount anomalies, frequency, suspicious keywords
+  - Automatic flagging of high-risk transactions
+  - User risk flags and warnings
+
+- **Suspicious Activity Reporting**:
+  - Report suspicious users/listings with evidence
+  - Multiple report types: scam attempts, offensive content, fake profiles
+  - Automatic user flagging with 3+ reports
+  - User blocking capability
+
+- **Anti-Spam & Validation**:
+  - SQL injection prevention through input sanitization
+  - API rate limiting (10 requests/minute configurable)
+  - Secure password hashing (SHA256)
+  - Email and phone validation
+
+### Payment Security
+
+- **Escrow System**:
+  - Payment hold until transaction completion
+  - Three states: Pending → Held → Released
+  - Dispute management for contested transactions
+  - Automatic refund capability
+
+- **Encryption & Secure Tokens**:
+  - Sensitive data encryption (passwords, IDs, payment info)
+  - JWT-like secure token generation
+  - Phone number masking for display
+  - Partial ID number masking
+
+### Security Widgets
+
+- `VerificationBadge` - Display verified status
+- `TrustScoreWidget` - Show rating and review count
+- `SafetyWarningBanner` - Display fraud risk levels with flags
+- `ReportUserDialog` - Easy reporting interface
+- `ReviewCard` - Display reviews with moderation options
+- `EscrowPaymentCard` - Show escrow transaction status
+
+### Services
+
+1. **VerificationService**:
+   - Phone OTP verification flow
+   - ID verification management
+   - Cleanup of expired verifications
+
+2. **ReviewService**:
+   - Manage user reviews and ratings
+   - Calculate rating summaries
+   - Flag inappropriate reviews
+   - Review statistics and analytics
+
+3. **FraudDetectionService**:
+   - Analyze transactions for fraud risk
+   - Report suspicious activity
+   - Block or flag suspicious users
+   - Track fraud statistics
+
+### Usage Examples
+
+```dart
+// Send OTP for phone verification
+final verifyProvider = context.read<VerificationProvider>();
+await verifyProvider.sendPhoneOTP('+241612345678');
+
+// Verify OTP
+final verified = await verifyProvider.verifyPhoneOTP(phoneNumber, otpCode);
+
+// Submit a review
+final reviewProvider = context.read<ReviewProvider>();
+await reviewProvider.submitReview(
+  reviewerId: currentUserId,
+  revieweeId: targetUserId,
+  rating: 5,
+  comment: 'Excellent service, very professional!',
+  tags: ['professional', 'friendly'],
+  recommendsUser: true,
+);
+
+// Analyze transaction for fraud
+final fraudProvider = context.read<FraudDetectionProvider>();
+await fraudProvider.analyzeTransaction(
+  userId: currentUserId,
+  transactionType: 'service_booking',
+  amount: 50000,
+  recipientId: providerId,
+  metadata: {
+    'accountAge': 30,
+    'previousAverageAmount': 10000,
+    'transactionFrequency': 2,
+    'description': 'Plumbing repair service',
+  },
+);
+
+// Report suspicious user
+await fraudProvider.reportSuspiciousActivity(
+  reporterId: currentUserId,
+  suspiciousUserId: suspiciousUserId,
+  reason: 'scam_attempt',
+  description: 'User requested payment via Bitcoin instead of escrow',
+  listingId: listingId,
+);
+
+// Display verification badge
+VerificationBadge(
+  verification: userVerification,
+  showLabel: true,
+)
+
+// Show fraud warning
+SafetyWarningBanner(
+  riskLevel: fraudProvider.currentRiskLevel,
+  riskFlags: fraudProvider.userRiskFlags,
+)
+```
+
+### Database Models
+
+- `UserVerification` - Phone & ID verification status
+- `UserReview` - Individual review with rating and tags
+- `UserRatingSummary` - Aggregated rating statistics
+- `FraudReport` - Reported suspicious activity
+- `PaymentEscrow` - Payment hold and release tracking
+- `BlockedUser` - User block list
+
+### Configuration
+
+All security parameters are customizable:
+- OTP validity period (default 5 minutes)
+- Max OTP attempts (default 5)
+- Rate limiting (default 10 requests/minute)
+- Cache expiration periods
+## Getting Started1. **VerificationService**:
+   - Phone OTP verification flow
+   - ID verification management
+   - Cleanup of expired verifications
+
+2. **ReviewService**:
+   - Manage user reviews and ratings
+   - Calculate rating summaries
+   - Flag inappropriate reviews
+   - Review statistics and analytics
+
+3. **FraudDetectionService**:
+   - Analyze transactions for fraud risk
+   - Report suspicious activity
+   - Block or flag suspicious users
+   - Track fraud statistics
+
+### Usage Examples
+
+```dart
+// Send OTP for phone verification
+final verifyProvider = context.read<VerificationProvider>();
+await verifyProvider.sendPhoneOTP('+241612345678');
+
+// Verify OTP
+final verified = await verifyProvider.verifyPhoneOTP(phoneNumber, otpCode);
+
+// Submit a review
+final reviewProvider = context.read<ReviewProvider>();
+await reviewProvider.submitReview(
+  reviewerId: currentUserId,
+  revieweeId: targetUserId,
+  rating: 5,
+  comment: 'Excellent service, very professional!',
+  tags: ['professional', 'friendly'],
+  recommendsUser: true,
+);
+
+// Analyze transaction for fraud
+final fraudProvider = context.read<FraudDetectionProvider>();
+await fraudProvider.analyzeTransaction(
+  userId: currentUserId,
+  transactionType: 'service_booking',
+  amount: 50000,
+  recipientId: providerId,
+  metadata: {
+    'accountAge': 30,
+    'previousAverageAmount': 10000,
+    'transactionFrequency': 2,
+    'description': 'Plumbing repair service',
+  },
+);
+
+// Report suspicious user
+await fraudProvider.reportSuspiciousActivity(
+  reporterId: currentUserId,
+  suspiciousUserId: suspiciousUserId,
+  reason: 'scam_attempt',
+  description: 'User requested payment via Bitcoin instead of escrow',
+  listingId: listingId,
+);
+
+// Display verification badge
+VerificationBadge(
+  verification: userVerification,
+  showLabel: true,
+)
+
+// Show fraud warning
+SafetyWarningBanner(
+  riskLevel: fraudProvider.currentRiskLevel,
+  riskFlags: fraudProvider.userRiskFlags,
+)
+```
+
+### Database Models
+
+- `UserVerification` - Phone & ID verification status
+- `UserReview` - Individual review with rating and tags
+- `UserRatingSummary` - Aggregated rating statistics
+- `FraudReport` - Reported suspicious activity
+- `PaymentEscrow` - Payment hold and release tracking
+- `BlockedUser` - User block list
+
+### Configuration
+
+All security parameters are customizable:
+- OTP validity period (default 5 minutes)
+- Max OTP attempts (default 5)
+- Rate limiting (default 10 requests/minute)
+- Cache expiration periods
+- Fraud risk scoring weights
+
+
 
 1. **Install Flutter SDK**:
    https://flutter.dev/docs/get-started/install

@@ -31,6 +31,13 @@ dependencies:
   # Data Serialization
   json_annotation: ^4.8.0
   
+  # Security & Encryption
+  crypto: ^3.0.3
+  uuid: ^4.0.0
+  
+  # Internationalization
+  intl: ^0.19.0
+  
   # Firebase dependencies (uncomment when setting up Firebase)
   # firebase_core: ^2.0.0
   # cloud_firestore: ^4.0.0

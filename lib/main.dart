@@ -13,19 +13,33 @@ import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
 import 'providers/marketplace_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/verification_provider.dart';
+import 'providers/review_provider.dart';
+import 'providers/fraud_detection_provider.dart';
+
 import 'utils/theme.dart';
+
 import 'services/notification_service.dart';
 import 'services/geolocation_service.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/offline_queue_service.dart';
+import 'services/verification_service.dart';
+import 'services/review_service.dart';
+import 'services/fraud_detection_service.dart';
+
 import 'widgets/connection_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize cache and connectivity services
+  // Initialize cache
   await CacheService.init();
+  
+  // Initialize security services
+  await VerificationService().init();
+  await ReviewService().init();
+  await FraudDetectionService().init();
   
   runApp(const GabonConnectApp());
 }
@@ -81,6 +95,10 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
           create: (_) => MarketplaceProvider(_connectivityService),
         ),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        // Security & verification providers
+        ChangeNotifierProvider(create: (_) => VerificationProvider(VerificationService())),
+        ChangeNotifierProvider(create: (_) => ReviewProvider(ReviewService())),
+        ChangeNotifierProvider(create: (_) => FraudDetectionProvider(FraudDetectionService())),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
