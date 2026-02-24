@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/custom_textfield.dart';
+import '../utils/validators.dart';
 import '../widgets/primary_button.dart';
 
 /// Screen with a form for posting an announcement or service.
@@ -27,16 +30,16 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
           key: _formKey,
           child: Column(
             children: [
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Title'),
+              CustomTextField(
+                label: 'Title',
+                validator: Validators.validateNotEmpty,
                 onSaved: (v) => _title = v,
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
-              TextFormField(
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Description'),
+              CustomTextField(
+                label: 'Description',
+                validator: Validators.validateNotEmpty,
                 onSaved: (v) => _description = v,
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                keyboardType: TextInputType.multiline,
               ),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Category'),
@@ -51,13 +54,13 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
                 onChanged: (v) => _category = v,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Price'),
+              CustomTextField(
+                label: 'Price',
                 keyboardType: TextInputType.number,
                 onSaved: (v) => _price = v,
               ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Location'),
+              CustomTextField(
+                label: 'Location',
                 onSaved: (v) => _location = v,
               ),
               const SizedBox(height: 16),
@@ -85,7 +88,9 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
       _formKey.currentState?.save();
       // TODO: handle submission logic (e.g. send to backend)
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Announcement posted (dummy)')),
+        SnackBar(
+            content: Text(
+                'Posted: $_title, desc: $_description, category: $_category, price: $_price, location: $_location')),
       );
       _formKey.currentState?.reset();
     }

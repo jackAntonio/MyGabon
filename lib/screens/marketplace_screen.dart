@@ -1,34 +1,48 @@
 import 'package:flutter/material.dart';
-import '../models/product_model.dart';
 import '../widgets/product_card.dart';
 
 /// Marketplace screen displaying a list of products for sale.
+import 'package:provider/provider.dart';
+import '../providers/marketplace_provider.dart';
+
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({Key? key}) : super(key: key);
 
-  static final List<ProductModel> _products = [
-    ProductModel(
-      name: 'Used Laptop',
-      price: 2500000,
-      location: 'Libreville',
-    ),
-    ProductModel(
-      name: 'Smartphone',
-      price: 1200000,
-      location: 'Port-Gentil',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<MarketplaceProvider>(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Marketplace')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _products.length,
-        itemBuilder: (context, index) {
-          return ProductCard(product: _products[index]);
-        },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search products...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onChanged: provider.search,
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.8,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: provider.products.length,
+              itemBuilder: (context, index) {
+                return ProductCard(product: provider.products[index]);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/service_model.dart';
+import '../screens/chat_screen.dart';
 
 /// Card widget displaying brief information about a service.
 class ServiceCard extends StatelessWidget {
@@ -37,7 +38,12 @@ class ServiceCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ChatScreen()),
+                  );
+                },
                 child: const Text('Contact'),
               ),
             )

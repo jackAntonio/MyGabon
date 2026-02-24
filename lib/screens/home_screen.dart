@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/category_grid.dart';
+import '../widgets/category_icon.dart';
 
 /// Home screen showing welcome message, search bar and categories.
 class HomeScreen extends StatelessWidget {
@@ -33,7 +33,52 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            const Expanded(child: CategoryGrid()),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: const [
+                  CategoryIcon(icon: Icons.build, label: 'Repair'),
+                  SizedBox(width: 16),
+                  CategoryIcon(icon: Icons.computer, label: 'IT Services'),
+                  SizedBox(width: 16),
+                  CategoryIcon(icon: Icons.cleaning_services, label: 'Cleaning'),
+                  SizedBox(width: 16),
+                  CategoryIcon(icon: Icons.local_taxi, label: 'Transport'),
+                  SizedBox(width: 16),
+                  CategoryIcon(icon: Icons.store, label: 'Marketplace'),
+                  SizedBox(width: 16),
+                  CategoryIcon(icon: Icons.more_horiz, label: 'Other'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Featured Providers',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            // Placeholder for a horizontal list of featured providers
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 120,
+                    margin: const EdgeInsets.only(right: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text('Provider ${index + 1}'),
+                  );
+                },
+              ),
+            ),
+            // remaining space
+            const Expanded(child: SizedBox()),
           ],
         ),
       ),

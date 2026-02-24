@@ -7,9 +7,12 @@ future Firebase integration and scalability.
 ## Features
 
 - 💻 Material 3 based clean UI
-- 📱 Bottom navigation bar for easy access
-- 🎯 Five primary screens: Home, Services, Marketplace, Chat, Profile
-- 🧩 Reusable widgets and well-organised folders
+- � Login/register UI ready for Firebase Authentication
+- 📱 Bottom navigation bar with five tabs: Home, Services, Post, Marketplace, Profile
+- 🎯 Screens for home, services, post announcement, marketplace, chat and profile
+- 🧠 State management using Provider with auth/service/marketplace/chat providers
+- 🧩 Reusable widgets and well-organised folders with models, providers, services, utils
+- 🌍 Geolocation and notifications service placeholders
 - 🔧 Dummy data used; Firebase-ready architecture
 - 📝 Commented code suitable for quick onboarding
 
@@ -18,6 +21,11 @@ future Firebase integration and scalability.
 ```
 lib/
   main.dart
+  models/
+    service_model.dart
+    product_model.dart
+    chat_model.dart
+    user_model.dart
   screens/
     home_screen.dart
     services_screen.dart
@@ -25,19 +33,29 @@ lib/
     marketplace_screen.dart
     chat_screen.dart
     profile_screen.dart
+    login_screen.dart
+    register_screen.dart
   widgets/
     category_grid.dart
+    category_icon.dart
     service_card.dart
     product_card.dart
     chat_bubble.dart
+    custom_button.dart
+    custom_textfield.dart
     primary_button.dart
-  models/
-    service_model.dart
-    product_model.dart
-    chat_model.dart
-    user_model.dart
+  providers/
+    auth_provider.dart
+    service_provider.dart
+    marketplace_provider.dart
+    chat_provider.dart
   services/
     dummy_data.dart
+    geolocation_service.dart
+    notification_service.dart
+  utils/
+    validators.dart
+    theme.dart
 ```
 
 ## Getting Started

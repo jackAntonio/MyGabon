@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'screens/home_screen.dart';
 import 'screens/services_screen.dart';
 import 'screens/post_announcement_screen.dart';
 import 'screens/marketplace_screen.dart';
-import 'screens/chat_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+
+import 'providers/auth_provider.dart';
+import 'providers/service_provider.dart';
+import 'providers/marketplace_provider.dart';
+import 'providers/chat_provider.dart';
+import 'utils/theme.dart';
+import 'services/notification_service.dart';
+import 'services/geolocation_service.dart';
 
 void main() {
   runApp(const GabonConnectApp());
@@ -17,17 +28,32 @@ class GabonConnectApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GabonConnect',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+    // initialize services once, log errors if any
+    NotificationService().init();
+    GeolocationService(); // constructor available for later use
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ServiceProvider()),
+        ChangeNotifierProvider(create: (_) => MarketplaceProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+      ],
+      child: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          return MaterialApp(
+            title: 'GabonConnect',
+            theme: AppTheme.lightTheme,
+            home: auth.isLoggedIn ? const MainScaffold() : const LoginScreen(),
+            routes: {
+              '/post': (context) => const PostAnnouncementScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const RegisterScreen(),
+            },
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
-      home: const MainScaffold(),
-      routes: {
-        '/post': (context) => const PostAnnouncementScreen(),
-      },
-      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -46,8 +72,8 @@ class _MainScaffoldState extends State<MainScaffold> {
   final List<Widget> _pages = const [
     HomeScreen(),
     ServicesScreen(),
+    PostAnnouncementScreen(),
     MarketplaceScreen(),
-    ChatScreen(),
     ProfileScreen(),
   ];
 
@@ -67,19 +93,11 @@ class _MainScaffoldState extends State<MainScaffold> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
+          NavigationDestination(icon: Icon(Icons.add_box), label: 'Post'),
           NavigationDestination(icon: Icon(Icons.store), label: 'Marketplace'),
-          NavigationDestination(icon: Icon(Icons.chat), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-      floatingActionButton: _currentIndex == 1
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/post');
-              },
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 }

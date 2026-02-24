@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import 'edit_profile_screen.dart';
 
 /// Profile screen with dummy user info and posts section.
 class ProfileScreen extends StatelessWidget {
@@ -23,8 +27,21 @@ class ProfileScreen extends StatelessWidget {
             const Text('+241 00 00 00 00'),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                );
+              },
               child: const Text('Edit Profile'),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                Provider.of<AuthProvider>(context, listen: false).logout();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Logout'),
             ),
             const SizedBox(height: 32),
             const Align(
