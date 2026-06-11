@@ -1,0 +1,201 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===== FONCTION UTILITAIRES =====
+    
+    /// Vérifier si l'utilisateur est authentifié
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    /// Vérifier si l'utilisateur est propriétaire de la ressource
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    /// Vérifier si l'utilisateur est admin
+    function isAdmin() {
+      return request.auth.token.isAdmin == true;
+    }
+    
+    /// Vérifier si l'utilisateur est vérifié
+    function isVerified() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isVerified == true;
+    }
+    
+    // ===== RÈGLES PAR DÉFAUT =====
+    
+    // Refuser tous par défaut
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // ===== USERS COLLECTION =====
+    
+    /// Chaque utilisateur peut lire et modifier son propre profil
+    /// Les autres utilisateurs peuvent voir le profil public
+    match /users/{userId} {
+      // L'utilisateur propriétaire peut lire/écrire son profil
+      allow read, write: if isOwner(userId);
+      
+      // Les utilisateurs authentifiés peuvent lire les infos publiques
+      allow read: if isAuthenticated();
+      
+      // Sous-collection: settings privées
+      match /settings/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // ===== VERIFICATION COLLECTION =====
+    
+    /// Données de vérification: seul propriétaire peut voir
+    match /verifications/{userId} {
+      allow read, write: if isOwner(userId);
+      allow read, write: if isAdmin(); // Admins pour modération
+    }
+    
+    // ===== PRODUCTS COLLECTION =====
+    
+    /// Produits: tous lecture, propriétaire + admins écriture
+    match /products/{productId} {
+      // Tous les utilisateurs authentifiés peuvent lire
+      allow read: if isAuthenticated();
+      
+      // Créateur et admins peuvent écrire/modifier
+      allow write: if isAuthenticated() && 
+        (isOwner(resource.data.ownerId) || isAdmin());
+      
+      // Créer nouveau: utilisateurs authentifiés et vérifiés
+      allow create: if isAuthenticated() && isVerified();
+      
+      // Sous-collection: reviews
+      match /reviews/{reviewId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && isVerified();
+        allow write: if isOwner(resource.data.reviewerId) || isAdmin();
+      }
+    }
+    
+    // ===== SERVICES COLLECTION =====
+    
+    /// Services: tous lecture, propriétaire + admins écriture
+    match /services/{serviceId} {
+      allow read: if isAuthenticated();
+      
+      allow write: if isAuthenticated() && 
+        (isOwner(resource.data.providerId) || isAdmin());
+      
+      allow create: if isAuthenticated() && isVerified();
+      
+      // Sous-collection: bookings
+      match /bookings/{bookingId} {
+        allow read: if isAuthenticated() && (
+          isOwner(resource.data.customerId) || 
+          isOwner(resource.data.providerId)
+        );
+        allow write: if isAuthenticated();
+      }
+    }
+    
+    // ===== CHAT COLLECTION =====
+    
+    /// Messages: seulement participants peuvent voir
+    match /chats/{chatId} {
+      // Participants peuvent lire
+      allow read: if isAuthenticated() && 
+        request.auth.uid in resource.data.participants;
+      
+      // Participants peuvent modifier
+      allow write: if isAuthenticated() && 
+        request.auth.uid in resource.data.participants;
+      
+      // Messages dans conversation
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        
+        // Créer message: l'expéditeur
+        allow create: if isAuthenticated() && 
+          request.auth.uid == request.resource.data.senderId;
+        
+        // Modifier: seulement l'auteur dans 5 min
+        allow update: if isAuthenticated() && 
+          request.auth.uid == resource.data.senderId &&
+          request.time < timestamp.value(resource.data.createdAt) + duration.value(5m);
+        
+        // Supprimer: auteur ou admin
+        allow delete: if isAuthenticated() && 
+          (request.auth.uid == resource.data.senderId || isAdmin());
+      }
+    }
+    
+    // ===== ANALYTICS COLLECTION =====
+    
+    /// Analytique: créé par client, lu par proprio + admin
+    match /analytics/{userId}/{document=**} {
+      allow write: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+    }
+    
+    // ===== TRANSACTIONS COLLECTION =====
+    
+    /// Transactions: utilisateur et admins seulement
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) || isAdmin()
+      );
+      allow create: if isAuthenticated() && isVerified();
+      allow write: if isAdmin(); // Seulement admins modifient
+    }
+    
+    // ===== FRAUD REPORTS COLLECTION =====
+    
+    /// Signalements de fraude: créé par utilisateurs, modéré par admins
+    match /fraudReports/{reportId} {
+      // Créer rapport: utilisateurs authentifiés
+      allow create: if isAuthenticated() && isVerified();
+      
+      // Lire: admin ou créateur
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.reporterId) || isAdmin()
+      );
+      
+      // Modifier: admin seulement
+      allow write: if isAdmin();
+    }
+    
+    // ===== REVIEWS COLLECTION =====
+    
+    /// Reviews: tous peut lire, authentifiés peuvent créer
+    match /reviews/{reviewId} {
+      allow read: if true; // Public
+      
+      allow create: if isAuthenticated() && isVerified();
+      
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.reviewerId) || isAdmin()
+      );
+      
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.reviewerId) || isAdmin()
+      );
+    }
+    
+    // ===== NOTIFICATIONS COLLECTION =====
+    
+    /// Notifications: utilisateur peut voir et modifier les siennes
+    match /notifications/{userId}/{notificationId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ===== AUDIT LOGS COLLECTION (Admin only) =====
+    
+    /// Logs d'audit: admin et système seulement
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false; // Écriture par système seulement
+    }
+  }
+}

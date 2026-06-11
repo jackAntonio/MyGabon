@@ -1,0 +1,76 @@
+# Flutter / Dart
+build/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Packages
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Android
+android/.gradle
+android/build
+android/local.properties
+*.iml
+.gradle
+
+# iOS
+ios/Pods
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+
+# Windows
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.h
+
+# macOS
+macos/Pods
+macos/Flutter/Generated.xcconfig
+macos/Flutter/flutter_export_environment.sh
+
+# Web
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Security keys
+*.jks
+*.p8
+*.p12
+*.pfx
+
+# Build outputs
+*.apk
+*.ipa
+*.aab
+*.aar
+
+# Logging
+*.log
+
+# Temporary files
+.tmp/
+temp/
+
+# IDE Generated code
+lib/generated_plugin_registrant.dart

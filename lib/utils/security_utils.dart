@@ -1,42 +1,68 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:crypto/crypto.dart';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:flutter/foundation.dart';
 
 /// Security utilities for encryption and data protection
+/// ✅ SÉCURISÉ: Utilise BCrypt pour les mots de passe
+/// ✅ SÉCURISÉ: OTP générés avec Random.secure()
 class SecurityUtils {
-  // Simple encryption using SHA256 hashing for sensitive data
-  // In production, use proper encryption library like encrypt
   
+  /// Hacher un mot de passe avec BCrypt (✅ SÉCURISÉ)
+  /// Ne jamais comparer directement les hashs - utiliser verifyPassword()
   static String hashPassword(String password) {
-    return sha256.convert(utf8.encode(password)).toString();
+    try {
+      return BCrypt.hashpw(password, BCrypt.gensalt());
+    } catch (e) {
+      debugPrint('❌ Erreur hashage mot de passe: $e');
+      rethrow;
+    }
   }
   
+  /// Vérifier un mot de passe contre un hash BCrypt (✅ SÉCURISÉ)
   static bool verifyPassword(String password, String hash) {
-    return sha256.convert(utf8.encode(password)).toString() == hash;
+    try {
+      return BCrypt.checkpw(password, hash);
+    } catch (e) {
+      debugPrint('❌ Erreur vérification mot de passe: $e');
+      return false;
+    }
   }
   
+  /// Générer un token sécurisé (Usage: seulement pour non-critiques)
+  /// Pour tokens d'authentification, utiliser AuthTokenService + JWT
   static String generateSecureToken(String userId, {int length = 32}) {
-    // Generate JWT-like token with timestamp
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     final data = '$userId:$timestamp:secure_token';
     return sha256.convert(utf8.encode(data)).toString().substring(0, length);
   }
   
+  /// Masquer un numéro de téléphone pour affichage
+  /// ⚠️ NE PAS stocker cela - toujours stocker la version chiffrée complète
   static String encryptPhoneNumber(String phoneNumber) {
-    // Hide most of phone number for security
     if (phoneNumber.length < 4) return '****';
     return '*' * (phoneNumber.length - 4) + phoneNumber.substring(phoneNumber.length - 4);
   }
   
+  /// Masquer un numéro d'ID pour affichage
+  /// ⚠️ NE PAS stocker cela - toujours stocker la version chiffrée complète
   static String encryptIdNumber(String idNumber) {
-    // Hide most of ID number for security
     if (idNumber.length < 4) return '****';
     return 'ID_' + '*' * 6 + idNumber.substring(idNumber.length - 3);
   }
   
+  /// Générer un OTP sécurisé avec Random.secure() (✅ SÉCURISÉ)
+  /// Utilise cryptographiquement sécurisé générateur de nombres aléatoires
   static String generateOTP({int length = 6}) {
-    // Generate 6-digit OTP
-    final random = List<int>.generate(length, (i) => 48 + (i % 10));
-    return String.fromCharCodes(random);
+    try {
+      final random = Random.secure();
+      final values = List<int>.generate(length, (i) => random.nextInt(10));
+      return values.join();
+    } catch (e) {
+      debugPrint('❌ Erreur génération OTP: $e');
+      rethrow;
+    }
   }
   
   static bool isValidOTP(String otp) {
