@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GabonConnect - Aperçu Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0B6E4F 0%, #0077B6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .phone-frame {
+            background: #fff;
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .phone-screen {
+            background: #F7F9FA;
+            border-radius: 45px;
+            height: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .status-bar {
+            background: linear-gradient(135deg, #0B6E4F 0%, #0077B6 100%);
+            color: white;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .screen-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #0B6E4F;
+            font-weight: 700;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: #F4C430;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .header-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .search-box {
+            background: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-box:hover {
+            border-color: #0B6E4F;
+            box-shadow: 0 4px 12px rgba(11, 110, 79, 0.1);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .search-icon {
+            color: #999;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1E1E1E;
+            margin-bottom: 16px;
+            margin-top: 24px;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .category {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .category:hover {
+            border-color: #0B6E4F;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(11, 110, 79, 0.15);
+        }
+
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .category-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1E1E1E;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            border-color: #0B6E4F;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            transform: translateX(4px);
+        }
+
+        .card-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #F4C430, #0077B6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: #1E1E1E;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .card-price {
+            color: #0B6E4F;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .rating {
+            color: #F4C430;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #E0E0E0;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding: 12px 0;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+
+        .nav-item.active {
+            color: #0B6E4F;
+        }
+
+        .nav-item:not(.active) {
+            color: #999;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: inherit;
+        }
+
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: 0;
+            background: #F4C430;
+            color: #0B6E4F;
+            border-radius: 10px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .info-banner {
+            background: linear-gradient(135deg, #0077B6, #0B6E4F);
+            color: white;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info-banner h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .info-banner p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .phone-frame {
+                padding: 0;
+            }
+
+            .phone-screen {
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="phone-frame">
+            <div class="phone-screen">
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>●●●●●</span>
+                </div>
+
+                <div class="screen-content" id="screenContent">
+                    <!-- Tab: Home -->
+                    <div id="home-tab" class="tab-content active">
+                        <div class="header">
+                            <h1>GabonConnect</h1>
+                            <div class="header-icon">🔔</div>
+                        </div>
+
+                        <div class="info-banner">
+                            <h2>Bienvenue! 👋</h2>
+                            <p>Trouvez des services locaux près de vous</p>
+                        </div>
+
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" placeholder="Chercher un service...">
+                        </div>
+
+                        <div class="section-title">Catégories</div>
+                        <div class="categories">
+                            <div class="category">
+                                <div class="category-icon">🔧</div>
+                                <div class="category-name">Services</div>
+                            </div>
+                            <div class="category">
+                                <div class="category-icon">🏠</div>
+                                <div class="category-name">Immobilier</div>
+                            </div>
+                            <div class="category">
+                                <div class="category-icon">🎓</div>
+                                <div class="category-name">Éducation</div>
+                            </div>
+                            <div class="category">
+                                <div class="category-icon">💼</div>
+                                <div class="category-name">Business</div>
+                            </div>
+                            <div class="category">
+                                <div class="category-icon">🚗</div>
+                                <div class="category-name">Transport</div>
+                            </div>
+                            <div class="category">
+                                <div class="category-icon">📱</div>
+                                <div class="category-name">Tech</div>
+                            </div>
+                        </div>
+
+                        <div class="section-title">Services Recommandés</div>
+                        <div class="card">
+                            <div class="card-image">⚡</div>
+                            <div class="card-info">
+                                <div class="card-title">Électricien Professionnel</div>
+                                <div class="card-desc">Réparation & Installation</div>
+                                <div class="card-price">50,000 FCFA/jour</div>
+                                <div class="rating">⭐ 4.8 (142 avis)</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image">🏡</div>
+                            <div class="card-info">
+                                <div class="card-title">Nettoyage Domicile</div>
+                                <div class="card-desc">Service complet</div>
+                                <div class="card-price">30,000 FCFA</div>
+                                <div class="rating">⭐ 4.9 (89 avis)</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image">💻</div>
+                            <div class="card-info">
+                                <div class="card-title">Réparation Ordinateur</div>
+                                <div class="card-desc">Tous les problèmes</div>
+                                <div class="card-price">25,000 FCFA</div>
+                                <div class="rating">⭐ 4.7 (56 avis)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Services -->
+                    <div id="services-tab" class="tab-content">
+                        <div class="header">
+                            <h1>Services</h1>
+                        </div>
+                        <div class="section-title">Tous les Services</div>
+                        <div class="card">
+                            <div class="card-image">🔨</div>
+                            <div class="card-info">
+                                <div class="card-title">Menuisier</div>
+                                <div class="card-desc">Mobilier & Portes</div>
+                                <div class="card-price">60,000 FCFA/jour</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">🧼</div>
+                            <div class="card-info">
+                                <div class="card-title">Plomberie</div>
+                                <div class="card-desc">Tuyauterie & Fuites</div>
+                                <div class="card-price">45,000 FCFA</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">💅</div>
+                            <div class="card-info">
+                                <div class="card-title">Coiffure</div>
+                                <div class="card-desc">Toutes coupes</div>
+                                <div class="card-price">15,000 FCFA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Annonces -->
+                    <div id="post-tab" class="tab-content">
+                        <div class="header">
+                            <h1>Poster</h1>
+                        </div>
+                        <div class="info-banner">
+                            <h2>📢 Poster une Annonce</h2>
+                            <p>Mettez en avant votre service ou produit</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">📝</div>
+                            <div class="card-info">
+                                <div class="card-title">Créer une annonce</div>
+                                <div class="card-desc">Vendez ou promouvoir un service</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">📊</div>
+                            <div class="card-info">
+                                <div class="card-title">Mes annonces</div>
+                                <div class="card-desc">Gérer vos publications</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Marketplace -->
+                    <div id="marketplace-tab" class="tab-content">
+                        <div class="header">
+                            <h1>Marketplace</h1>
+                        </div>
+                        <div class="section-title">Achetez & Vendez</div>
+                        <div class="card">
+                            <div class="card-image">📱</div>
+                            <div class="card-info">
+                                <div class="card-title">iPhone 14 Pro</div>
+                                <div class="card-desc">Comme neuf</div>
+                                <div class="card-price">850,000 FCFA</div>
+                                <div class="rating">⭐ 4.9 (234 avis)</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">👕</div>
+                            <div class="card-info">
+                                <div class="card-title">Vêtements Branché</div>
+                                <div class="card-desc">Collection été</div>
+                                <div class="card-price">45,000 FCFA</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">🪑</div>
+                            <div class="card-info">
+                                <div class="card-title">Mobilier Bureau</div>
+                                <div class="card-desc">Occasion, bon état</div>
+                                <div class="card-price">150,000 FCFA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Profile -->
+                    <div id="profile-tab" class="tab-content">
+                        <div class="header">
+                            <h1>Profil</h1>
+                        </div>
+                        <div class="info-banner">
+                            <h2>👤 Votre Profil</h2>
+                            <p>Jean Mbadinga</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">✏️</div>
+                            <div class="card-info">
+                                <div class="card-title">Éditer le profil</div>
+                                <div class="card-desc">Mettre à jour vos infos</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">🔒</div>
+                            <div class="card-info">
+                                <div class="card-title">Sécurité</div>
+                                <div class="card-desc">Mot de passe & vérification</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">⚙️</div>
+                            <div class="card-info">
+                                <div class="card-title">Paramètres</div>
+                                <div class="card-desc">Notifications, langue, thème</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-image">🚪</div>
+                            <div class="card-info">
+                                <div class="card-title">Déconnexion</div>
+                                <div class="card-desc">Se déconnecter de l'app</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-nav">
+                    <div class="nav-item active" onclick="switchTab('home-tab', this)">
+                        <span>🏠</span>
+                        <span class="nav-label">Home</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('services-tab', this)">
+                        <span>🔧</span>
+                        <span class="nav-label">Services</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('post-tab', this)">
+                        <span>➕</span>
+                        <span class="nav-label">Post</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('marketplace-tab', this)">
+                        <span>🛒</span>
+                        <span class="nav-label">Market</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('profile-tab', this)">
+                        <span>👤</span>
+                        <span class="nav-label">Profile</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId, navItem) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+
+            // Add active class to clicked nav item
+            navItem.classList.add('active');
+
+            // Scroll to top
+            document.getElementById('screenContent').scrollTop = 0;
+        }
+
+        // Add click animations
+        document.querySelectorAll('.card, .category, .header-icon').forEach(el => {
+            el.addEventListener('click', function() {
+                this.style.opacity = '0.7';
+                setTimeout(() => {
+                    this.style.opacity = '1';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
