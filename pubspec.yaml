@@ -42,6 +42,10 @@ dependencies:
   # Internationalization
   intl: ^0.19.0
   
+  # Phase 2: SMS & Notifications
+  flutter_dotenv: ^5.1.0
+  http: ^1.1.0
+
   # Firebase dependencies
   firebase_core: ^2.0.0
   cloud_firestore: ^4.0.0
@@ -62,3 +66,4 @@ flutter:
 
   assets:
     - assets/images/
+    - .env

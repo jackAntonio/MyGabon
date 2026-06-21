@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/security_models.dart';
 import '../services/verification_service.dart';
 import '../utils/security_utils.dart';
+import '../app_services.dart';
 
 /// Provider for managing user verification (phone, ID)
 class VerificationProvider extends ChangeNotifier {
@@ -51,23 +52,51 @@ class VerificationProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       }
-      
+
       _isVerifying = true;
       _verificationError = null;
       notifyListeners();
-      
-      _otpSent = await _verificationService.sendOTPToPhone(phoneNumber);
+
+      // 📱 Générer OTP (6 digits)
+      final otp = _generateOTP();
+
+      // 📤 Envoyer via SMS
+      final sent = await AppServices().sms.sendOTP(
+        phoneNumber: phoneNumber,
+        otp: otp,
+      );
+
+      if (!sent) {
+        _verificationError = 'Failed to send OTP. Please check phone number.';
+        _isVerifying = false;
+        notifyListeners();
+        return false;
+      }
+
+      // 📝 Log audit
+      await AppServices().auditLog.logPhoneVerification(
+        phoneNumber: phoneNumber,
+        verified: false,
+      );
+
+      _otpSent = otp;
       _otpResendCountdown = 60; // 60 seconds before resend allowed
-      
+
       _isVerifying = false;
       notifyListeners();
       return true;
     } catch (e) {
       _isVerifying = false;
       _verificationError = 'Failed to send OTP. Please try again.';
+      debugPrint('❌ Error sending OTP: $e');
       notifyListeners();
       return false;
     }
+  }
+
+  /// Generate 6-digit OTP
+  String _generateOTP() {
+    return (100000 + DateTime.now().millisecond % 900000).toString();
   }
   
   /// Verify OTP
@@ -78,32 +107,45 @@ class VerificationProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       }
-      
+
       _isVerifying = true;
       _verificationError = null;
       notifyListeners();
-      
+
+      // Vérifier OTP correspond à celui envoyé
+      if (_otpSent != otp) {
+        _verificationError = 'Invalid OTP. Please try again.';
+        _isVerifying = false;
+        notifyListeners();
+        return false;
+      }
+
       final isValid = await _verificationService.verifyOTP(phoneNumber, otp);
-      
+
       if (!isValid) {
         _verificationError = 'Invalid OTP. Please try again.';
         _isVerifying = false;
         notifyListeners();
         return false;
       }
-      
+
       // Mark phone as verified
-      // Note: In real app, you'd have the userId from auth
       if (_currentUserVerification != null) {
         await _verificationService.markPhoneVerified(
           _currentUserVerification!.userId,
           phoneNumber,
         );
-        
+
+        // 📝 Log successful verification
+        await AppServices().auditLog.logPhoneVerification(
+          phoneNumber: phoneNumber,
+          verified: true,
+        );
+
         // Reload verification status
         await loadUserVerification(_currentUserVerification!.userId);
       }
-      
+
       _isVerifying = false;
       _otpSent = null;
       notifyListeners();
@@ -111,6 +153,7 @@ class VerificationProvider extends ChangeNotifier {
     } catch (e) {
       _isVerifying = false;
       _verificationError = 'Verification failed. Please try again.';
+      debugPrint('❌ Error verifying OTP: $e');
       notifyListeners();
       return false;
     }

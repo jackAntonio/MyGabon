@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_token_service.dart';
 import '../services/secure_storage_service.dart';
 import '../utils/security_utils.dart';
+import '../app_services.dart';
 import 'dart:async';
 
 /// ✅ SÉCURISÉ: Authentification avec Firebase Auth + JWT Tokens
@@ -66,7 +67,13 @@ class AuthProvider extends ChangeNotifier {
       
       // Générer tokens
       await _generateAndSaveTokens(_currentUser!.uid, _currentUser!.email!);
-      
+
+      // 📝 Log audit
+      await AppServices().auditLog.logLogin(
+        email: _currentUser!.email!,
+        success: true,
+      );
+
       debugPrint('✅ Login réussi: ${_currentUser!.email}');
       notifyListeners();
     } on FirebaseAuthException catch (e) {
@@ -116,7 +123,7 @@ class AuthProvider extends ChangeNotifier {
       
       // Générer tokens
       await _generateAndSaveTokens(_currentUser!.uid, email);
-      
+
       debugPrint('✅ Registration réussi: $email');
       notifyListeners();
     } on FirebaseAuthException catch (e) {
@@ -170,17 +177,20 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     try {
       _setLoading(true);
-      
+
+      // 📝 Log audit
+      await AppServices().auditLog.logLogout();
+
       // Supprimer tokens stockés
       await SecureStorageService.clearAll();
-      
+
       // Logout Firebase
       await _auth.signOut();
-      
+
       _currentUser = null;
       _accessToken = null;
       _refreshToken = null;
-      
+
       debugPrint('✅ Logout réussi');
       notifyListeners();
     } catch (e) {

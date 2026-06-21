@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/services_screen.dart';
@@ -29,10 +30,21 @@ import 'services/review_service.dart';
 import 'services/fraud_detection_service.dart';
 
 import 'widgets/connection_widgets.dart';
+import 'app_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Charger .env
+  await dotenv.load();
+
+  // Initialiser AppServices avec Twilio credentials
+  await AppServices().init(
+    twilioAccountSid: dotenv.env['TWILIO_ACCOUNT_SID'] ?? '',
+    twilioAuthToken: dotenv.env['TWILIO_AUTH_TOKEN'] ?? '',
+    twilioPhoneNumber: dotenv.env['TWILIO_PHONE_NUMBER'] ?? '',
+  );
+
   // Initialize cache
   await CacheService.init();
   
