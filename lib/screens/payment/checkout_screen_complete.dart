@@ -4,7 +4,8 @@ import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/payment_service.dart';
 import '../../services/supabase_provider.dart';
-import 'airtel_confirmation_screen.dart';
+import '../../services/kpay_service.dart';
+import 'airtel_money_screen.dart';
 
 class CheckoutScreenComplete extends ConsumerStatefulWidget {
   final Product product;
@@ -379,10 +380,11 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AirtelConfirmationScreen(
+            builder: (context) => AirtelMoneyScreen(
               product: widget.product,
               visibleFee: fees.visibleFee,
               totalAmount: fees.totalWithVisibleFee,
+              phoneNumber: _phoneNumber,
             ),
           ),
         );

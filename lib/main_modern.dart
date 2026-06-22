@@ -8,6 +8,7 @@ import 'screens/auth_screen.dart';
 import 'models/product.dart';
 import 'widgets/floating_nav_bar.dart';
 import 'widgets/modern_card.dart';
+import 'services/kpay_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +19,8 @@ Future<void> main() async {
   // Initialiser Supabase
   try {
     await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? 'https://xyzsupabaseio.supabase.co',
-      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      url: dotenv.env['SUPABASE_URL'] ?? 'https://kbggddignhydzxjzdera.supabase.com',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_fb4ZPkQfXIXsh5jFWptcPA_TD8oIAUD',
       debug: false,
     );
     debugPrint('✅ Supabase initialisé');
@@ -27,10 +28,35 @@ Future<void> main() async {
     debugPrint('❌ Erreur Supabase: $e');
   }
 
+  // Initialiser Kpay pour paiements Airtel Money
+  try {
+    final kpayApiKey = dotenv.env['KPAY_API_KEY'];
+    final kpayMerchantId = dotenv.env['KPAY_MERCHANT_ID'];
+
+    if (kpayApiKey != null && kpayMerchantId != null) {
+      _initKpay(kpayApiKey, kpayMerchantId);
+      debugPrint('✅ Kpay initialisé');
+    } else {
+      debugPrint('⚠️ Kpay credentials non trouvés - mode simulation');
+    }
+  } catch (e) {
+    debugPrint('❌ Erreur Kpay: $e');
+  }
+
   runApp(
     const ProviderScope(
       child: GabonConnectModernApp(),
     ),
+  );
+}
+
+void _initKpay(String apiKey, String merchantId) {
+  // Import will be done at the top
+  final kpay = KpayService();
+  kpay.init(
+    apiKey: apiKey,
+    merchantId: merchantId,
+    webhookSecret: dotenv.env['KPAY_WEBHOOK_SECRET'],
   );
 }
 
