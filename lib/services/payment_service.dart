@@ -2,24 +2,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/transaction.dart';
 
+class FeeCalculation {
+  final double visibleFee;
+  final double actualFee;
+  final double netToSeller;
+  final double totalWithVisibleFee;
+
+  FeeCalculation({
+    required this.visibleFee,
+    required this.actualFee,
+    required this.netToSeller,
+    required this.totalWithVisibleFee,
+  });
+}
+
 /// Payment Service - Handles MyGabon Wallet and Airtel Money payments
 class PaymentService {
   static const double VISIBLE_FEE_RATE = 0.05;  // 5% shown to user
   static const double ACTUAL_FEE_RATE = 0.10;   // 10% actually deducted
 
   /// Calculate fees for a transaction
-  static ({
-    double visibleFee,
-    double actualFee,
-    double netToSeller,
-    double totalWithVisibleFee,
-  }) calculateFees(double grossAmount) {
+  static FeeCalculation calculateFees(double grossAmount) {
     final visibleFee = grossAmount * VISIBLE_FEE_RATE;
     final actualFee = grossAmount * ACTUAL_FEE_RATE;
     final netToSeller = grossAmount * (1 - ACTUAL_FEE_RATE);
     final totalWithVisibleFee = grossAmount + visibleFee;
 
-    return (
+    return FeeCalculation(
       visibleFee: visibleFee,
       actualFee: actualFee,
       netToSeller: netToSeller,

@@ -71,9 +71,9 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
                     ),
                   )
                       .animate(onPlay: (controller) => controller.repeat())
-                      .scale(duration: 2000.ms, end: 1.1)
+                      .scaleXY(begin: 1.0, end: 1.1, duration: 2000.ms)
                       .then()
-                      .scale(duration: 2000.ms, end: 1.0),
+                      .scaleXY(begin: 1.1, end: 1.0, duration: 2000.ms),
 
                   const SizedBox(height: 32),
 

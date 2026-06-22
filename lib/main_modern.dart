@@ -1,12 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/theme.dart';
 import 'screens/marketplace_detail_screen.dart';
+import 'screens/auth_screen.dart';
 import 'models/product.dart';
 import 'widgets/floating_nav_bar.dart';
 import 'widgets/modern_card.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Charger les variables d'environnement
+  await dotenv.load();
+
+  // Initialiser Supabase
+  try {
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL'] ?? 'https://xyzsupabaseio.supabase.co',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      debug: false,
+    );
+    debugPrint('✅ Supabase initialisé');
+  } catch (e) {
+    debugPrint('❌ Erreur Supabase: $e');
+  }
+
   runApp(
     const ProviderScope(
       child: GabonConnectModernApp(),
@@ -20,7 +40,7 @@ class GabonConnectModernApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GabonConnect',
+      title: 'MyGabon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -30,14 +50,14 @@ class GabonConnectModernApp extends StatelessWidget {
   }
 }
 
-class MainShell extends StatefulWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({Key? key}) : super(key: key);
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
 
   final List<NavBarItem> navItems = [
@@ -50,19 +70,33 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      body: _buildCurrentPage(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Stack(
-        children: [
-          FloatingNavBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            items: navItems,
+    // Vérifier l'authentification
+    final authState = Supabase.instance.client.auth.onAuthStateChange;
+
+    return StreamBuilder(
+      stream: authState,
+      builder: (context, snapshot) {
+        final isAuthenticated = snapshot.data?.session != null;
+
+        if (!isAuthenticated) {
+          return const AuthScreen();
+        }
+
+        return Scaffold(
+          extendBody: true,
+          body: _buildCurrentPage(),
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: Stack(
+            children: [
+              FloatingNavBar(
+                currentIndex: _currentIndex,
+                onTap: (index) => setState(() => _currentIndex = index),
+                items: navItems,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

@@ -386,6 +386,294 @@ class SupabaseService {
     return '*' * (phone.length - 4) + phone.substring(phone.length - 4);
   }
 
+  // ========== PRODUCTS / MARKETPLACE ==========
+
+  /// Récupérer tous les produits
+  Future<List<dynamic>> getAllProducts() async {
+    try {
+      final products = await _client
+          .from('products')
+          .select()
+          .eq('published', true)
+          .order('created_at', ascending: false);
+      return products;
+    } catch (e) {
+      debugPrint('❌ Erreur récupération produits: $e');
+      return [];
+    }
+  }
+
+  /// Récupérer produits par catégorie
+  Future<List<dynamic>> getProductsByCategory(String category) async {
+    try {
+      final products = await _client
+          .from('products')
+          .select()
+          .eq('published', true)
+          .eq('category', category)
+          .order('created_at', ascending: false);
+      return products;
+    } catch (e) {
+      debugPrint('❌ Erreur récupération produits par catégorie: $e');
+      return [];
+    }
+  }
+
+  /// Créer un produit
+  Future<String?> createProduct({
+    required String title,
+    required String description,
+    required double price,
+    required String category,
+    required String condition,
+    required String location,
+    required int quantity,
+    String? imageUrl,
+  }) async {
+    try {
+      final result = await _client
+          .from('products')
+          .insert({
+            'seller_id': currentUser!.id,
+            'title': title,
+            'description': description,
+            'price': price,
+            'category': category,
+            'condition': condition,
+            'location': location,
+            'quantity': quantity,
+            'image_url': imageUrl,
+            'published': true,
+          })
+          .select()
+          .single();
+
+      await logAuditEvent(
+        action: 'product_created',
+        resourceId: result['id'],
+        details: {'title': title, 'category': category},
+      );
+
+      return result['id'];
+    } catch (e) {
+      debugPrint('❌ Erreur création produit: $e');
+      return null;
+    }
+  }
+
+  // ========== WALLET / TRANSACTIONS ==========
+
+  /// Récupérer solde du portefeuille
+  Future<double> getWalletBalance(String userId) async {
+    try {
+      final result = await _client
+          .from('user_wallets')
+          .select('balance')
+          .eq('user_id', userId)
+          .single();
+      return (result['balance'] as num).toDouble();
+    } catch (e) {
+      debugPrint('⚠️ Erreur récupération solde: $e');
+      // Créer le portefeuille s'il n'existe pas
+      try {
+        await _client.from('user_wallets').insert({
+          'user_id': userId,
+          'balance': 500000.0,
+        });
+        return 500000.0;
+      } catch (_) {
+        return 0.0;
+      }
+    }
+  }
+
+  /// Créditer le portefeuille
+  Future<bool> creditWallet({
+    required String userId,
+    required double amount,
+  }) async {
+    try {
+      final currentBalance = await getWalletBalance(userId);
+      await _client
+          .from('user_wallets')
+          .update({'balance': currentBalance + amount})
+          .eq('user_id', userId);
+
+      await logAuditEvent(
+        action: 'wallet_credited',
+        details: {'amount': amount, 'new_balance': currentBalance + amount},
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur crédit portefeuille: $e');
+      return false;
+    }
+  }
+
+  /// Débiter le portefeuille
+  Future<bool> debitWallet({
+    required String userId,
+    required double amount,
+  }) async {
+    try {
+      final currentBalance = await getWalletBalance(userId);
+      if (currentBalance < amount) {
+        throw Exception('Solde insuffisant');
+      }
+
+      await _client
+          .from('user_wallets')
+          .update({'balance': currentBalance - amount})
+          .eq('user_id', userId);
+
+      await logAuditEvent(
+        action: 'wallet_debited',
+        details: {'amount': amount, 'new_balance': currentBalance - amount},
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur débit portefeuille: $e');
+      return false;
+    }
+  }
+
+  /// Récupérer les transactions de l'utilisateur
+  Future<List<dynamic>> getUserTransactions(String userId) async {
+    try {
+      final transactions = await _client
+          .from('transactions')
+          .select()
+          .or('buyer_id.eq.$userId,seller_id.eq.$userId')
+          .order('created_at', ascending: false)
+          .limit(50);
+      return transactions;
+    } catch (e) {
+      debugPrint('❌ Erreur récupération transactions: $e');
+      return [];
+    }
+  }
+
+  /// Créer une transaction
+  Future<String?> createTransaction({
+    required String sellerId,
+    required String productId,
+    required double grossAmount,
+    required String paymentMethod,
+  }) async {
+    try {
+      // Calculer les frais
+      final visibleFee = grossAmount * 0.05;
+      final actualFee = grossAmount * 0.10;
+      final netToSeller = grossAmount * 0.90;
+
+      final result = await _client
+          .from('transactions')
+          .insert({
+            'buyer_id': currentUser!.id,
+            'seller_id': sellerId,
+            'product_id': productId,
+            'gross_amount': grossAmount,
+            'visible_fee': visibleFee,
+            'actual_fee': actualFee,
+            'net_to_seller': netToSeller,
+            'payment_method': paymentMethod,
+            'status': 'pending',
+          })
+          .select()
+          .single();
+
+      await logAuditEvent(
+        action: 'transaction_created',
+        resourceId: result['id'],
+        details: {
+          'product': productId,
+          'amount': grossAmount,
+          'payment_method': paymentMethod,
+        },
+      );
+
+      return result['id'];
+    } catch (e) {
+      debugPrint('❌ Erreur création transaction: $e');
+      return null;
+    }
+  }
+
+  /// Mettre à jour le statut d'une transaction
+  Future<bool> updateTransactionStatus({
+    required String transactionId,
+    required String status,
+  }) async {
+    try {
+      await _client
+          .from('transactions')
+          .update({
+            'status': status,
+            'completed_at': status == 'success' ? DateTime.now().toIso8601String() : null,
+          })
+          .eq('id', transactionId);
+
+      await logAuditEvent(
+        action: 'transaction_updated',
+        resourceId: transactionId,
+        details: {'new_status': status},
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur mise à jour transaction: $e');
+      return false;
+    }
+  }
+
+  // ========== REVIEWS ==========
+
+  /// Récupérer les avis pour un produit
+  Future<List<Map<String, dynamic>>> getProductReviews(String productId) async {
+    try {
+      final reviews = await _client
+          .from('reviews')
+          .select()
+          .eq('product_id', productId)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(reviews);
+    } catch (e) {
+      debugPrint('❌ Erreur récupération avis: $e');
+      return [];
+    }
+  }
+
+  /// Créer un avis
+  Future<bool> createReview({
+    required String productId,
+    required String sellerId,
+    required int rating,
+    required String comment,
+  }) async {
+    try {
+      await _client.from('reviews').insert({
+        'product_id': productId,
+        'seller_id': sellerId,
+        'buyer_id': currentUser!.id,
+        'rating': rating,
+        'comment': comment,
+      });
+
+      await logAuditEvent(
+        action: 'review_created',
+        resourceId: productId,
+        details: {'rating': rating},
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur création avis: $e');
+      return false;
+    }
+  }
+
   /// Vérifier connexion Supabase
   bool get isConnected => _initialized && currentUser != null;
 }

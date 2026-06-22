@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../config/theme.dart';
 import '../models/product.dart';
-import 'payment/checkout_screen.dart';
+import 'payment/checkout_screen_complete.dart';
 
 /// Full-screen marketplace product detail page
 class MarketplaceDetailScreen extends StatefulWidget {
@@ -303,19 +303,19 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
       children: [
         Expanded(
           child: _buildDetailChip(
+            context,
             icon: Icons.inventory_2_outlined,
             label: 'Condition',
             value: widget.product.condition,
-            context: context,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildDetailChip(
+            context,
             icon: Icons.location_on_outlined,
             label: 'Localisation',
             value: widget.product.location,
-            context: context,
           ),
         ),
       ],
@@ -505,7 +505,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CheckoutScreen(
+                        builder: (context) => CheckoutScreenComplete(
                           product: widget.product,
                         ),
                       ),

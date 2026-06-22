@@ -1,5 +1,6 @@
 {
     "projectManager.git.baseFolders": [
         "K"
-    ]
+    ],
+    "cmake.sourceDirectory": "C:/Users/HP/Downloads/MyGabon/web/linux"
 }
