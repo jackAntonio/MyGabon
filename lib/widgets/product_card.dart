@@ -14,8 +14,9 @@ class ProductCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
           ],
           color: Colors.white,
         ),
@@ -25,7 +26,8 @@ class ProductCard extends StatelessWidget {
             Container(
               height: 120,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 color: Colors.grey[300],
               ),
               child: const Center(
@@ -38,13 +40,18 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(product.name,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge
+                          ?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(product.location,
                       style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 8),
                   Text('${product.price} FCFA',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary)),
                 ],
               ),
             ),

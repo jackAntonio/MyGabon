@@ -4,7 +4,6 @@ import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/payment_service.dart';
 import '../../services/supabase_provider.dart';
-import '../../services/kpay_service.dart';
 import 'airtel_money_screen.dart';
 
 class CheckoutScreenComplete extends ConsumerStatefulWidget {
@@ -16,10 +15,12 @@ class CheckoutScreenComplete extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<CheckoutScreenComplete> createState() => _CheckoutScreenCompleteState();
+  ConsumerState<CheckoutScreenComplete> createState() =>
+      _CheckoutScreenCompleteState();
 }
 
-class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete> {
+class _CheckoutScreenCompleteState
+    extends ConsumerState<CheckoutScreenComplete> {
   late final fees = PaymentService.calculateFees(widget.product.price);
   String _selectedPaymentMethod = 'my_gabon';
   bool _isProcessing = false;
@@ -95,19 +96,20 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primary.withOpacity(0.3),
-                      AppColors.accent.withOpacity(0.2),
+                      AppColors.primary.withValues(alpha: 0.3),
+                      AppColors.accent.withValues(alpha: 0.2),
                     ],
                   ),
                 ),
-                child: Icon(Icons.shopping_bag, color: AppColors.primary),
+                child: const Icon(Icons.shopping_bag, color: AppColors.primary),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.product.title, style: Theme.of(context).textTheme.titleSmall),
+                    Text(widget.product.title,
+                        style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 8),
                     Text(
                       'Vendeur: ${widget.product.sellerName}',
@@ -129,15 +131,24 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Prix', style: Theme.of(context).textTheme.bodyMedium),
-              Text('${_formatPrice(widget.product.price)}', style: Theme.of(context).textTheme.bodyMedium),
+              Text(_formatPrice(widget.product.price),
+                  style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Frais MyGabon (5%)', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey600)),
-              Text('${_formatPrice(fees.visibleFee)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey600)),
+              Text('Frais MyGabon (5%)',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.grey600)),
+              Text(_formatPrice(fees.visibleFee),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.grey600)),
             ],
           ),
           const SizedBox(height: 16),
@@ -146,7 +157,11 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text('Total',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
               Text(
                 _formatPrice(fees.totalWithVisibleFee),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -168,13 +183,13 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: hasSufficientBalance
-            ? AppColors.success.withOpacity(0.05)
-            : AppColors.error.withOpacity(0.05),
+            ? AppColors.success.withValues(alpha: 0.05)
+            : AppColors.error.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: hasSufficientBalance
-              ? AppColors.success.withOpacity(0.3)
-              : AppColors.error.withOpacity(0.3),
+              ? AppColors.success.withValues(alpha: 0.3)
+              : AppColors.error.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -196,7 +211,9 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
                 Text(
                   'Solde: ${_formatPrice(balance)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: hasSufficientBalance ? AppColors.success : AppColors.error,
+                        color: hasSufficientBalance
+                            ? AppColors.success
+                            : AppColors.error,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -212,10 +229,10 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.05),
+        color: AppColors.error.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text('Erreur lors de la récupération du solde'),
+      child: const Text('Erreur lors de la récupération du solde'),
     );
   }
 
@@ -261,7 +278,9 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.05) : AppColors.grey50,
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.05)
+              : AppColors.grey50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.grey200,
@@ -277,7 +296,8 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
                 color: isSelected ? AppColors.primary : AppColors.grey200,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: isSelected ? AppColors.white : AppColors.grey600),
+              child: Icon(icon,
+                  color: isSelected ? AppColors.white : AppColors.grey600),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -296,7 +316,8 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: AppColors.primary, size: 24),
+              const Icon(Icons.check_circle,
+                  color: AppColors.primary, size: 24),
           ],
         ),
       ),
@@ -323,7 +344,7 @@ class _CheckoutScreenCompleteState extends ConsumerState<CheckoutScreenComplete>
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(top: BorderSide(color: AppColors.grey200)),
       ),

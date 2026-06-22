@@ -9,56 +9,56 @@ import '../utils/colors.dart';
 /// Monetization profile section widget
 class MonetizationProfileSection extends StatelessWidget {
   final String userId;
-  
+
   const MonetizationProfileSection({
     Key? key,
     required this.userId,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSubscriptionSection(context),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _buildRevenueSection(context),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _buildFeatureBoostSection(context),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _buildQuickActions(context),
         ],
       ),
     );
   }
-  
+
   Widget _buildSubscriptionSection(BuildContext context) {
     return Consumer<SubscriptionProvider>(
       builder: (context, provider, _) {
         final sub = provider.currentSubscription;
-        
+
         if (sub == null) {
           return Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Améliorez votre expérience',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Soyez parmi les vendeurs de premier plan avec un abonnement professionnel',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -66,14 +66,14 @@ class MonetizationProfileSection extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SubscriptionScreen(),
+                            builder: (context) => const SubscriptionScreen(),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                       ),
-                      child: Text('Voir les plans'),
+                      child: const Text('Voir les plans'),
                     ),
                   ),
                 ],
@@ -81,10 +81,10 @@ class MonetizationProfileSection extends StatelessWidget {
             ),
           );
         }
-        
+
         return Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -94,17 +94,17 @@ class MonetizationProfileSection extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Abonnement actif',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           sub.currentTier.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
@@ -112,17 +112,15 @@ class MonetizationProfileSection extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Icon(Icons.verified, color: Colors.green, size: 28),
+                    const Icon(Icons.verified, color: Colors.green, size: 28),
                   ],
                 ),
-                SizedBox(height: 12),
-                
+                const SizedBox(height: 12),
                 Text(
                   'Annonces en vedette: ${sub.featuredListingsUsed} / ${sub.currentTier == SubscriptionTier.professional ? '5' : (sub.currentTier == SubscriptionTier.enterprise ? '∞' : '0')}',
                   style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
-                SizedBox(height: 12),
-                
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
@@ -130,11 +128,11 @@ class MonetizationProfileSection extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => SubscriptionScreen(),
+                          builder: (context) => const SubscriptionScreen(),
                         ),
                       );
                     },
-                    child: Text('Gérer l\'abonnement'),
+                    child: const Text('Gérer l\'abonnement'),
                   ),
                 ),
               ],
@@ -144,26 +142,26 @@ class MonetizationProfileSection extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildRevenueSection(BuildContext context) {
     return Consumer<PaymentProvider>(
       builder: (context, provider, _) {
         final revenue = provider.revenueSummary;
-        
+
         return GestureDetector(
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AnalyticsScreen()),
+              MaterialPageRoute(builder: (context) => const AnalyticsScreen()),
             );
           },
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
@@ -176,33 +174,32 @@ class MonetizationProfileSection extends StatelessWidget {
                       Icon(Icons.trending_up, color: Colors.green, size: 20),
                     ],
                   ),
-                  SizedBox(height: 12),
-                  
+                  const SizedBox(height: 12),
                   if (revenue != null) ...[
                     Text(
                       'Revenu net',
                       style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       '${revenue.netEarnings.toStringAsFixed(0)} CFA',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Transactions: ${revenue.totalTransactions}',
-                          style: TextStyle(fontSize: 11),
+                          style: const TextStyle(fontSize: 11),
                         ),
                         Text(
                           'Moy: ${revenue.averageTransactionValue.toStringAsFixed(0)} CFA',
-                          style: TextStyle(fontSize: 11),
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ],
                     ),
@@ -211,9 +208,8 @@ class MonetizationProfileSection extends StatelessWidget {
                       'Aucun revenu pour le moment',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
-                  
-                  SizedBox(height: 12),
-                  Align(
+                  const SizedBox(height: 12),
+                  const Align(
                     alignment: Alignment.centerRight,
                     child: Text(
                       'Voir les détails →',
@@ -232,27 +228,26 @@ class MonetizationProfileSection extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildFeatureBoostSection(BuildContext context) {
     return Consumer<FeaturedListingProvider>(
       builder: (context, provider, _) {
         final featured = provider.userFeaturedListings;
-        
+
         return Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Annonces en vedette',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 12),
-                
+                const SizedBox(height: 12),
                 if (featured.isEmpty)
                   Text(
                     'Aucune annonce en vedette',
@@ -261,15 +256,16 @@ class MonetizationProfileSection extends StatelessWidget {
                 else
                   ...featured.take(3).map((listing) {
                     return Padding(
-                      padding: EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             listing.listingId,
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w500),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             'Expire dans ${listing.daysRemaining} jours',
                             style: TextStyle(
@@ -283,7 +279,6 @@ class MonetizationProfileSection extends StatelessWidget {
                       ),
                     );
                   }),
-                
                 if (featured.length > 3)
                   Text(
                     '+${featured.length - 3} autres',
@@ -296,20 +291,20 @@ class MonetizationProfileSection extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildQuickActions(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Actions rapides',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           children: [
@@ -321,7 +316,8 @@ class MonetizationProfileSection extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SubscriptionScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const SubscriptionScreen()),
                 );
               },
             ),
@@ -333,7 +329,8 @@ class MonetizationProfileSection extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AnalyticsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const AnalyticsScreen()),
                 );
               },
             ),
@@ -344,8 +341,9 @@ class MonetizationProfileSection extends StatelessWidget {
               color: Colors.orange,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Sélectionner une annonce pour la mettre en vedette'),
+                  const SnackBar(
+                    content: Text(
+                        'Sélectionner une annonce pour la mettre en vedette'),
                   ),
                 );
               },
@@ -357,7 +355,7 @@ class MonetizationProfileSection extends StatelessWidget {
               color: Colors.purple,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Historique des transactions')),
+                  const SnackBar(content: Text('Historique des transactions')),
                 );
               },
             ),
@@ -366,7 +364,7 @@ class MonetizationProfileSection extends StatelessWidget {
       ],
     );
   }
-  
+
   Widget _buildActionCard(
     BuildContext context, {
     required IconData icon,
@@ -386,14 +384,14 @@ class MonetizationProfileSection extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withValues(alpha: 0.2),
               child: Icon(icon, color: color, size: 20),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -405,16 +403,16 @@ class MonetizationProfileSection extends StatelessWidget {
 /// Home screen featured listings section
 class FeaturedListingsSection extends StatelessWidget {
   const FeaturedListingsSection({Key? key}) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<FeaturedListingProvider>(
       builder: (context, provider, _) {
         if (provider.userFeaturedListings.isEmpty) {
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }
-        
-        return Column(
+
+        return const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -442,24 +440,27 @@ class FeaturedListingsSection extends StatelessWidget {
 /// Revenue banner for home screen
 class RevenueInfoBanner extends StatelessWidget {
   const RevenueInfoBanner({Key? key}) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<SubscriptionProvider, PaymentProvider>(
       builder: (context, subProvider, paymentProvider, _) {
         final sub = subProvider.currentSubscription;
         final revenue = paymentProvider.revenueSummary;
-        
+
         if (sub == null) {
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }
-        
+
         return Container(
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withValues(alpha: 0.7)
+              ],
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -472,17 +473,17 @@ class RevenueInfoBanner extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Vous gagnez',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         '${revenue?.netEarnings.toStringAsFixed(0) ?? '0'} CFA',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -493,17 +494,17 @@ class RevenueInfoBanner extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
+                      const Text(
                         'Plan',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         sub.currentTier.name,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -513,15 +514,16 @@ class RevenueInfoBanner extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => AnalyticsScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const AnalyticsScreen()),
                   );
                 },
-                child: Text(
+                child: const Text(
                   'Voir l\'analyse complète →',
                   style: TextStyle(
                     color: Colors.white,

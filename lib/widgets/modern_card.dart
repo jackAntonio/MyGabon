@@ -40,7 +40,7 @@ class ModernCard extends StatelessWidget {
       onTap: onTap,
       child: Card(
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -61,8 +61,8 @@ class ModernCard extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppColors.primary.withOpacity(0.3),
-                        AppColors.accent.withOpacity(0.2),
+                        AppColors.primary.withValues(alpha: 0.3),
+                        AppColors.accent.withValues(alpha: 0.2),
                       ],
                     ),
                   ),
@@ -70,8 +70,10 @@ class ModernCard extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: imageUrl!,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => _buildImagePlaceholder(),
-                          errorWidget: (context, url, error) => _buildImagePlaceholder(),
+                          placeholder: (context, url) =>
+                              _buildImagePlaceholder(),
+                          errorWidget: (context, url, error) =>
+                              _buildImagePlaceholder(),
                         )
                       : _buildImagePlaceholder(),
                 ),
@@ -80,13 +82,14 @@ class ModernCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.success,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.success.withOpacity(0.3),
+                          color: AppColors.success.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -205,12 +208,12 @@ class ModernCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.3),
-            AppColors.accent.withOpacity(0.2),
+            AppColors.primary.withValues(alpha: 0.3),
+            AppColors.accent.withValues(alpha: 0.2),
           ],
         ),
       ),
-      child: Center(
+      child: const Center(
         child: Icon(
           Icons.image_outlined,
           size: 48,
@@ -223,7 +226,7 @@ class ModernCard extends StatelessWidget {
   Widget _buildLoadingCard() {
     return Card(
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -234,8 +237,8 @@ class ModernCard extends StatelessWidget {
           children: [
             Container(
               height: 180,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),

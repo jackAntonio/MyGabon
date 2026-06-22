@@ -10,7 +10,8 @@ void main() async {
 
   // 🔧 Configuration Supabase (LOCAL ou CLOUD)
   const supabaseUrl = 'http://127.0.0.1:54321'; // LOCAL
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4YW1wbGUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYxNTIwNjQwMCwiZXhwIjoxNzQzODQyNDAwfQ.rq7DrHzryFtWQ33dus7PAseIvUbtFsvu0ImCUEKsH3U';
+  const supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4YW1wbGUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYxNTIwNjQwMCwiZXhwIjoxNzQzODQyNDAwfQ.rq7DrHzryFtWQ33dus7PAseIvUbtFsvu0ImCUEKsH3U';
 
   try {
     await Supabase.initialize(
@@ -89,7 +90,8 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
               padding: const EdgeInsets.all(16),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isConnected ? Colors.green : Colors.orange,
                     borderRadius: BorderRadius.circular(20),
@@ -130,7 +132,8 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
             NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-            NavigationDestination(icon: Icon(Icons.shopping_bag), label: 'Produits'),
+            NavigationDestination(
+                icon: Icon(Icons.shopping_bag), label: 'Produits'),
             NavigationDestination(icon: Icon(Icons.chat), label: 'Messages'),
             NavigationDestination(icon: Icon(Icons.person), label: 'Profils'),
           ],
@@ -192,14 +195,14 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF0B6E4F), const Color(0xFF0077B6)],
+                colors: [Color(0xFF0B6E4F), Color(0xFF0077B6)],
               ),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'GabonConnect',
                   style: TextStyle(
@@ -250,9 +253,8 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
         final services = snapshot.data as List? ?? [];
 
         return Column(
-          children: services
-              .map((service) => _buildServiceCard(service))
-              .toList(),
+          children:
+              services.map((service) => _buildServiceCard(service)).toList(),
         );
       },
     );
@@ -497,7 +499,9 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
                             Text(user['email'] ?? ''),
                             const SizedBox(height: 4),
                             Text(
-                              user['verified'] == true ? '✅ Vérifié' : '❌ Non vérifié',
+                              user['verified'] == true
+                                  ? '✅ Vérifié'
+                                  : '❌ Non vérifié',
                               style: TextStyle(
                                 color: user['verified'] == true
                                     ? Colors.green

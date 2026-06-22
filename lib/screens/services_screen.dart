@@ -23,16 +23,19 @@ class ServicesScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 2)),
                 ],
               ),
               child: TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
                   hintText: 'Search services...',
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
                 onChanged: provider.search,
               ),
@@ -46,7 +49,9 @@ class ServicesScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: SkeletonLoader(height: 100, borderRadius: BorderRadius.circular(16)),
+                        child: SkeletonLoader(
+                            height: 100,
+                            borderRadius: BorderRadius.circular(16)),
                       );
                     },
                   )

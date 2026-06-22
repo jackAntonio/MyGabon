@@ -20,8 +20,9 @@ class ServiceCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
           ],
           color: Colors.white,
         ),
@@ -34,7 +35,8 @@ class ServiceCard extends StatelessWidget {
                 Container(
                   height: 140,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
                     color: Colors.grey[300],
                   ),
                   child: const Center(
@@ -44,9 +46,13 @@ class ServiceCard extends StatelessWidget {
                 Container(
                   height: 140,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
                     gradient: LinearGradient(
-                      colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                      colors: [
+                        Colors.black.withValues(alpha: 0.6),
+                        Colors.transparent
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -56,7 +62,8 @@ class ServiceCard extends StatelessWidget {
                   right: 8,
                   top: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(12),
@@ -66,7 +73,8 @@ class ServiceCard extends StatelessWidget {
                         const Icon(Icons.star, color: Colors.amber, size: 14),
                         const SizedBox(width: 4),
                         Text(service.rating.toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 12)),
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12)),
                       ],
                     ),
                   ),

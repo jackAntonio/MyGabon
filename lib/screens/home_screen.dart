@@ -42,16 +42,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 2)),
                   ],
                 ),
-                child: TextField(
+                child: const TextField(
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: Icon(Icons.search),
                     hintText: 'What service do you need?',
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
@@ -61,15 +64,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              SingleChildScrollView(
+              const SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: const [
+                  children: [
                     CategoryIcon(icon: Icons.build, label: 'Repair'),
                     SizedBox(width: 16),
                     CategoryIcon(icon: Icons.computer, label: 'IT Services'),
                     SizedBox(width: 16),
-                    CategoryIcon(icon: Icons.cleaning_services, label: 'Cleaning'),
+                    CategoryIcon(
+                        icon: Icons.cleaning_services, label: 'Cleaning'),
                     SizedBox(width: 16),
                     CategoryIcon(icon: Icons.local_taxi, label: 'Transport'),
                     SizedBox(width: 16),
@@ -97,8 +101,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 2)),
                         ],
                       ),
                       alignment: Alignment.center,

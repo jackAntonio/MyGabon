@@ -13,7 +13,8 @@ class ServicesScreenComplete extends ConsumerStatefulWidget {
       _ServicesScreenCompleteState();
 }
 
-class _ServicesScreenCompleteState extends ConsumerState<ServicesScreenComplete> {
+class _ServicesScreenCompleteState
+    extends ConsumerState<ServicesScreenComplete> {
   String _selectedCategory = 'Tous';
   final List<String> categories = [
     'Tous',
@@ -51,8 +52,8 @@ class _ServicesScreenCompleteState extends ConsumerState<ServicesScreenComplete>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primary.withOpacity(0.1),
-                    AppColors.accent.withOpacity(0.05),
+                    AppColors.primary.withValues(alpha: 0.1),
+                    AppColors.accent.withValues(alpha: 0.05),
                   ],
                 ),
               ),
@@ -86,8 +87,8 @@ class _ServicesScreenCompleteState extends ConsumerState<ServicesScreenComplete>
                             label: Text(category),
                             selected: _selectedCategory == category,
                             onSelected: (selected) {
-                              setState(() =>
-                                  _selectedCategory = selected ? category : 'Tous');
+                              setState(() => _selectedCategory =
+                                  selected ? category : 'Tous');
                             },
                             backgroundColor: AppColors.white,
                             selectedColor: AppColors.primary,
@@ -137,7 +138,7 @@ class _ServicesScreenCompleteState extends ConsumerState<ServicesScreenComplete>
         mainAxisSpacing: 16,
       ),
       itemCount: 6,
-      itemBuilder: (context, index) => ModernCard(
+      itemBuilder: (context, index) => const ModernCard(
         title: '',
         description: '',
         price: '',
@@ -153,7 +154,7 @@ class _ServicesScreenCompleteState extends ConsumerState<ServicesScreenComplete>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: AppColors.error),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           Text('Erreur: $error'),
         ],
@@ -167,7 +168,7 @@ class _ServicesScreenCompleteState extends ConsumerState<ServicesScreenComplete>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_bag_outlined,
+            const Icon(Icons.shopping_bag_outlined,
                 size: 48, color: AppColors.grey400),
             const SizedBox(height: 16),
             Text(

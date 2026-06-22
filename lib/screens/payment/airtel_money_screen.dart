@@ -229,10 +229,10 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
       width: 100,
       height: 100,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(30),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.phone_in_talk_outlined,
         size: 48,
         color: AppColors.primary,
@@ -279,7 +279,8 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Montant à payer', style: Theme.of(context).textTheme.bodyMedium),
+              Text('Montant à payer',
+                  style: Theme.of(context).textTheme.bodyMedium),
               Text(
                 kpayService.formatPrice(widget.totalAmount),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -295,7 +296,8 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Numéro Airtel', style: Theme.of(context).textTheme.bodySmall),
+              Text('Numéro Airtel',
+                  style: Theme.of(context).textTheme.bodySmall),
               Text(
                 widget.phoneNumber,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -382,9 +384,9 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -433,14 +435,15 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+              border:
+                  Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.schedule, color: AppColors.warning, size: 18),
+                const Icon(Icons.schedule, color: AppColors.warning, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   'Code valide dans $_secondsRemaining secondes',
@@ -460,16 +463,16 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.error_outline, color: AppColors.error),
+              const Icon(Icons.error_outline, color: AppColors.error),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(

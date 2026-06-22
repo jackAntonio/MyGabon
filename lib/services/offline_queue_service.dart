@@ -15,7 +15,7 @@ class QueuedAction {
   final Map<String, dynamic> data;
   final DateTime createdAt;
   int retryCount;
-  
+
   QueuedAction({
     required this.id,
     required this.action,
@@ -23,15 +23,15 @@ class QueuedAction {
     DateTime? createdAt,
     this.retryCount = 0,
   }) : createdAt = createdAt ?? DateTime.now();
-  
+
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'action': action.toString(),
-    'data': data,
-    'createdAt': createdAt.toIso8601String(),
-    'retryCount': retryCount,
-  };
-  
+        'id': id,
+        'action': action.toString(),
+        'data': data,
+        'createdAt': createdAt.toIso8601String(),
+        'retryCount': retryCount,
+      };
+
   static QueuedAction fromJson(Map<String, dynamic> json) {
     return QueuedAction(
       id: json['id'] as String,
@@ -50,34 +50,35 @@ class QueuedAction {
 class OfflineQueueService extends ChangeNotifier {
   static const String queueBoxName = 'offline_queue';
   static late Box<Map<dynamic, dynamic>> _queueBox;
-  
+
   static bool _initialized = false;
   final List<QueuedAction> _pendingActions = [];
-  final Map<String, Future<bool> Function(Map<String, dynamic>)> _actionHandlers = {};
-  
+  final Map<String, Future<bool> Function(Map<String, dynamic>)>
+      _actionHandlers = {};
+
   bool _isSyncing = false;
   int _syncProgress = 0;
-  
+
   bool get isSyncing => _isSyncing;
   int get syncProgress => _syncProgress;
   List<QueuedAction> get pendingActions => List.unmodifiable(_pendingActions);
-  
+
   Future<void> init() async {
     if (_initialized) return;
-    
+
     try {
       _queueBox = await Hive.openBox<Map<dynamic, dynamic>>(queueBoxName);
-      
+
       // Load pending actions from storage
       await _loadPendingActions();
-      
+
       _initialized = true;
       debugPrint('✅ Service file d\'attente hors ligne initialisé');
     } catch (e) {
       debugPrint('❌ Erreur initialisation file d\'attente: $e');
     }
   }
-  
+
   /// Register action handler for sync
   void registerActionHandler(
     QueueAction action,
@@ -86,7 +87,7 @@ class OfflineQueueService extends ChangeNotifier {
     _actionHandlers[action.toString()] = handler;
     debugPrint('📝 Gestionnaire enregistré pour: ${action.toString()}');
   }
-  
+
   /// Queue an action when offline
   Future<void> queueAction(
     QueueAction action,
@@ -98,46 +99,46 @@ class OfflineQueueService extends ChangeNotifier {
         action: action,
         data: data,
       );
-      
+
       _pendingActions.add(queuedAction);
-      
+
       // Persist to storage
       final jsonData = queuedAction.toJson();
       await _queueBox.put(queuedAction.id, jsonData);
-      
+
       debugPrint(
         '📤 Action en queue: ${action.toString()} (Total: ${_pendingActions.length})',
       );
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('❌ Erreur mise en queue: $e');
     }
   }
-  
+
   /// Sync all pending actions (call when connection returns)
   Future<void> syncAllPendingActions() async {
     if (_pendingActions.isEmpty || _isSyncing) return;
-    
+
     _isSyncing = true;
     _syncProgress = 0;
     notifyListeners();
-    
+
     try {
       final total = _pendingActions.length;
       int synced = 0;
       final failedIds = <String>[];
-      
+
       for (final action in _pendingActions) {
         try {
           final handler = _actionHandlers[action.action.toString()];
-          
+
           if (handler == null) {
             debugPrint('⚠️ Aucun gestionnaire pour: ${action.action}');
             failedIds.add(action.id);
             continue;
           }
-          
+
           // Try to sync with exponential backoff
           bool success = false;
           for (int attempt = 0; attempt < 3; attempt++) {
@@ -153,7 +154,7 @@ class OfflineQueueService extends ChangeNotifier {
               );
             }
           }
-          
+
           if (success) {
             _queueBox.delete(action.id);
             synced++;
@@ -175,16 +176,16 @@ class OfflineQueueService extends ChangeNotifier {
           debugPrint('❌ Erreur synchronisation action: $e');
           failedIds.add(action.id);
         }
-        
+
         _syncProgress = ((synced + failedIds.length) / total * 100).toInt();
         notifyListeners();
       }
-      
+
       // Remove synced actions from memory
       _pendingActions.removeWhere(
         (action) => !failedIds.contains(action.id),
       );
-      
+
       debugPrint(
         '✅ Synchronisation terminée: $synced/$total réussies',
       );
@@ -196,12 +197,12 @@ class OfflineQueueService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Load pending actions from storage
   Future<void> _loadPendingActions() async {
     try {
       _pendingActions.clear();
-      
+
       for (int i = 0; i < _queueBox.length; i++) {
         try {
           final value = _queueBox.getAt(i);
@@ -215,7 +216,7 @@ class OfflineQueueService extends ChangeNotifier {
           debugPrint('⚠️ Erreur parsing action: $e');
         }
       }
-      
+
       debugPrint(
         '📂 ${_pendingActions.length} actions en attente chargées',
       );
@@ -223,7 +224,7 @@ class OfflineQueueService extends ChangeNotifier {
       debugPrint('❌ Erreur chargement actions: $e');
     }
   }
-  
+
   /// Clear all pending actions
   Future<void> clearAllActions() async {
     try {
@@ -235,12 +236,7 @@ class OfflineQueueService extends ChangeNotifier {
       debugPrint('❌ Erreur vidage file d\'attente: $e');
     }
   }
-  
+
   /// Get pending actions count
   int getPendingActionCount() => _pendingActions.length;
-  
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/product.dart';
-import '../models/transaction.dart';
 import 'supabase_service.dart';
 
 // ========== AUTHENTICATION ==========
@@ -21,7 +19,7 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 });
 
 // ========== PRODUCTS / MARKETPLACE ==========
-final productsProvider = FutureProvider<List<Product>>((ref) async {
+final productsProvider = FutureProvider<List>((ref) async {
   try {
     final response = await supabaseService.getAllProducts();
     return response;
@@ -31,7 +29,8 @@ final productsProvider = FutureProvider<List<Product>>((ref) async {
   }
 });
 
-final productsByCategoryProvider = FutureProvider.family<List<Product>, String>((ref, category) async {
+final productsByCategoryProvider =
+    FutureProvider.family<List, String>((ref, category) async {
   try {
     final response = await supabaseService.getProductsByCategory(category);
     return response;
@@ -56,7 +55,7 @@ final userWalletProvider = FutureProvider<double>((ref) async {
 });
 
 // ========== TRANSACTIONS ==========
-final userTransactionsProvider = FutureProvider<List<Transaction>>((ref) async {
+final userTransactionsProvider = FutureProvider<List>((ref) async {
   if (!supabaseService.isAuthenticated) return [];
   final userId = supabaseService.currentUser?.id;
   if (userId == null) return [];
@@ -70,8 +69,9 @@ final userTransactionsProvider = FutureProvider<List<Transaction>>((ref) async {
 });
 
 // ========== REVIEWS ==========
-final productReviewsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
-    (ref, productId) async {
+final productReviewsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, productId) async {
   try {
     return await supabaseService.getProductReviews(productId);
   } catch (e) {
@@ -81,7 +81,8 @@ final productReviewsProvider = FutureProvider.family<List<Map<String, dynamic>>,
 });
 
 // ========== SERVICES ==========
-final servicesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final servicesProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   try {
     return await supabaseService.getServices();
   } catch (e) {

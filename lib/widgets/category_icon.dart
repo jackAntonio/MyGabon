@@ -6,13 +6,15 @@ class CategoryIcon extends StatefulWidget {
   final IconData icon;
   final String label;
 
-  const CategoryIcon({Key? key, required this.icon, required this.label}) : super(key: key);
+  const CategoryIcon({Key? key, required this.icon, required this.label})
+      : super(key: key);
 
   @override
   State<CategoryIcon> createState() => _CategoryIconState();
 }
 
-class _CategoryIconState extends State<CategoryIcon> with SingleTickerProviderStateMixin {
+class _CategoryIconState extends State<CategoryIcon>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -42,7 +44,7 @@ class _CategoryIconState extends State<CategoryIcon> with SingleTickerProviderSt
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(widget.icon, size: 24, color: AppColors.primary),

@@ -7,8 +7,7 @@ class PostScreenComplete extends ConsumerStatefulWidget {
   const PostScreenComplete({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<PostScreenComplete> createState() =>
-      _PostScreenCompleteState();
+  ConsumerState<PostScreenComplete> createState() => _PostScreenCompleteState();
 }
 
 class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
@@ -79,9 +78,9 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                 title: 'Titre du produit',
                 child: TextField(
                   controller: _titleController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Ex: iPhone 14 Pro 256GB',
-                    prefixIcon: const Icon(Icons.title_rounded),
+                    prefixIcon: Icon(Icons.title_rounded),
                   ),
                   maxLength: 100,
                 ),
@@ -93,10 +92,10 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                 title: 'Description',
                 child: TextField(
                   controller: _descriptionController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText:
                         'Décrivez votre produit en détail (état, caractéristiques, défauts)',
-                    prefixIcon: const Icon(Icons.description_rounded),
+                    prefixIcon: Icon(Icons.description_rounded),
                   ),
                   maxLines: 4,
                   maxLength: 500,
@@ -108,16 +107,16 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                 context,
                 title: 'Catégorie',
                 child: DropdownButtonFormField<String>(
-                  value: _selectedCategory,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.category_rounded),
+                  initialValue: _selectedCategory,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.category_rounded),
                   ),
                   items: categories
-                      .map((category) =>
-                          DropdownMenuItem(value: category, child: Text(category)))
+                      .map((category) => DropdownMenuItem(
+                          value: category, child: Text(category)))
                       .toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedCategory = value ?? 'Électronique'),
+                  onChanged: (value) => setState(
+                      () => _selectedCategory = value ?? 'Électronique'),
                 ),
               ),
 
@@ -126,13 +125,13 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                 context,
                 title: 'État du produit',
                 child: DropdownButtonFormField<String>(
-                  value: _selectedCondition,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.inventory_2_rounded),
+                  initialValue: _selectedCondition,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.inventory_2_rounded),
                   ),
                   items: conditions
-                      .map((condition) =>
-                          DropdownMenuItem(value: condition, child: Text(condition)))
+                      .map((condition) => DropdownMenuItem(
+                          value: condition, child: Text(condition)))
                       .toList(),
                   onChanged: (value) =>
                       setState(() => _selectedCondition = value ?? 'Neuf'),
@@ -145,9 +144,9 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                 title: 'Prix (FCFA)',
                 child: TextField(
                   controller: _priceController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Ex: 150000',
-                    prefixIcon: const Icon(Icons.attach_money_rounded),
+                    prefixIcon: Icon(Icons.attach_money_rounded),
                     suffixText: 'FCFA',
                   ),
                   keyboardType: TextInputType.number,
@@ -191,9 +190,9 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                 context,
                 title: 'Localisation',
                 child: DropdownButtonFormField<String>(
-                  value: _locationController.text,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.location_on_rounded),
+                  initialValue: _locationController.text,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.location_on_rounded),
                   ),
                   items: gabonCities
                       .map((city) =>
@@ -224,9 +223,10 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                         const SizedBox(height: 4),
                         Text(
                           'L\'annonce sera visible pour tous',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey600,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.grey600,
+                                  ),
                         ),
                       ],
                     ),
@@ -234,7 +234,7 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
                       value: _isPublished,
                       onChanged: (value) =>
                           setState(() => _isPublished = value),
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -302,8 +302,8 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
         _descriptionController.text.isEmpty ||
         _priceController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Veuillez remplir tous les champs'),
+        const SnackBar(
+          content: Text('Veuillez remplir tous les champs'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -330,8 +330,8 @@ class _PostScreenCompleteState extends ConsumerState<PostScreenComplete> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Annonce publiée avec succès!'),
+        const SnackBar(
+          content: Text('Annonce publiée avec succès!'),
           backgroundColor: AppColors.success,
         ),
       );

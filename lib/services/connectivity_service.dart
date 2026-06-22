@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 enum ConnectionQuality {
-  offline,     // No connection
-  poor,        // Very slow, high latency (< 100KB/s)
-  moderate,    // Acceptable speed (100KB/s - 1MB/s)
-  good,        // Fast connection (> 1MB/s)
+  offline, // No connection
+  poor, // Very slow, high latency (< 100KB/s)
+  moderate, // Acceptable speed (100KB/s - 1MB/s)
+  good, // Fast connection (> 1MB/s)
 }
 
 /// Service for monitoring network connectivity and quality
@@ -14,14 +14,15 @@ enum ConnectionQuality {
 class ConnectivityService extends ChangeNotifier {
   late Connectivity _connectivity;
   late StreamSubscription<ConnectivityResult> _connectivityStream;
-  
+
   bool _isConnected = false;
   ConnectionQuality _connectionQuality = ConnectionQuality.offline;
   ConnectivityResult _lastResult = ConnectivityResult.none;
-  
+
   bool get isConnected => _isConnected;
   ConnectionQuality get connectionQuality => _connectionQuality;
-  bool get isOnlineMode => _isConnected && _connectionQuality != ConnectionQuality.offline;
+  bool get isOnlineMode =>
+      _isConnected && _connectionQuality != ConnectionQuality.offline;
   String get connectionStatusText {
     switch (_connectionQuality) {
       case ConnectionQuality.offline:
@@ -34,18 +35,18 @@ class ConnectivityService extends ChangeNotifier {
         return '🟢 Bonne connexion';
     }
   }
-  
+
   ConnectivityService() {
     _connectivity = Connectivity();
     _initConnectivity();
   }
-  
+
   Future<void> _initConnectivity() async {
     try {
       final result = await _connectivity.checkConnectivity();
       _lastResult = result;
       _updateConnectionStatus(_lastResult);
-      
+
       // Listen to connectivity changes
       _connectivityStream = _connectivity.onConnectivityChanged.listen(
         _updateConnectionStatus,
@@ -54,15 +55,15 @@ class ConnectivityService extends ChangeNotifier {
       debugPrint('❌ Erreur de connectivité: $e');
     }
   }
-  
+
   void _updateConnectionStatus(ConnectivityResult result) {
     _lastResult = result;
-    
+
     final isOnline = result != ConnectivityResult.none;
-    
+
     if (_isConnected != isOnline) {
       _isConnected = isOnline;
-      
+
       if (_isConnected) {
         debugPrint('✅ Connexion établie: ${_lastResult.toString()}');
         _checkNetworkQuality();
@@ -70,11 +71,11 @@ class ConnectivityService extends ChangeNotifier {
         debugPrint('❌ Connexion perdue');
         _connectionQuality = ConnectionQuality.offline;
       }
-      
+
       notifyListeners();
     }
   }
-  
+
   /// Simulate network quality check
   /// In production, implement actual network speed test
   Future<void> _checkNetworkQuality() async {
@@ -82,7 +83,7 @@ class ConnectivityService extends ChangeNotifier {
       _connectionQuality = ConnectionQuality.offline;
       return;
     }
-    
+
     // Simulate network quality based on connection type
     // In a real app, perform actual speed tests
     if (_lastResult == ConnectivityResult.wifi) {
@@ -94,10 +95,10 @@ class ConnectivityService extends ChangeNotifier {
     } else {
       _connectionQuality = ConnectionQuality.poor;
     }
-    
+
     notifyListeners();
   }
-  
+
   /// Retry operation with exponential backoff
   /// Useful for failed API calls in low-bandwidth environments
   Future<T> retryWithBackoff<T>(
@@ -106,27 +107,27 @@ class ConnectivityService extends ChangeNotifier {
     Duration initialDelay = const Duration(milliseconds: 500),
   }) async {
     int retryCount = 0;
-    
+
     while (true) {
       try {
         return await operation();
       } catch (e) {
         retryCount++;
-        
+
         if (retryCount >= maxRetries || !_isConnected) {
           rethrow;
         }
-        
+
         // Exponential backoff
         final delayMs = initialDelay.inMilliseconds * (1 << (retryCount - 1));
         debugPrint(
-          '⏳ Tentative $retryCount/${maxRetries} après ${delayMs}ms',
+          '⏳ Tentative $retryCount/$maxRetries après ${delayMs}ms',
         );
         await Future.delayed(Duration(milliseconds: delayMs));
       }
     }
   }
-  
+
   /// Simulate network bandwidth (in KB/s)
   /// In production, use actual measurements
   int getEstimatedBandwidth() {
@@ -141,7 +142,7 @@ class ConnectivityService extends ChangeNotifier {
         return 2000; // ~2 MB/s
     }
   }
-  
+
   @override
   void dispose() {
     _connectivityStream.cancel();

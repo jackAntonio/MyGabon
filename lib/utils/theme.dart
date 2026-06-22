@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'colors.dart';
@@ -17,11 +18,13 @@ class AppTheme {
         onSurface: AppColors.text,
       ),
       fontFamily: 'Roboto',
-      textTheme: TextTheme(
-        headlineLarge: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.text),
-        titleLarge: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text),
-        bodyLarge: const TextStyle(fontSize: 16, color: AppColors.text),
-        bodyMedium: const TextStyle(fontSize: 14, color: AppColors.text),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+            fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.text),
+        titleLarge: TextStyle(
+            fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text),
+        bodyLarge: TextStyle(fontSize: 16, color: AppColors.text),
+        bodyMedium: TextStyle(fontSize: 14, color: AppColors.text),
       ),
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(
@@ -39,7 +42,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -78,11 +82,17 @@ class AppTheme {
         onSurface: AppColors.darkText,
       ),
       fontFamily: 'Roboto',
-      textTheme: TextTheme(
-        headlineLarge: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.darkText),
-        titleLarge: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.darkText),
-        bodyLarge: const TextStyle(fontSize: 16, color: AppColors.darkText),
-        bodyMedium: const TextStyle(fontSize: 14, color: AppColors.darkText),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: AppColors.darkText),
+        titleLarge: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.darkText),
+        bodyLarge: TextStyle(fontSize: 16, color: AppColors.darkText),
+        bodyMedium: TextStyle(fontSize: 14, color: AppColors.darkText),
       ),
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(
@@ -101,7 +111,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(

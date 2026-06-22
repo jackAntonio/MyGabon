@@ -33,7 +33,7 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
+                      color: AppColors.success.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: const Icon(
@@ -43,9 +43,13 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
                     ),
                   )
                       .animate()
-                      .scaleXY(begin: 0, end: 1, duration: const Duration(milliseconds: 600))
+                      .scaleXY(
+                          begin: 0,
+                          end: 1,
+                          duration: const Duration(milliseconds: 600))
                       .then()
-                      .shake(hz: 2, duration: const Duration(milliseconds: 300)),
+                      .shake(
+                          hz: 2, duration: const Duration(milliseconds: 300)),
 
                   const SizedBox(height: 32),
 
@@ -92,12 +96,13 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppColors.primary.withOpacity(0.3),
-                                    AppColors.accent.withOpacity(0.2),
+                                    AppColors.primary.withValues(alpha: 0.3),
+                                    AppColors.accent.withValues(alpha: 0.2),
                                   ],
                                 ),
                               ),
-                              child: const Icon(Icons.shopping_bag, color: AppColors.primary),
+                              child: const Icon(Icons.shopping_bag,
+                                  color: AppColors.primary),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -106,14 +111,18 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
                                 children: [
                                   Text(
                                     product.title,
-                                    style: Theme.of(context).textTheme.titleSmall,
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'Vendeur: ${product.sellerName}',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
                                           color: AppColors.grey600,
                                         ),
                                   ),
@@ -175,7 +184,10 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
                           ),
                           child: Text(
                             'Retourner à la marketplace',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
                                   color: AppColors.white,
                                 ),
                           ),
@@ -199,7 +211,10 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
                           ),
                           child: Text(
                             'Télécharger le reçu',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
                                   color: AppColors.primary,
                                 ),
                           ),
@@ -258,9 +273,9 @@ class PaymentSuccessScreenComplete extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

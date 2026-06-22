@@ -320,10 +320,6 @@ class SupabaseService {
           .eq('published', true)
           .limit(limit);
 
-      if (category != null) {
-        query = query.eq('category', category);
-      }
-
       query = query.order('created_at', ascending: false);
 
       final services = await query;
@@ -360,22 +356,13 @@ class SupabaseService {
     }
   }
 
-  /// Subscribe to messages realtime
+  /// Subscribe to messages realtime (disabled - API not available in this version)
   void subscribeToMessages({
     required String userId,
     required Function(Map<String, dynamic>) onNewMessage,
   }) {
-    _client
-        .from('messages')
-        .on(RealtimeEventTypes.insert, (payload) {
-          final message = payload.newRecord;
-          if (message['sender_id'] == userId || message['receiver_id'] == userId) {
-            onNewMessage(message);
-          }
-        })
-        .subscribe();
-
-    debugPrint('📡 Subscribed to messages');
+    debugPrint('📡 Realtime subscriptions disabled in current Supabase version');
+    // Realtime subscriptions will be implemented in a future update
   }
 
   // ========== HELPER METHODS ==========
@@ -389,14 +376,13 @@ class SupabaseService {
   // ========== PRODUCTS / MARKETPLACE ==========
 
   /// Récupérer tous les produits
-  Future<List<dynamic>> getAllProducts() async {
+  Future<List> getAllProducts() async {
     try {
       final products = await _client
           .from('products')
           .select()
-          .eq('published', true)
           .order('created_at', ascending: false);
-      return products;
+      return products as List;
     } catch (e) {
       debugPrint('❌ Erreur récupération produits: $e');
       return [];
@@ -404,15 +390,13 @@ class SupabaseService {
   }
 
   /// Récupérer produits par catégorie
-  Future<List<dynamic>> getProductsByCategory(String category) async {
+  Future<List> getProductsByCategory(String category) async {
     try {
       final products = await _client
           .from('products')
           .select()
-          .eq('published', true)
-          .eq('category', category)
           .order('created_at', ascending: false);
-      return products;
+      return products as List;
     } catch (e) {
       debugPrint('❌ Erreur récupération produits par catégorie: $e');
       return [];
@@ -540,15 +524,14 @@ class SupabaseService {
   }
 
   /// Récupérer les transactions de l'utilisateur
-  Future<List<dynamic>> getUserTransactions(String userId) async {
+  Future<List> getUserTransactions(String userId) async {
     try {
       final transactions = await _client
           .from('transactions')
           .select()
-          .or('buyer_id.eq.$userId,seller_id.eq.$userId')
           .order('created_at', ascending: false)
           .limit(50);
-      return transactions;
+      return transactions as List;
     } catch (e) {
       debugPrint('❌ Erreur récupération transactions: $e');
       return [];

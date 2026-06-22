@@ -77,8 +77,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primary.withOpacity(0.3),
-                      AppColors.accent.withOpacity(0.2),
+                      AppColors.primary.withValues(alpha: 0.3),
+                      AppColors.accent.withValues(alpha: 0.2),
                     ],
                   ),
                 ),
@@ -160,7 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
+                color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -245,7 +245,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary.withOpacity(0.05) : AppColors.white,
+        color: isSelected
+            ? AppColors.primary.withValues(alpha: 0.05)
+            : AppColors.white,
         border: Border.all(
           color: isSelected ? AppColors.primary : AppColors.grey200,
           width: isSelected ? 2 : 1,
@@ -264,7 +266,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? AppColors.primary : AppColors.grey900,
+                        color:
+                            isSelected ? AppColors.primary : AppColors.grey900,
                       ),
                 ),
                 const SizedBox(height: 4),
@@ -298,7 +301,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(
           top: BorderSide(color: AppColors.grey200),
@@ -315,9 +318,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ElevatedButton(
-            onPressed: _isProcessing
-                ? null
-                : () => _processPayment(context),
+            onPressed: _isProcessing ? null : () => _processPayment(context),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: AppColors.primary,
@@ -327,8 +328,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.white),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.white),
                       strokeWidth: 2,
                     ),
                   )

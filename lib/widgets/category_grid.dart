@@ -7,7 +7,7 @@ class CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categories = DummyData.categories;
+    const categories = DummyData.categories;
 
     return GridView.builder(
       itemCount: categories.length,

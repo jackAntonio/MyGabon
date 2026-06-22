@@ -8,14 +8,14 @@ class ConnectionStatusBanner extends StatelessWidget {
   final Color? backgroundColor;
   final Color? textColor;
   final VoidCallback? onSyncPressed;
-  
+
   const ConnectionStatusBanner({
     Key? key,
     this.backgroundColor,
     this.textColor,
     this.onSyncPressed,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ConnectivityService>(
@@ -24,7 +24,7 @@ class ConnectionStatusBanner extends StatelessWidget {
           // Optionally hide banner when online (remove return to show always)
           return const SizedBox.shrink();
         }
-        
+
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           color: backgroundColor ?? Colors.red[700],
@@ -39,9 +39,9 @@ class ConnectionStatusBanner extends StatelessWidget {
                     Text(
                       connectivity.connectionStatusText,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: textColor ?? Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: textColor ?? Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -49,8 +49,9 @@ class ConnectionStatusBanner extends StatelessWidget {
                           ? 'Les données en attente seront synchronisées'
                           : 'Mode hors ligne - Les actions seront en file d\'attente',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: (textColor ?? Colors.white).withOpacity(0.9),
-                      ),
+                            color: (textColor ?? Colors.white)
+                                .withValues(alpha: 0.9),
+                          ),
                     ),
                   ],
                 ),
@@ -74,19 +75,19 @@ class ConnectionStatusBanner extends StatelessWidget {
 /// Widget showing detailed connection quality information
 class ConnectionQualityIndicator extends StatelessWidget {
   final bool showLabel;
-  
+
   const ConnectionQualityIndicator({
     Key? key,
     this.showLabel = true,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ConnectivityService>(
       builder: (context, connectivity, _) {
         Color indicatorColor;
         IconData icon;
-        
+
         switch (connectivity.connectionQuality) {
           case ConnectionQuality.offline:
             indicatorColor = Colors.red;
@@ -105,7 +106,7 @@ class ConnectionQualityIndicator extends StatelessWidget {
             icon = Icons.signal_cellular_4_bar;
             break;
         }
-        
+
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -119,8 +120,8 @@ class ConnectionQualityIndicator extends StatelessWidget {
               Text(
                 connectivity.connectionStatusText,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: indicatorColor,
-                ),
+                      color: indicatorColor,
+                    ),
               ),
             ],
           ],
@@ -133,12 +134,12 @@ class ConnectionQualityIndicator extends StatelessWidget {
 /// Sync status widget showing offline queue progress
 class SyncStatusWidget extends StatelessWidget {
   final void Function()? onTap;
-  
+
   const SyncStatusWidget({
     Key? key,
     this.onTap,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ConnectivityService>(
@@ -146,7 +147,7 @@ class SyncStatusWidget extends StatelessWidget {
         if (connectivity.isOnlineMode) {
           return const SizedBox.shrink();
         }
-        
+
         return GestureDetector(
           onTap: onTap,
           child: Container(
@@ -173,10 +174,13 @@ class SyncStatusWidget extends StatelessWidget {
                         children: [
                           Text(
                             'Vous êtes hors ligne',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: Colors.orange[700],
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  color: Colors.orange[700],
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           Text(
                             'Vos actions seront synchronisées dès que possible',
@@ -215,7 +219,7 @@ class OptimizedListLoader extends StatelessWidget {
   final bool isLoading;
   final bool hasReachedEnd;
   final ScrollController? controller;
-  
+
   const OptimizedListLoader({
     Key? key,
     required this.itemCount,
@@ -225,17 +229,17 @@ class OptimizedListLoader extends StatelessWidget {
     this.hasReachedEnd = false,
     this.controller,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ConnectivityService>(
       builder: (context, connectivity, _) {
         return ListView.builder(
-          controller: controller,
-          // Optimize list rendering for low-bandwidth
-          cacheExtent: connectivity.connectionQuality == ConnectionQuality.poor
-              ? 100  // Reduced cache extent for poor connections
-              : 500, // Normal cache extent
+          scrollCacheExtent: ScrollCacheExtent.pixels(
+              connectivity.connectionQuality == ConnectionQuality.poor
+                  ? 100 // Reduced cache extent for poor connections
+                  : 500),
+          controller: controller, // Normal cache extent
           itemCount: itemCount + (isLoading ? 1 : 0) + (!hasReachedEnd ? 1 : 0),
           itemBuilder: (context, index) {
             // Show loading indicator at end for pagination
@@ -260,11 +264,11 @@ class OptimizedListLoader extends StatelessWidget {
                 ),
               );
             }
-            
+
             if (index >= itemCount) {
               return const SizedBox.shrink();
             }
-            
+
             return itemBuilder(context, index);
           },
         );

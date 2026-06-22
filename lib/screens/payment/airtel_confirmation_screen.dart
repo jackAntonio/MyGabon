@@ -61,10 +61,10 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.phone_in_talk_outlined,
                       size: 48,
                       color: AppColors.primary,
@@ -184,7 +184,8 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
     );
   }
 
-  Widget _buildStep(BuildContext context, int number, String text, bool isDone) {
+  Widget _buildStep(
+      BuildContext context, int number, String text, bool isDone) {
     return Row(
       children: [
         Container(
@@ -227,13 +228,14 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+              border:
+                  Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.schedule_outlined,
                   color: AppColors.warning,
                 ),
@@ -257,8 +259,7 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                     strokeWidth: 2,
                   ),
                 )
@@ -295,11 +296,11 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.1),
+        color: AppColors.success.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
@@ -307,7 +308,7 @@ class _AirtelConfirmationScreenState extends State<AirtelConfirmationScreen> {
             color: AppColors.success,
             size: 28,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text(
             'Paiement confirmé!',
             style: TextStyle(

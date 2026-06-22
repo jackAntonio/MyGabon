@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../config/theme.dart';
 import '../models/product.dart';
 import 'payment/checkout_screen_complete.dart';
@@ -14,7 +13,8 @@ class MarketplaceDetailScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<MarketplaceDetailScreen> createState() => _MarketplaceDetailScreenState();
+  State<MarketplaceDetailScreen> createState() =>
+      _MarketplaceDetailScreenState();
 }
 
 class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
@@ -33,7 +33,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                 )
               ],
@@ -75,8 +75,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                             Expanded(
                               child: Text(
                                 widget.product.title,
-                                style:
-                                    Theme.of(context).textTheme.displaySmall,
+                                style: Theme.of(context).textTheme.displaySmall,
                               ),
                             ),
                             _buildRatingBadge(),
@@ -119,8 +118,8 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.3),
-            AppColors.accent.withOpacity(0.2),
+            AppColors.primary.withValues(alpha: 0.3),
+            AppColors.accent.withValues(alpha: 0.2),
           ],
         ),
       ),
@@ -133,7 +132,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
               width: double.infinity,
             )
           else
-            Center(
+            const Center(
               child: Icon(
                 Icons.image_outlined,
                 size: 80,
@@ -151,7 +150,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                   )
                 ],
@@ -175,12 +174,12 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.2),
+        color: AppColors.accent.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.star_rounded,
             color: AppColors.accent,
             size: 16,
@@ -278,8 +277,9 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
             widget.product.description,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          crossFadeState:
-              _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: _isExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 300),
         ),
         const SizedBox(height: 12),
@@ -361,8 +361,8 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        color: AppColors.primary.withValues(alpha: 0.05),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -370,7 +370,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.local_shipping_outlined,
                 color: AppColors.primary,
               ),
@@ -434,7 +434,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(
           top: BorderSide(

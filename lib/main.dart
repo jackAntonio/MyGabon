@@ -47,12 +47,12 @@ void main() async {
 
   // Initialize cache
   await CacheService.init();
-  
+
   // Initialize security services
   await VerificationService().init();
   await ReviewService().init();
   await FraudDetectionService().init();
-  
+
   runApp(const GabonConnectApp());
 }
 
@@ -68,20 +68,20 @@ class GabonConnectApp extends StatefulWidget {
 class _GabonConnectAppState extends State<GabonConnectApp> {
   final _connectivityService = ConnectivityService();
   final _offlineQueueService = OfflineQueueService();
-  
+
   @override
   void initState() {
     super.initState();
     _initializeServices();
   }
-  
+
   /// Initialize offline queue and sync when connection returns
   Future<void> _initializeServices() async {
     await _offlineQueueService.init();
-    
+
     // Listen to connectivity changes and auto-sync when online
     _connectivityService.addListener(() {
-      if (_connectivityService.isOnlineMode && 
+      if (_connectivityService.isOnlineMode &&
           _offlineQueueService.getPendingActionCount() > 0) {
         debugPrint('🔄 Connexion restaurée, synchronisation des actions...');
         _offlineQueueService.syncAllPendingActions();
@@ -108,9 +108,11 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
         ),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         // Security & verification providers
-        ChangeNotifierProvider(create: (_) => VerificationProvider(VerificationService())),
+        ChangeNotifierProvider(
+            create: (_) => VerificationProvider(VerificationService())),
         ChangeNotifierProvider(create: (_) => ReviewProvider(ReviewService())),
-        ChangeNotifierProvider(create: (_) => FraudDetectionProvider(FraudDetectionService())),
+        ChangeNotifierProvider(
+            create: (_) => FraudDetectionProvider(FraudDetectionService())),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
@@ -131,7 +133,7 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
       ),
     );
   }
-  
+
   @override
   void dispose() {
     _connectivityService.dispose();
@@ -182,8 +184,9 @@ class _MainScaffoldState extends State<MainScaffold> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 10, offset: const Offset(0, 4)),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
           ],
         ),
         child: ClipRRect(
@@ -195,7 +198,8 @@ class _MainScaffoldState extends State<MainScaffold> {
               NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
               NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
               NavigationDestination(icon: Icon(Icons.add_box), label: 'Post'),
-              NavigationDestination(icon: Icon(Icons.store), label: 'Marketplace'),
+              NavigationDestination(
+                  icon: Icon(Icons.store), label: 'Marketplace'),
               NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
             ],
           ),

@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // Primary Palette - Gabon Colors
-  static const Color primary = Color(0xFF0B6E4F);      // Deep Green
-  static const Color accent = Color(0xFFF4C430);       // Electric Yellow
-  static const Color darkBg = Color(0xFF0A1628);       // Deep Navy
+  static const Color primary = Color(0xFF0B6E4F); // Deep Green
+  static const Color accent = Color(0xFFF4C430); // Electric Yellow
+  static const Color darkBg = Color(0xFF0A1628); // Deep Navy
   static const Color white = Color(0xFFFFFFFF);
 
   // Semantic Colors
@@ -31,7 +31,7 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
       secondary: AppColors.accent,
       tertiary: AppColors.darkBg,
@@ -109,9 +109,9 @@ class AppTheme {
     ),
 
     // Cards
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -195,7 +195,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorScheme: ColorScheme.dark(
+    colorScheme: const ColorScheme.dark(
       primary: AppColors.accent,
       secondary: AppColors.primary,
       tertiary: AppColors.grey200,

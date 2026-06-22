@@ -41,11 +41,11 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -60,10 +60,14 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
               },
               destinations: const [
                 NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
-                NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-                NavigationDestination(icon: Icon(Icons.shopping_bag), label: 'Achats'),
-                NavigationDestination(icon: Icon(Icons.chat), label: 'Messages'),
-                NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
+                NavigationDestination(
+                    icon: Icon(Icons.build), label: 'Services'),
+                NavigationDestination(
+                    icon: Icon(Icons.shopping_bag), label: 'Achats'),
+                NavigationDestination(
+                    icon: Icon(Icons.chat), label: 'Messages'),
+                NavigationDestination(
+                    icon: Icon(Icons.person), label: 'Profil'),
               ],
             ),
           ),
@@ -106,9 +110,12 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatCard('👥', '${stats['total_users']}', 'Utilisateurs'),
-                    _buildStatCard('🔧', '${stats['total_services']}', 'Services'),
-                    _buildStatCard('🛍️', '${stats['total_products']}', 'Produits'),
+                    _buildStatCard(
+                        '👥', '${stats['total_users']}', 'Utilisateurs'),
+                    _buildStatCard(
+                        '🔧', '${stats['total_services']}', 'Services'),
+                    _buildStatCard(
+                        '🛍️', '${stats['total_products']}', 'Produits'),
                   ],
                 ),
                 const SizedBox(height: 30),
@@ -218,9 +225,9 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
                   Container(
                     width: 100,
                     height: 100,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [Color(0xFF0B6E4F), Color(0xFF0077B6)],
                       ),
                     ),
@@ -245,7 +252,8 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF4C430),
                       borderRadius: BorderRadius.circular(12),
@@ -289,13 +297,13 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF0B6E4F),
-            const Color(0xFF0077B6),
+            Color(0xFF0B6E4F),
+            Color(0xFF0077B6),
           ],
         ),
       ),
@@ -306,10 +314,10 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'GabonConnect',
                     style: TextStyle(
                       fontSize: 32,
@@ -317,8 +325,8 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'Marketplace Gabon',
                     style: TextStyle(
                       fontSize: 14,

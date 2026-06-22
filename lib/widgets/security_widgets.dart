@@ -9,20 +9,20 @@ class VerificationBadge extends StatelessWidget {
   final UserVerification? verification;
   final bool showLabel;
   final double size;
-  
+
   const VerificationBadge({
     Key? key,
     required this.verification,
     this.showLabel = true,
     this.size = 24,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     if (verification == null || !verification!.phoneVerified) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -32,8 +32,8 @@ class VerificationBadge extends StatelessWidget {
           size: size,
         ),
         if (showLabel) ...[
-          SizedBox(width: 4),
-          Text(
+          const SizedBox(width: 4),
+          const Text(
             'Vérifié',
             style: TextStyle(
               color: AppColors.accent,
@@ -51,13 +51,13 @@ class VerificationBadge extends StatelessWidget {
 class TrustScoreWidget extends StatelessWidget {
   final UserRatingSummary? ratingSummary;
   final bool compact;
-  
+
   const TrustScoreWidget({
     Key? key,
     required this.ratingSummary,
     this.compact = false,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     if (ratingSummary == null) {
@@ -66,22 +66,22 @@ class TrustScoreWidget extends StatelessWidget {
         style: TextStyle(color: Colors.grey[600], fontSize: 12),
       );
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.star, color: Colors.amber, size: 16),
-            SizedBox(width: 4),
+            const Icon(Icons.star, color: Colors.amber, size: 16),
+            const SizedBox(width: 4),
             Text(
-              '${ratingSummary!.averageRating.toStringAsFixed(1)}',
+              ratingSummary!.averageRating.toStringAsFixed(1),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: compact ? 12 : 14,
               ),
             ),
-            SizedBox(width: 4),
+            const SizedBox(width: 4),
             Text(
               '(${ratingSummary!.totalReviews} avis)',
               style: TextStyle(
@@ -92,7 +92,7 @@ class TrustScoreWidget extends StatelessWidget {
           ],
         ),
         if (!compact) ...[
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             '${ratingSummary!.getRecommendPercentage().toStringAsFixed(0)}% le recommandent',
             style: TextStyle(fontSize: 12, color: Colors.grey[700]),
@@ -108,39 +108,39 @@ class SafetyWarningBanner extends StatelessWidget {
   final FraudRiskLevel riskLevel;
   final List<String> riskFlags;
   final VoidCallback? onDismiss;
-  
+
   const SafetyWarningBanner({
     Key? key,
     required this.riskLevel,
     required this.riskFlags,
     this.onDismiss,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     if (riskLevel == FraudRiskLevel.safe && riskFlags.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
-    
+
     final color = _getRiskColor();
     final icon = _getRiskIcon();
     final text = _getRiskText();
-    
+
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         border: Border(left: BorderSide(color: color, width: 4)),
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(icon, color: color, size: 20),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   text,
@@ -159,30 +159,30 @@ class SafetyWarningBanner extends StatelessWidget {
             ],
           ),
           if (riskFlags.isNotEmpty) ...[
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             ...riskFlags.map((flag) => Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Row(
-                children: [
-                  SizedBox(width: 28),
-                  Expanded(
-                    child: Text(
-                      '• $flag',
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 12,
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 28),
+                      Expanded(
+                        child: Text(
+                          '• $flag',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
           ],
         ],
       ),
     );
   }
-  
+
   Color _getRiskColor() {
     switch (riskLevel) {
       case FraudRiskLevel.safe:
@@ -197,7 +197,7 @@ class SafetyWarningBanner extends StatelessWidget {
         return Colors.red;
     }
   }
-  
+
   IconData _getRiskIcon() {
     switch (riskLevel) {
       case FraudRiskLevel.safe:
@@ -212,7 +212,7 @@ class SafetyWarningBanner extends StatelessWidget {
         return Icons.error;
     }
   }
-  
+
   String _getRiskText() {
     switch (riskLevel) {
       case FraudRiskLevel.safe:
@@ -233,13 +233,13 @@ class SafetyWarningBanner extends StatelessWidget {
 class ReportUserDialog extends StatefulWidget {
   final String suspiciousUserId;
   final VoidCallback? onSubmitted;
-  
+
   const ReportUserDialog({
     Key? key,
     required this.suspiciousUserId,
     this.onSubmitted,
   }) : super(key: key);
-  
+
   @override
   State<ReportUserDialog> createState() => _ReportUserDialogState();
 }
@@ -248,37 +248,37 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
   late TextEditingController _descriptionController;
   String _selectedReason = 'suspicious_behavior';
   bool _isSubmitting = false;
-  
+
   @override
   void initState() {
     super.initState();
     _descriptionController = TextEditingController();
   }
-  
+
   @override
   void dispose() {
     _descriptionController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            const Text(
               'Signaler un utilisateur',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
-            
+            const SizedBox(height: 16),
+
             // Reason dropdown
             DropdownButtonFormField<String>(
-              value: _selectedReason,
-              items: [
+              initialValue: _selectedReason,
+              items: const [
                 DropdownMenuItem(
                   value: 'suspicious_behavior',
                   child: Text('Comportement suspect'),
@@ -306,8 +306,8 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
                 ),
               ),
             ),
-            SizedBox(height: 12),
-            
+            const SizedBox(height: 12),
+
             // Description
             TextField(
               controller: _descriptionController,
@@ -320,24 +320,24 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
-            
+            const SizedBox(height: 16),
+
             // Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Annuler'),
+                  child: const Text('Annuler'),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitReport,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                   ),
                   child: _isSubmitting
-                      ? SizedBox(
+                      ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
@@ -345,7 +345,7 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
                             valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
-                      : Text('Signaler'),
+                      : const Text('Signaler'),
                 ),
               ],
             ),
@@ -354,40 +354,40 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
       ),
     );
   }
-  
+
   Future<void> _submitReport() async {
     if (_descriptionController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veuillez fournir des détails')),
+        const SnackBar(content: Text('Veuillez fournir des détails')),
       );
       return;
     }
-    
+
     setState(() => _isSubmitting = true);
-    
+
     try {
       // Get current user ID from auth provider
       // For now, using placeholder
       final fraudProvider = context.read<FraudDetectionProvider>();
-      
+
       await fraudProvider.reportSuspiciousActivity(
         reporterId: 'current_user_id', // Replace with actual user ID
         suspiciousUserId: widget.suspiciousUserId,
         reason: _selectedReason,
         description: _descriptionController.text,
       );
-      
+
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signalement envoyé avec succès')),
+          const SnackBar(content: Text('Signalement envoyé avec succès')),
         );
         widget.onSubmitted?.call();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du signalement')),
+          const SnackBar(content: Text('Erreur lors du signalement')),
         );
       }
     } finally {
@@ -401,20 +401,20 @@ class ReviewCard extends StatelessWidget {
   final UserReview review;
   final VoidCallback? onDelete;
   final VoidCallback? onReport;
-  
+
   const ReviewCard({
     Key? key,
     required this.review,
     this.onDelete,
     this.onReport,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -427,9 +427,7 @@ class ReviewCard extends StatelessWidget {
                     ...List.generate(
                       5,
                       (index) => Icon(
-                        index < review.rating
-                            ? Icons.star
-                            : Icons.star_border,
+                        index < review.rating ? Icons.star : Icons.star_border,
                         color: Colors.amber,
                         size: 16,
                       ),
@@ -442,15 +440,15 @@ class ReviewCard extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 8),
-            
+            const SizedBox(height: 8),
+
             // Comment
             Text(
               review.comment,
-              style: TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 8),
-            
+            const SizedBox(height: 8),
+
             // Tags
             if (review.tags.isNotEmpty)
               Wrap(
@@ -458,24 +456,25 @@ class ReviewCard extends StatelessWidget {
                 children: review.tags.map((tag) {
                   return Chip(
                     label: Text(tag),
-                    labelStyle: TextStyle(fontSize: 11),
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    labelStyle: const TextStyle(fontSize: 11),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   );
                 }).toList(),
               ),
-            
-            if (review.tags.isNotEmpty) SizedBox(height: 8),
-            
+
+            if (review.tags.isNotEmpty) const SizedBox(height: 8),
+
             // Recommend badge
             if (review.recommendsUser)
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   border: Border.all(color: Colors.green, width: 0.5),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.thumb_up, color: Colors.green, size: 14),
@@ -487,18 +486,18 @@ class ReviewCard extends StatelessWidget {
                   ],
                 ),
               ),
-            
+
             // Actions
             if (onDelete != null || onReport != null) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   if (onReport != null)
                     TextButton.icon(
                       onPressed: onReport,
-                      icon: Icon(Icons.flag, size: 16),
-                      label: Text('Signaler'),
+                      icon: const Icon(Icons.flag, size: 16),
+                      label: const Text('Signaler'),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.orange,
                       ),
@@ -506,8 +505,8 @@ class ReviewCard extends StatelessWidget {
                   if (onDelete != null)
                     TextButton.icon(
                       onPressed: onDelete,
-                      icon: Icon(Icons.delete, size: 16),
-                      label: Text('Supprimer'),
+                      icon: const Icon(Icons.delete, size: 16),
+                      label: const Text('Supprimer'),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red,
                       ),
@@ -520,11 +519,11 @@ class ReviewCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inMinutes < 60) {
       return 'il y a ${difference.inMinutes} min';
     } else if (difference.inHours < 24) {
@@ -542,19 +541,19 @@ class EscrowPaymentCard extends StatelessWidget {
   final PaymentEscrow escrow;
   final VoidCallback? onRelease;
   final VoidCallback? onDispute;
-  
+
   const EscrowPaymentCard({
     Key? key,
     required this.escrow,
     this.onRelease,
     this.onDispute,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -562,33 +561,33 @@ class EscrowPaymentCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   'Paiement en fiducie',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 _buildStatusBadge(),
               ],
             ),
-            SizedBox(height: 12),
-            
+            const SizedBox(height: 12),
+
             // Amount
             Text(
               '${escrow.amount.toStringAsFixed(2)} CFA',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(height: 12),
-            
+            const SizedBox(height: 12),
+
             // Info
             _buildInfoRow('Service', escrow.serviceId),
             _buildInfoRow('ID Transaction', escrow.transactionId),
             _buildInfoRow('Statut', _getStatusText()),
-            
-            SizedBox(height: 12),
-            
+
+            const SizedBox(height: 12),
+
             // Actions
             if (escrow.status == EscrowStatus.held) ...[
               Row(
@@ -600,10 +599,10 @@ class EscrowPaymentCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
-                        child: Text('Libérer'),
+                        child: const Text('Libérer'),
                       ),
                     ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   if (onDispute != null)
                     Expanded(
                       child: ElevatedButton(
@@ -611,7 +610,7 @@ class EscrowPaymentCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange,
                         ),
-                        child: Text('Contester'),
+                        child: const Text('Contester'),
                       ),
                     ),
                 ],
@@ -622,13 +621,13 @@ class EscrowPaymentCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildStatusBadge() {
     final color = _getStatusColor();
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         border: Border.all(color: color),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -642,20 +641,20 @@ class EscrowPaymentCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(color: Colors.grey[600])),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
-  
+
   String _getStatusText() {
     switch (escrow.status) {
       case EscrowStatus.pending:
@@ -670,7 +669,7 @@ class EscrowPaymentCard extends StatelessWidget {
         return 'Contesté';
     }
   }
-  
+
   Color _getStatusColor() {
     switch (escrow.status) {
       case EscrowStatus.pending:

@@ -40,11 +40,11 @@ class _GabonConnectSimpleState extends State<GabonConnectSimple> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -111,13 +111,13 @@ class _GabonConnectSimpleState extends State<GabonConnectSimple> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF0B6E4F),
-                  const Color(0xFF0077B6),
+                  Color(0xFF0B6E4F),
+                  Color(0xFF0077B6),
                 ],
               ),
             ),
@@ -370,7 +370,8 @@ class _GabonConnectSimpleState extends State<GabonConnectSimple> {
                   children: [
                     const Text(
                       '📢 Poster une Annonce',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -451,14 +452,14 @@ class _GabonConnectSimpleState extends State<GabonConnectSimple> {
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Text(
+                  Text(
                     '👤',
                     style: TextStyle(fontSize: 48),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Jean Mbadinga',
                     style: TextStyle(
                       fontSize: 20,
@@ -466,8 +467,8 @@ class _GabonConnectSimpleState extends State<GabonConnectSimple> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'jean@example.com',
                     style: TextStyle(color: Colors.white70),
                   ),

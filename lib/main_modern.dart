@@ -19,8 +19,10 @@ Future<void> main() async {
   // Initialiser Supabase
   try {
     await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? 'https://kbggddignhydzxjzdera.supabase.com',
-      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_fb4ZPkQfXIXsh5jFWptcPA_TD8oIAUD',
+      url: dotenv.env['SUPABASE_URL'] ??
+          'https://kbggddignhydzxjzdera.supabase.com',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ??
+          'sb_publishable_fb4ZPkQfXIXsh5jFWptcPA_TD8oIAUD',
       debug: false,
     );
     debugPrint('✅ Supabase initialisé');
@@ -111,7 +113,8 @@ class _MainShellState extends ConsumerState<MainShell> {
         return Scaffold(
           extendBody: true,
           body: _buildCurrentPage(),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
           floatingActionButton: Stack(
             children: [
               FloatingNavBar(
@@ -129,17 +132,17 @@ class _MainShellState extends ConsumerState<MainShell> {
   Widget _buildCurrentPage() {
     switch (_currentIndex) {
       case 0:
-        return HomeScreen(key: PageStorageKey('home'));
+        return const HomeScreen(key: PageStorageKey('home'));
       case 1:
-        return ServicesScreen(key: PageStorageKey('services'));
+        return const ServicesScreen(key: PageStorageKey('services'));
       case 2:
-        return PostScreen(key: PageStorageKey('post'));
+        return const PostScreen(key: PageStorageKey('post'));
       case 3:
-        return MarketplaceScreen(key: PageStorageKey('marketplace'));
+        return const MarketplaceScreen(key: PageStorageKey('marketplace'));
       case 4:
-        return ProfileScreen(key: PageStorageKey('profile'));
+        return const ProfileScreen(key: PageStorageKey('profile'));
       default:
-        return HomeScreen(key: PageStorageKey('home'));
+        return const HomeScreen(key: PageStorageKey('home'));
     }
   }
 }
@@ -204,7 +207,7 @@ class HomeScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [
                   AppColors.primary,
-                  AppColors.primary.withOpacity(0.7),
+                  AppColors.primary.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -222,7 +225,7 @@ class HomeScreen extends StatelessWidget {
                 Text(
                   'Découvrez les meilleures offres du Gabon',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.white.withOpacity(0.9),
+                        color: AppColors.white.withValues(alpha: 0.9),
                       ),
                 ),
               ],
@@ -283,10 +286,10 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildCategoryChips(BuildContext context) {
     final categories = [
-      MapEntry('Électronique', Icons.smartphone),
-      MapEntry('Vêtements', Icons.shopping_bag),
-      MapEntry('Maison', Icons.home),
-      MapEntry('Services', Icons.build),
+      const MapEntry('Électronique', Icons.smartphone),
+      const MapEntry('Vêtements', Icons.shopping_bag),
+      const MapEntry('Maison', Icons.home),
+      const MapEntry('Services', Icons.build),
     ];
 
     return SingleChildScrollView(
@@ -303,7 +306,7 @@ class HomeScreen extends StatelessWidget {
                     size: 18,
                   ),
                   label: Text(category.key),
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   labelStyle: const TextStyle(color: AppColors.primary),
                 ),
               ),
@@ -324,15 +327,60 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen> {
   final services = [
-    {'title': '⚡ Installation électrique', 'provider': 'Jean Mbadinga', 'price': '50 000', 'rating': 4.8},
-    {'title': '⚡ Réparation électrique', 'provider': 'Jean Mbadinga', 'price': '25 000', 'rating': 4.9},
-    {'title': '🏡 Nettoyage maison', 'provider': 'Marie Ondoua', 'price': '30 000', 'rating': 4.9},
-    {'title': '🏢 Nettoyage bureau', 'provider': 'Marie Ondoua', 'price': '45 000', 'rating': 4.7},
-    {'title': '💻 Réparation ordinateur', 'provider': 'Claude Nkomo', 'price': '25 000', 'rating': 4.7},
-    {'title': '🌐 Installation réseau', 'provider': 'Claude Nkomo', 'price': '75 000', 'rating': 4.8},
-    {'title': '🪑 Menuiserie custom', 'provider': 'Pierre Mboumbou', 'price': '60 000', 'rating': 4.6},
-    {'title': '💅 Coiffure femme', 'provider': 'Fatima Traoré', 'price': '15 000', 'rating': 4.9},
-    {'title': '💈 Coiffure homme', 'provider': 'Fatima Traoré', 'price': '8 000', 'rating': 4.8},
+    {
+      'title': '⚡ Installation électrique',
+      'provider': 'Jean Mbadinga',
+      'price': '50 000',
+      'rating': 4.8
+    },
+    {
+      'title': '⚡ Réparation électrique',
+      'provider': 'Jean Mbadinga',
+      'price': '25 000',
+      'rating': 4.9
+    },
+    {
+      'title': '🏡 Nettoyage maison',
+      'provider': 'Marie Ondoua',
+      'price': '30 000',
+      'rating': 4.9
+    },
+    {
+      'title': '🏢 Nettoyage bureau',
+      'provider': 'Marie Ondoua',
+      'price': '45 000',
+      'rating': 4.7
+    },
+    {
+      'title': '💻 Réparation ordinateur',
+      'provider': 'Claude Nkomo',
+      'price': '25 000',
+      'rating': 4.7
+    },
+    {
+      'title': '🌐 Installation réseau',
+      'provider': 'Claude Nkomo',
+      'price': '75 000',
+      'rating': 4.8
+    },
+    {
+      'title': '🪑 Menuiserie custom',
+      'provider': 'Pierre Mboumbou',
+      'price': '60 000',
+      'rating': 4.6
+    },
+    {
+      'title': '💅 Coiffure femme',
+      'provider': 'Fatima Traoré',
+      'price': '15 000',
+      'rating': 4.9
+    },
+    {
+      'title': '💈 Coiffure homme',
+      'provider': 'Fatima Traoré',
+      'price': '8 000',
+      'rating': 4.8
+    },
   ];
 
   @override
@@ -350,29 +398,31 @@ class _ServicesScreenState extends State<ServicesScreen> {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 20),
-          ...services.map((service) =>
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                title: Text(service['title']?.toString() ?? ''),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    Text(service['provider']?.toString() ?? ''),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${service['price']} FCFA • ⭐ ${service['rating']}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0B6E4F),
-                      ),
+          ...services
+              .map(
+                (service) => Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    title: Text(service['title']?.toString() ?? ''),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(service['provider']?.toString() ?? ''),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${service['price']} FCFA • ⭐ ${service['rating']}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0B6E4F),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ).toList(),
+              )
+              .toList(),
         ],
       ),
     );
@@ -398,9 +448,21 @@ class _PostScreenState extends State<PostScreen> {
   String _location = 'Libreville';
   bool _published = false;
 
-  final categories = ['Électronique', 'Vêtements', 'Maison', 'Services', 'Autre'];
+  final categories = [
+    'Électronique',
+    'Vêtements',
+    'Maison',
+    'Services',
+    'Autre'
+  ];
   final conditions = ['Neuf', 'Bon état', 'Usé', 'À rénover'];
-  final locations = ['Libreville', 'Port-Gentil', 'Franceville', 'Oyem', 'Bitam'];
+  final locations = [
+    'Libreville',
+    'Port-Gentil',
+    'Franceville',
+    'Oyem',
+    'Bitam'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +495,8 @@ class _PostScreenState extends State<PostScreen> {
               const SizedBox(height: 20),
 
               // Description field
-              Text('Description', style: Theme.of(context).textTheme.titleMedium),
+              Text('Description',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               TextFormField(
                 maxLines: 4,
@@ -451,7 +514,7 @@ class _PostScreenState extends State<PostScreen> {
               Text('Catégorie', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 items: categories
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
@@ -468,7 +531,7 @@ class _PostScreenState extends State<PostScreen> {
               Text('État', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _condition,
+                initialValue: _condition,
                 items: conditions
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
@@ -482,7 +545,8 @@ class _PostScreenState extends State<PostScreen> {
               const SizedBox(height: 20),
 
               // Price field
-              Text('Prix (FCFA)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Prix (FCFA)',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               TextFormField(
                 keyboardType: TextInputType.number,
@@ -503,8 +567,8 @@ class _PostScreenState extends State<PostScreen> {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () =>
-                        setState(() => _quantity = (_quantity - 1).clamp(1, 999)),
+                    onPressed: () => setState(
+                        () => _quantity = (_quantity - 1).clamp(1, 999)),
                     icon: const Icon(Icons.remove),
                   ),
                   Expanded(
@@ -522,8 +586,8 @@ class _PostScreenState extends State<PostScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () =>
-                        setState(() => _quantity = (_quantity + 1).clamp(1, 999)),
+                    onPressed: () => setState(
+                        () => _quantity = (_quantity + 1).clamp(1, 999)),
                     icon: const Icon(Icons.add),
                   ),
                 ],
@@ -531,10 +595,11 @@ class _PostScreenState extends State<PostScreen> {
               const SizedBox(height: 20),
 
               // Location dropdown
-              Text('Localisation', style: Theme.of(context).textTheme.titleMedium),
+              Text('Localisation',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _location,
+                initialValue: _location,
                 items: locations
                     .map((l) => DropdownMenuItem(value: l, child: Text(l)))
                     .toList(),
@@ -551,7 +616,7 @@ class _PostScreenState extends State<PostScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -570,15 +635,16 @@ class _PostScreenState extends State<PostScreen> {
                         const SizedBox(height: 4),
                         Text(
                           'Visible immédiatement',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey600,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.grey600,
+                                  ),
                         ),
                       ],
                     ),
                     Switch(
                       value: _published,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (value) => setState(() => _published = value),
                     ),
                   ],
@@ -726,28 +792,30 @@ class MarketplaceScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 20),
-          ...products.map((product) => GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MarketplaceDetailScreen(
-                    product: product,
-                  ),
-                ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              child: ModernCard(
-                title: product.title,
-                description: product.description,
-                price: product.formattedPrice,
-                rating: product.sellerRating,
-                sellerName: product.sellerName,
-              ),
-            ),
-          )).toList(),
+          ...products
+              .map((product) => GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MarketplaceDetailScreen(
+                            product: product,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: ModernCard(
+                        title: product.title,
+                        description: product.description,
+                        price: product.formattedPrice,
+                        rating: product.sellerRating,
+                        sellerName: product.sellerName,
+                      ),
+                    ),
+                  ))
+              .toList(),
         ],
       ),
     );
@@ -761,9 +829,24 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final transactions = [
-      {'date': '22 Jun 2026', 'type': 'Achat', 'amount': '850 000', 'status': 'Réussi'},
-      {'date': '20 Jun 2026', 'type': 'Vente', 'amount': '425 000', 'status': 'Réussi'},
-      {'date': '18 Jun 2026', 'type': 'Achat', 'amount': '120 000', 'status': 'Réussi'},
+      {
+        'date': '22 Jun 2026',
+        'type': 'Achat',
+        'amount': '850 000',
+        'status': 'Réussi'
+      },
+      {
+        'date': '20 Jun 2026',
+        'type': 'Vente',
+        'amount': '425 000',
+        'status': 'Réussi'
+      },
+      {
+        'date': '18 Jun 2026',
+        'type': 'Achat',
+        'amount': '120 000',
+        'status': 'Réussi'
+      },
     ];
 
     return Scaffold(
@@ -783,7 +866,7 @@ class ProfileScreen extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     AppColors.primary,
-                    AppColors.primary.withOpacity(0.7),
+                    AppColors.primary.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -794,10 +877,11 @@ class ProfileScreen extends StatelessWidget {
                     backgroundColor: AppColors.white,
                     child: Text(
                       'AC',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -812,19 +896,20 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     'acaméron@example.com',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.white.withOpacity(0.9),
+                          color: AppColors.white.withValues(alpha: 0.9),
                         ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.star_rounded, color: AppColors.accent, size: 18),
+                      const Icon(Icons.star_rounded,
+                          color: AppColors.accent, size: 18),
                       const SizedBox(width: 4),
                       Text(
                         '4.8 • 28 avis',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.white.withOpacity(0.9),
+                              color: AppColors.white.withValues(alpha: 0.9),
                             ),
                       ),
                     ],
@@ -841,12 +926,15 @@ class ProfileScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary.withValues(alpha: 0.8)
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -890,10 +978,11 @@ class ProfileScreen extends StatelessWidget {
                           icon: const Icon(Icons.send),
                           label: const Text('Envoyer'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.white.withOpacity(0.2),
+                            backgroundColor:
+                                AppColors.white.withValues(alpha: 0.2),
                             foregroundColor: AppColors.white,
                             side: BorderSide(
-                              color: AppColors.white.withOpacity(0.3),
+                              color: AppColors.white.withValues(alpha: 0.3),
                             ),
                           ),
                         ),
@@ -913,68 +1002,77 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ...transactions.map((tx) =>
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.grey50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tx['type'] ?? '',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          tx['date'] ?? '',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey600,
-                              ),
-                        ),
-                      ],
+            ...transactions
+                .map(
+                  (tx) => Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey50,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${tx['amount']} FCFA',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            tx['status'] ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.success,
-                              fontWeight: FontWeight.w600,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx['type'] ?? '',
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              tx['date'] ?? '',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.grey600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${tx['amount']} FCFA',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                tx['status'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ).toList(),
+                  ),
+                )
+                .toList(),
 
             // Settings section
             Padding(
@@ -1053,7 +1151,7 @@ class ProfileScreen extends StatelessWidget {
                 color: isDangerous ? AppColors.error : null,
               ),
         ),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.arrow_forward_ios,
           size: 16,
           color: AppColors.grey400,

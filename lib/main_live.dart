@@ -6,9 +6,9 @@ void main() async {
 
   // ⚠️ REMPLACER avec tes vraies credentials Supabase!
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
-    defaultValue: 'https://YOUR_PROJECT.supabase.co');
+      defaultValue: 'https://YOUR_PROJECT.supabase.co');
   const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
-    defaultValue: 'YOUR_ANON_KEY');
+      defaultValue: 'YOUR_ANON_KEY');
 
   // Pour test local: utiliser données mockées
   await Supabase.initialize(
@@ -84,7 +84,8 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
               padding: const EdgeInsets.all(16),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isConnected ? Colors.green : Colors.red,
                     borderRadius: BorderRadius.circular(20),
@@ -95,7 +96,7 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
@@ -127,7 +128,8 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
             NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-            NavigationDestination(icon: Icon(Icons.shopping_bag), label: 'Produits'),
+            NavigationDestination(
+                icon: Icon(Icons.shopping_bag), label: 'Produits'),
             NavigationDestination(icon: Icon(Icons.chat), label: 'Messages'),
             NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
           ],
@@ -162,11 +164,11 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF0B6E4F),
-                  const Color(0xFF0077B6),
+                  Color(0xFF0B6E4F),
+                  Color(0xFF0077B6),
                 ],
               ),
             ),
@@ -515,9 +517,13 @@ class _GabonConnectLiveAppState extends State<GabonConnectLiveApp> {
                             Text(user['email'] ?? ''),
                             const SizedBox(height: 4),
                             Text(
-                              user['verified'] == true ? '✅ Vérifié' : '❌ Non vérifié',
+                              user['verified'] == true
+                                  ? '✅ Vérifié'
+                                  : '❌ Non vérifié',
                               style: TextStyle(
-                                color: user['verified'] == true ? Colors.green : Colors.red,
+                                color: user['verified'] == true
+                                    ? Colors.green
+                                    : Colors.red,
                               ),
                             ),
                           ],

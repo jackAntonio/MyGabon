@@ -43,10 +43,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                   // Success message
                   Text(
                     'Paiement réussi!',
-                    style: Theme.of(context)
-                        .textTheme
-                        .displaySmall
-                        ?.copyWith(
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           color: AppColors.success,
                           fontWeight: FontWeight.bold,
                         ),
@@ -90,10 +87,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.1),
+        color: AppColors.success.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(60),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.check_circle_rounded,
         size: 80,
         color: AppColors.success,
@@ -134,7 +131,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
           _buildDetailRow(
             context,
             label: 'N° de transaction',
-            value: widget.transactionId.substring(0, 20) + '...',
+            value: '${widget.transactionId.substring(0, 20)}...',
           ),
           const SizedBox(height: 12),
           _buildDetailRow(
@@ -191,8 +188,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.primary.withOpacity(0.3),
-                  AppColors.accent.withOpacity(0.2),
+                  AppColors.primary.withValues(alpha: 0.3),
+                  AppColors.accent.withValues(alpha: 0.2),
                 ],
               ),
             ),
@@ -238,14 +235,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.info.withOpacity(0.1),
-        border: Border.all(color: AppColors.info.withOpacity(0.2)),
+        color: AppColors.info.withValues(alpha: 0.1),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
+          const Icon(
             Icons.info_outline,
             color: AppColors.info,
             size: 20,
@@ -280,7 +277,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(
           top: BorderSide(color: AppColors.grey200),
@@ -299,8 +296,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
           ElevatedButton(
             onPressed: () {
               // Navigate back to home
-              Navigator.of(context)
-                  .popUntil((route) => route.isFirst);
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),

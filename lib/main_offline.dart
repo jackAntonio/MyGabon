@@ -48,7 +48,8 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
               padding: const EdgeInsets.all(16),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(20),
@@ -85,7 +86,8 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
             NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-            NavigationDestination(icon: Icon(Icons.shopping_bag), label: 'Produits'),
+            NavigationDestination(
+                icon: Icon(Icons.shopping_bag), label: 'Produits'),
             NavigationDestination(icon: Icon(Icons.chat), label: 'Messages'),
             NavigationDestination(icon: Icon(Icons.person), label: 'Profils'),
           ],
@@ -123,9 +125,9 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF0B6E4F), const Color(0xFF0077B6)],
+                colors: [Color(0xFF0B6E4F), Color(0xFF0077B6)],
               ),
             ),
             child: Column(
@@ -149,8 +151,10 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildStatCard('👥', '${stats['total_users']}', 'Users'),
-                    _buildStatCard('🔧', '${stats['total_services']}', 'Services'),
-                    _buildStatCard('🛍️', '${stats['total_products']}', 'Products'),
+                    _buildStatCard(
+                        '🔧', '${stats['total_services']}', 'Services'),
+                    _buildStatCard(
+                        '🛍️', '${stats['total_products']}', 'Products'),
                   ],
                 ),
               ],
@@ -215,7 +219,8 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
             ),
           ),
           child: Center(
-            child: Text(service['icon'] ?? '🔧', style: const TextStyle(fontSize: 24)),
+            child: Text(service['icon'] ?? '🔧',
+                style: const TextStyle(fontSize: 24)),
           ),
         ),
         title: Text(
@@ -336,11 +341,13 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
                           children: [
                             Text(
                               '${msg['sender_name']} → ${msg['receiver_name']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
                               msg['timestamp'],
-                              style: const TextStyle(fontSize: 11, color: Colors.grey),
+                              style: const TextStyle(
+                                  fontSize: 11, color: Colors.grey),
                             ),
                           ],
                         ),
@@ -358,7 +365,8 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
                           alignment: Alignment.bottomRight,
                           child: Text(
                             msg['read'] ? '✅✅ Lu' : '✅ Envoyé',
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.grey),
                           ),
                         ),
                       ],
@@ -410,9 +418,13 @@ class _GabonConnectOfflineAppState extends State<GabonConnectOfflineApp> {
                         Text(user['email']),
                         const SizedBox(height: 4),
                         Text(
-                          user['verified'] == true ? '✅ Verified' : '❌ Not verified',
+                          user['verified'] == true
+                              ? '✅ Verified'
+                              : '❌ Not verified',
                           style: TextStyle(
-                            color: user['verified'] == true ? Colors.green : Colors.red,
+                            color: user['verified'] == true
+                                ? Colors.green
+                                : Colors.red,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

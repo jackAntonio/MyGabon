@@ -140,7 +140,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
               // Name field (signup only)
               if (!_isLogin) ...[
-                Text('Nom complet', style: Theme.of(context).textTheme.titleSmall),
+                Text('Nom complet',
+                    style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _nameController,
@@ -155,7 +156,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ],
 
               // Password field
-              Text('Mot de passe', style: Theme.of(context).textTheme.titleSmall),
+              Text('Mot de passe',
+                  style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
@@ -174,12 +176,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _error,
-                    style: TextStyle(color: AppColors.error),
+                    style: const TextStyle(color: AppColors.error),
                   ),
                 ),
               const SizedBox(height: 24),
@@ -206,9 +208,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         )
                       : Text(
                           _isLogin ? 'Connexion' : 'Créer un compte',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: AppColors.white,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: AppColors.white,
+                                  ),
                         ),
                 ),
               ),

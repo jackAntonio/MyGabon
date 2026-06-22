@@ -19,7 +19,7 @@ class ProfileScreenComplete extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
             Text('Erreur: ${err.toString()}'),
             const SizedBox(height: 16),
@@ -41,7 +41,7 @@ class ProfileScreenComplete extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_outline, size: 64, color: AppColors.grey400),
+          const Icon(Icons.person_outline, size: 64, color: AppColors.grey400),
           const SizedBox(height: 24),
           Text(
             'Non connecté',
@@ -87,7 +87,7 @@ class ProfileScreenComplete extends ConsumerWidget {
                 end: Alignment.bottomRight,
                 colors: [
                   AppColors.primary,
-                  AppColors.primary.withOpacity(0.7),
+                  AppColors.primary.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -117,7 +117,7 @@ class ProfileScreenComplete extends ConsumerWidget {
                 Text(
                   'Utilisateur actif',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.white.withOpacity(0.9),
+                        color: AppColors.white.withValues(alpha: 0.9),
                       ),
                 ),
               ],
@@ -136,7 +136,8 @@ class ProfileScreenComplete extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 userWallet.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Text('Erreur: ${err.toString()}'),
                   data: (balance) => Container(
                     padding: const EdgeInsets.all(24),
@@ -145,13 +146,13 @@ class ProfileScreenComplete extends ConsumerWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.success.withOpacity(0.2),
-                          AppColors.accent.withOpacity(0.1),
+                          AppColors.success.withValues(alpha: 0.2),
+                          AppColors.accent.withValues(alpha: 0.1),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.success.withOpacity(0.3),
+                        color: AppColors.success.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -159,18 +160,21 @@ class ProfileScreenComplete extends ConsumerWidget {
                       children: [
                         Text(
                           'Solde disponible',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey600,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.grey600,
+                                  ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _formatPrice(balance),
-                          style:
-                              Theme.of(context).textTheme.displaySmall?.copyWith(
-                                    color: AppColors.success,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .displaySmall
+                              ?.copyWith(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -290,7 +294,7 @@ class ProfileScreenComplete extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Column(
           children: [
-            Icon(Icons.history, size: 48, color: AppColors.grey400),
+            const Icon(Icons.history, size: 48, color: AppColors.grey400),
             const SizedBox(height: 16),
             Text(
               'Aucune transaction',
@@ -305,8 +309,8 @@ class ProfileScreenComplete extends ConsumerWidget {
   }
 
   Widget _buildTransactionTile(BuildContext context, dynamic transaction) {
-    final isIncoming =
-        transaction['status'] == 'success' && transaction['payment_method'] != null;
+    final isIncoming = transaction['status'] == 'success' &&
+        transaction['payment_method'] != null;
     final amount = transaction['gross_amount'] as num?;
 
     return Container(
@@ -400,7 +404,7 @@ class ProfileScreenComplete extends ConsumerWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.grey400),
+            const Icon(Icons.chevron_right, color: AppColors.grey400),
           ],
         ),
       ),

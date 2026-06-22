@@ -140,11 +140,11 @@ class _MainScaffoldState extends State<MainScaffold> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black26,
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -157,7 +157,8 @@ class _MainScaffoldState extends State<MainScaffold> {
               NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
               NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
               NavigationDestination(icon: Icon(Icons.add_box), label: 'Post'),
-              NavigationDestination(icon: Icon(Icons.store), label: 'Marketplace'),
+              NavigationDestination(
+                  icon: Icon(Icons.store), label: 'Marketplace'),
               NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
             ],
           ),

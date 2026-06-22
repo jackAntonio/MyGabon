@@ -8,23 +8,23 @@ import '../utils/colors.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({Key? key}) : super(key: key);
-  
+
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   late String _userId;
-  DateTime _startDate = DateTime.now().subtract(Duration(days: 30));
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
-  
+
   @override
   void initState() {
     super.initState();
     _userId = 'current_user_id'; // Get from auth provider
     _loadAnalytics();
   }
-  
+
   void _loadAnalytics() {
     Future.microtask(() {
       final provider = context.read<AnalyticsProvider>();
@@ -35,44 +35,40 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       );
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Analyse'),
+        title: const Text('Analyse'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Consumer<AnalyticsProvider>(
           builder: (context, provider, _) {
             if (provider.isLoading) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
-            
+
             final analytics = provider.userAnalytics;
             if (analytics == null) {
-              return Center(
+              return const Center(
                 child: Text('Aucune donnée disponible'),
               );
             }
-            
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDateRangeSelector(),
-                SizedBox(height: 16),
-                
+                const SizedBox(height: 16),
                 _buildMetricsGrid(analytics),
-                SizedBox(height: 16),
-                
+                const SizedBox(height: 16),
                 _buildConversionFunnel(analytics),
-                SizedBox(height: 16),
-                
+                const SizedBox(height: 16),
                 _buildEngagementBreakdown(analytics),
-                SizedBox(height: 16),
-                
+                const SizedBox(height: 16),
                 _buildRevenueBreakdown(analytics),
               ],
             );
@@ -81,11 +77,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-  
+
   Widget _buildDateRangeSelector() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -93,14 +89,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               'Période',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectDateRange(context),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(6),
@@ -108,14 +105,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       child: Text(
                         '${DateFormat('d/M/yy').format(_startDate)} - ${DateFormat('d/M/yy').format(_endDate)}',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 IconButton(
-                  icon: Icon(Icons.refresh),
+                  icon: const Icon(Icons.refresh),
                   onPressed: _loadAnalytics,
                 ),
               ],
@@ -125,12 +122,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-  
+
   Widget _buildMetricsGrid(AnalyticsSummary analytics) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
       children: [
@@ -165,20 +162,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ],
     );
   }
-  
+
   Widget _buildConversionFunnel(AnalyticsSummary analytics) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Entonnoir de conversion',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
-            
+            const SizedBox(height: 16),
             _buildFunnelStep(
               'Vues',
               analytics.totalViews.toString(),
@@ -206,7 +202,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-  
+
   Widget _buildFunnelStep(
     String label,
     String count,
@@ -219,14 +215,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: TextStyle(fontSize: 12)),
+            Text(label, style: const TextStyle(fontSize: 12)),
             Text(
               '$count (${(percent * 100).toStringAsFixed(1)}%)',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
@@ -236,24 +232,23 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
       ],
     );
   }
-  
+
   Widget _buildEngagementBreakdown(AnalyticsSummary analytics) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Répartition de l\'engagement',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 12),
-            
+            const SizedBox(height: 12),
             _buildBreakdownItem(
               'Vues',
               analytics.eventTypeBreakdown['view'] ?? 0,
@@ -279,25 +274,24 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-  
+
   Widget _buildRevenueBreakdown(AnalyticsSummary analytics) {
     double total = 0.0;
     for (final value in analytics.revenueBySource.values) {
       total += value;
     }
-    
+
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Revenus par source',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 12),
-            
+            const SizedBox(height: 12),
             if (total == 0)
               Text(
                 'Aucun revenu cette période',
@@ -305,26 +299,26 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               )
             else
               ...analytics.revenueBySource.entries.map((entry) {
-                final percentage = total > 0 ? (entry.value / total) * 100 : 0.0;
+                final percentage =
+                    total > 0 ? (entry.value / total) * 100 : 0.0;
                 return _buildRevenueSourceItem(
                   _formatRevenueSource(entry.key),
                   entry.value,
                   percentage,
                 );
               }),
-            
             if (total > 0) ...[
-              Divider(height: 12),
+              const Divider(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     'Total',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${total.toStringAsFixed(0)} CFA',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
@@ -337,10 +331,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-  
+
   Widget _buildBreakdownItem(String label, int count, Color color) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -354,46 +348,48 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   shape: BoxShape.circle,
                 ),
               ),
-              SizedBox(width: 8),
-              Text(label, style: TextStyle(fontSize: 12)),
+              const SizedBox(width: 8),
+              Text(label, style: const TextStyle(fontSize: 12)),
             ],
           ),
           Text(
             count.toString(),
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildRevenueSourceItem(String source, double amount, double percentage) {
+
+  Widget _buildRevenueSourceItem(
+      String source, double amount, double percentage) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(source, style: TextStyle(fontSize: 12)),
+              Text(source, style: const TextStyle(fontSize: 12)),
               Text(
                 '${amount.toStringAsFixed(0)} CFA',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
               value: percentage / 100,
               minHeight: 6,
               backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             '${percentage.toStringAsFixed(1)}%',
             style: TextStyle(fontSize: 10, color: Colors.grey[600]),
@@ -402,7 +398,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-  
+
   Future<void> _selectDateRange(BuildContext context) async {
     final range = await showDateRangePicker(
       context: context,
@@ -410,7 +406,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       lastDate: DateTime.now(),
       initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
     );
-    
+
     if (range != null) {
       setState(() {
         _startDate = range.start;
@@ -419,7 +415,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       _loadAnalytics();
     }
   }
-  
+
   String _formatRevenueSource(String source) {
     final map = {
       'subscription': 'Abonnements',

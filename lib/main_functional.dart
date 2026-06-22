@@ -73,7 +73,8 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
               padding: const EdgeInsets.all(16),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isConnected ? Colors.green : Colors.orange,
                     borderRadius: BorderRadius.circular(20),
@@ -114,7 +115,8 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
             NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-            NavigationDestination(icon: Icon(Icons.shopping_bag), label: 'Produits'),
+            NavigationDestination(
+                icon: Icon(Icons.shopping_bag), label: 'Produits'),
             NavigationDestination(icon: Icon(Icons.chat), label: 'Messages'),
             NavigationDestination(icon: Icon(Icons.person), label: 'Profils'),
           ],
@@ -170,9 +172,9 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF0B6E4F), const Color(0xFF0077B6)],
+                colors: [Color(0xFF0B6E4F), Color(0xFF0077B6)],
               ),
             ),
             child: Column(
@@ -264,7 +266,8 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
         final services = snapshot.data as List? ?? [];
 
         return Column(
-          children: services.map((service) => _buildServiceCard(service)).toList(),
+          children:
+              services.map((service) => _buildServiceCard(service)).toList(),
         );
       },
     );
@@ -470,12 +473,13 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
                               children: [
                                 Text(
                                   '${msg['sender_name']} → ${msg['receiver_name']}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   msg['timestamp'] ?? '',
-                                  style:
-                                      const TextStyle(fontSize: 11, color: Colors.grey),
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.grey),
                                 ),
                               ],
                             ),
@@ -549,7 +553,8 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
                                 ),
                                 Text(
                                   '${user['rating']}⭐',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -557,7 +562,9 @@ class _GabonConnectFunctionalAppState extends State<GabonConnectFunctionalApp> {
                             Text(user['email'] ?? ''),
                             const SizedBox(height: 8),
                             Text(
-                              user['verified'] == true ? '✅ Vérifié' : '❌ Non vérifié',
+                              user['verified'] == true
+                                  ? '✅ Vérifié'
+                                  : '❌ Non vérifié',
                               style: TextStyle(
                                 color: user['verified'] == true
                                     ? Colors.green

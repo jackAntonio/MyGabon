@@ -29,7 +29,8 @@ class ChatScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ChatDetailScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const ChatDetailScreen()),
                     );
                   },
                 );
@@ -38,10 +39,10 @@ class ChatScreen extends StatelessWidget {
           ),
           const Divider(),
           // sample chat bubble area placeholder
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
             child: Column(
-              children: const [
+              children: [
                 ChatBubble(
                   isMe: false,
                   text: 'Hello there!',
