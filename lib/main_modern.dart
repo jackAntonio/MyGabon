@@ -223,10 +223,10 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildCategoryChips(BuildContext context) {
     final categories = [
-      ('Électronique', Icons.smartphones),
-      ('Vêtements', Icons.shopping_bag),
-      ('Maison', Icons.home),
-      ('Services', Icons.build),
+      MapEntry('Électronique', Icons.smartphone),
+      MapEntry('Vêtements', Icons.shopping_bag),
+      MapEntry('Maison', Icons.home),
+      MapEntry('Services', Icons.build),
     ];
 
     return SingleChildScrollView(
@@ -239,10 +239,10 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 12),
                 child: Chip(
                   avatar: Icon(
-                    category.$2,
+                    category.value,
                     size: 18,
                   ),
-                  label: Text(category.$1),
+                  label: Text(category.key),
                   backgroundColor: AppColors.primary.withOpacity(0.1),
                   labelStyle: const TextStyle(color: AppColors.primary),
                 ),
@@ -255,30 +255,309 @@ class HomeScreen extends StatelessWidget {
 }
 
 // ===== SERVICES SCREEN =====
-class ServicesScreen extends StatelessWidget {
+class ServicesScreen extends StatefulWidget {
   const ServicesScreen({Key? key}) : super(key: key);
 
   @override
+  State<ServicesScreen> createState() => _ServicesScreenState();
+}
+
+class _ServicesScreenState extends State<ServicesScreen> {
+  final services = [
+    {'title': '⚡ Installation électrique', 'provider': 'Jean Mbadinga', 'price': '50 000', 'rating': 4.8},
+    {'title': '⚡ Réparation électrique', 'provider': 'Jean Mbadinga', 'price': '25 000', 'rating': 4.9},
+    {'title': '🏡 Nettoyage maison', 'provider': 'Marie Ondoua', 'price': '30 000', 'rating': 4.9},
+    {'title': '🏢 Nettoyage bureau', 'provider': 'Marie Ondoua', 'price': '45 000', 'rating': 4.7},
+    {'title': '💻 Réparation ordinateur', 'provider': 'Claude Nkomo', 'price': '25 000', 'rating': 4.7},
+    {'title': '🌐 Installation réseau', 'provider': 'Claude Nkomo', 'price': '75 000', 'rating': 4.8},
+    {'title': '🪑 Menuiserie custom', 'provider': 'Pierre Mboumbou', 'price': '60 000', 'rating': 4.6},
+    {'title': '💅 Coiffure femme', 'provider': 'Fatima Traoré', 'price': '15 000', 'rating': 4.9},
+    {'title': '💈 Coiffure homme', 'provider': 'Fatima Traoré', 'price': '8 000', 'rating': 4.8},
+  ];
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Services (À implémenter)',
-        style: Theme.of(context).textTheme.headlineSmall,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Services Gabon'),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(
+            'Tous les Services (9)',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 20),
+          ...services.map((service) =>
+            Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                title: Text(service['title']?.toString() ?? ''),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(service['provider']?.toString() ?? ''),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${service['price']} FCFA • ⭐ ${service['rating']}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0B6E4F),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ).toList(),
+        ],
       ),
     );
   }
 }
 
 // ===== POST SCREEN =====
-class PostScreen extends StatelessWidget {
+class PostScreen extends StatefulWidget {
   const PostScreen({Key? key}) : super(key: key);
 
   @override
+  State<PostScreen> createState() => _PostScreenState();
+}
+
+class _PostScreenState extends State<PostScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String _title = '';
+  String _description = '';
+  String _category = 'Électronique';
+  String _condition = 'Bon état';
+  double _price = 0;
+  int _quantity = 1;
+  String _location = 'Libreville';
+  bool _published = false;
+
+  final categories = ['Électronique', 'Vêtements', 'Maison', 'Services', 'Autre'];
+  final conditions = ['Neuf', 'Bon état', 'Usé', 'À rénover'];
+  final locations = ['Libreville', 'Port-Gentil', 'Franceville', 'Oyem', 'Bitam'];
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Poster une annonce (À implémenter)',
-        style: Theme.of(context).textTheme.headlineSmall,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Poster une annonce'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title field
+              Text('Titre', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: 'Ex: iPhone 14 Pro',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onChanged: (value) => setState(() => _title = value),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Veuillez entrer un titre' : null,
+              ),
+              const SizedBox(height: 20),
+
+              // Description field
+              Text('Description', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              TextFormField(
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Décrivez votre produit...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onChanged: (value) => setState(() => _description = value),
+              ),
+              const SizedBox(height: 20),
+
+              // Category dropdown
+              Text('Catégorie', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _category,
+                items: categories
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (value) => setState(() => _category = value ?? ''),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Condition dropdown
+              Text('État', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _condition,
+                items: conditions
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (value) => setState(() => _condition = value ?? ''),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Price field
+              Text('Prix (FCFA)', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: '0',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onChanged: (value) =>
+                    setState(() => _price = double.tryParse(value) ?? 0),
+              ),
+              const SizedBox(height: 20),
+
+              // Quantity
+              Text('Quantité', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () =>
+                        setState(() => _quantity = (_quantity - 1).clamp(1, 999)),
+                    icon: const Icon(Icons.remove),
+                  ),
+                  Expanded(
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      initialValue: _quantity.toString(),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: (value) =>
+                          setState(() => _quantity = int.tryParse(value) ?? 1),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () =>
+                        setState(() => _quantity = (_quantity + 1).clamp(1, 999)),
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Location dropdown
+              Text('Localisation', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _location,
+                items: locations
+                    .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                    .toList(),
+                onChanged: (value) => setState(() => _location = value ?? ''),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Publish toggle
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Publier l\'annonce',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Visible immédiatement',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.grey600,
+                              ),
+                        ),
+                      ],
+                    ),
+                    Switch(
+                      value: _published,
+                      activeColor: AppColors.primary,
+                      onChanged: (value) => setState(() => _published = value),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Submit button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Annonce postée: $_title (${_price.toStringAsFixed(0)} FCFA)',
+                          ),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: Text(
+                    'Publier l\'annonce',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppColors.white,
+                        ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -294,7 +573,7 @@ class MarketplaceScreen extends StatelessWidget {
       Product(
         id: '1',
         title: 'iPhone 14 Pro',
-        description: 'Téléphone dernière génération',
+        description: 'Téléphone dernière génération en excellent état',
         price: 850000,
         category: 'Électronique',
         imageUrl: null,
@@ -307,35 +586,109 @@ class MarketplaceScreen extends StatelessWidget {
         quantity: 1,
         published: true,
       ),
+      Product(
+        id: '2',
+        title: 'Laptop Gaming RTX 4080',
+        description: 'Ordinateur gaming haute performance',
+        price: 1200000,
+        category: 'Électronique',
+        imageUrl: null,
+        sellerId: 'seller_2',
+        sellerName: 'Claude Nkomo',
+        sellerRating: 4.7,
+        condition: 'Bon état',
+        location: 'Port-Gentil',
+        createdAt: DateTime.now(),
+        quantity: 1,
+        published: true,
+      ),
+      Product(
+        id: '3',
+        title: 'Canapé confortable 3 places',
+        description: 'Canapé gris anthracite très confortable',
+        price: 250000,
+        category: 'Maison',
+        imageUrl: null,
+        sellerId: 'seller_3',
+        sellerName: 'Marie Ondoua',
+        sellerRating: 4.9,
+        condition: 'Bon état',
+        location: 'Libreville',
+        createdAt: DateTime.now(),
+        quantity: 1,
+        published: true,
+      ),
+      Product(
+        id: '4',
+        title: 'Robe élégante taille M',
+        description: 'Robe de soirée noire, jamais portée',
+        price: 45000,
+        category: 'Vêtements',
+        imageUrl: null,
+        sellerId: 'seller_4',
+        sellerName: 'Fatima Traoré',
+        sellerRating: 4.6,
+        condition: 'Neuf',
+        location: 'Franceville',
+        createdAt: DateTime.now(),
+        quantity: 2,
+        published: true,
+      ),
+      Product(
+        id: '5',
+        title: 'Service d\'installation électrique',
+        description: 'Installation électrique pour maison/bureau',
+        price: 50000,
+        category: 'Services',
+        imageUrl: null,
+        sellerId: 'seller_5',
+        sellerName: 'Jean Mbadinga',
+        sellerRating: 4.8,
+        condition: 'Bon état',
+        location: 'Libreville',
+        createdAt: DateTime.now(),
+        quantity: 5,
+        published: true,
+      ),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Marketplace'),
         centerTitle: true,
+        elevation: 0,
       ),
-      body: ListView.builder(
+      body: ListView(
         padding: const EdgeInsets.all(24),
-        itemCount: products.length,
-        itemBuilder: (context, index) => GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MarketplaceDetailScreen(
-                  product: products[index],
-                ),
-              ),
-            );
-          },
-          child: ModernCard(
-            title: products[index].title,
-            description: products[index].description,
-            price: products[index].formattedPrice,
-            rating: products[index].sellerRating,
-            sellerName: products[index].sellerName,
+        children: [
+          Text(
+            'Tous les articles (5)',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-        ),
+          const SizedBox(height: 20),
+          ...products.map((product) => GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MarketplaceDetailScreen(
+                    product: product,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ModernCard(
+                title: product.title,
+                description: product.description,
+                price: product.formattedPrice,
+                rating: product.sellerRating,
+                sellerName: product.sellerName,
+              ),
+            ),
+          )).toList(),
+        ],
       ),
     );
   }
@@ -347,10 +700,304 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Profil (À implémenter)',
-        style: Theme.of(context).textTheme.headlineSmall,
+    final transactions = [
+      {'date': '22 Jun 2026', 'type': 'Achat', 'amount': '850 000', 'status': 'Réussi'},
+      {'date': '20 Jun 2026', 'type': 'Vente', 'amount': '425 000', 'status': 'Réussi'},
+      {'date': '18 Jun 2026', 'type': 'Achat', 'amount': '120 000', 'status': 'Réussi'},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mon Profil'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Profile header
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary.withOpacity(0.7),
+                  ],
+                ),
+              ),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: AppColors.white,
+                    child: Text(
+                      'AC',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Alice Cameroon',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'acaméron@example.com',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.white.withOpacity(0.9),
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.star_rounded, color: AppColors.accent, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        '4.8 • 28 avis',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.white.withOpacity(0.9),
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Wallet section
+            Container(
+              margin: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Portefeuille MyGabon',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.white,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '485 750 FCFA',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.add),
+                          label: const Text('Recharger'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.white,
+                            foregroundColor: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.send),
+                          label: const Text('Envoyer'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.white.withOpacity(0.2),
+                            foregroundColor: AppColors.white,
+                            side: BorderSide(
+                              color: AppColors.white.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Transactions section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Historique des transactions',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...transactions.map((tx) =>
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tx['type'] ?? '',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          tx['date'] ?? '',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.grey600,
+                              ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${tx['amount']} FCFA',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            tx['status'] ?? '',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ).toList(),
+
+            // Settings section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Paramètres',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.edit,
+                    title: 'Éditer le profil',
+                    onTap: () {},
+                  ),
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.lock,
+                    title: 'Modifier le mot de passe',
+                    onTap: () {},
+                  ),
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.notifications,
+                    title: 'Notifications',
+                    onTap: () {},
+                  ),
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.help,
+                    title: 'Aide et support',
+                    onTap: () {},
+                  ),
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.logout,
+                    title: 'Déconnexion',
+                    onTap: () {},
+                    isDangerous: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDangerous = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.grey50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(
+          icon,
+          color: isDangerous ? AppColors.error : AppColors.primary,
+        ),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: isDangerous ? AppColors.error : null,
+              ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: AppColors.grey400,
+        ),
       ),
     );
   }

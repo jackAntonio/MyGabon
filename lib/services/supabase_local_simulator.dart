@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'demo_data.dart';
 
 /// 🎬 LOCAL SUPABASE SIMULATOR

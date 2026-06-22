@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_token_service.dart';
 import '../services/secure_storage_service.dart';
-import '../utils/security_utils.dart';
 import '../app_services.dart';
 import 'dart:async';
 

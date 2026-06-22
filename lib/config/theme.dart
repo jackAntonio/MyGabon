@@ -36,7 +36,6 @@ class AppTheme {
       secondary: AppColors.accent,
       tertiary: AppColors.darkBg,
       surface: AppColors.white,
-      background: AppColors.grey50,
       error: AppColors.error,
     ),
 
@@ -201,7 +200,6 @@ class AppTheme {
       secondary: AppColors.primary,
       tertiary: AppColors.grey200,
       surface: AppColors.grey800,
-      background: AppColors.grey900,
       error: AppColors.error,
     ),
   );
