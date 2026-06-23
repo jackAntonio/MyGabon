@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/services_screen.dart';
@@ -32,17 +31,29 @@ import 'services/fraud_detection_service.dart';
 import 'widgets/connection_widgets.dart';
 import 'app_services.dart';
 
+// Secrets injectés au build via --dart-define-from-file=env.json
+// (jamais via un .env empaqueté comme asset, lisible en dézippant l'APK/IPA).
+const _twilioAccountSid = String.fromEnvironment('TWILIO_ACCOUNT_SID');
+const _twilioAuthToken = String.fromEnvironment('TWILIO_AUTH_TOKEN');
+const _twilioPhoneNumber = String.fromEnvironment('TWILIO_PHONE_NUMBER');
+const _jwtSecret = String.fromEnvironment('JWT_SECRET');
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Charger .env
-  await dotenv.load();
+  if (_jwtSecret.length < 32) {
+    throw Exception(
+      'JWT_SECRET manquant ou trop court. '
+      'Lancez avec --dart-define-from-file=env.json (voir env.json.example), '
+      'JWT_SECRET doit faire au moins 32 caractères.',
+    );
+  }
 
   // Initialiser AppServices avec Twilio credentials
   await AppServices().init(
-    twilioAccountSid: dotenv.env['TWILIO_ACCOUNT_SID'] ?? '',
-    twilioAuthToken: dotenv.env['TWILIO_AUTH_TOKEN'] ?? '',
-    twilioPhoneNumber: dotenv.env['TWILIO_PHONE_NUMBER'] ?? '',
+    twilioAccountSid: _twilioAccountSid,
+    twilioAuthToken: _twilioAuthToken,
+    twilioPhoneNumber: _twilioPhoneNumber,
   );
 
   // Initialize cache
@@ -53,13 +64,15 @@ void main() async {
   await ReviewService().init();
   await FraudDetectionService().init();
 
-  runApp(const GabonConnectApp());
+  runApp(const GabonConnectApp(jwtSecret: _jwtSecret));
 }
 
 /// Root of the GabonConnect application.
 /// Sets up MaterialApp with bottom navigation and responsive theme.
 class GabonConnectApp extends StatefulWidget {
-  const GabonConnectApp({Key? key}) : super(key: key);
+  final String jwtSecret;
+
+  const GabonConnectApp({Key? key, required this.jwtSecret}) : super(key: key);
 
   @override
   State<GabonConnectApp> createState() => _GabonConnectAppState();
@@ -99,7 +112,8 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
       providers: [
         ChangeNotifierProvider.value(value: _connectivityService),
         ChangeNotifierProvider.value(value: _offlineQueueService),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(
+            create: (_) => AuthProvider(jwtSecret: widget.jwtSecret)),
         ChangeNotifierProvider(
           create: (_) => ServiceProvider(_connectivityService),
         ),

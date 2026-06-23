@@ -225,10 +225,27 @@ ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies (Allow public access for demo)
-CREATE POLICY "Allow public select" ON users FOR SELECT USING (true);
+-- RLS Policies
+-- ⚠️ users / messages / audit_logs contiennent des données privées (email, téléphone,
+-- contenu de chat, journaux d'audit) : accès restreint au propriétaire.
+-- services / products / reviews restent en lecture publique (catalogue marketplace).
+CREATE POLICY "Users can read own row" ON users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own row" ON users FOR UPDATE USING (auth.uid() = id);
+
 CREATE POLICY "Allow public select" ON services FOR SELECT USING (true);
+CREATE POLICY "Providers manage own services" ON services FOR ALL USING (auth.uid() = provider_id);
+
 CREATE POLICY "Allow public select" ON products FOR SELECT USING (true);
-CREATE POLICY "Allow public select" ON messages FOR SELECT USING (true);
-CREATE POLICY "Allow public select" ON audit_logs FOR SELECT USING (true);
+CREATE POLICY "Sellers manage own products" ON products FOR ALL USING (auth.uid() = seller_id);
+
+CREATE POLICY "Participants can read own messages" ON messages
+  FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+CREATE POLICY "Users can send messages as themselves" ON messages
+  FOR INSERT WITH CHECK (auth.uid() = sender_id);
+
+CREATE POLICY "Users can read own audit logs" ON audit_logs FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own audit logs" ON audit_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 CREATE POLICY "Allow public select" ON reviews FOR SELECT USING (true);
+CREATE POLICY "Reviewers can create reviews" ON reviews
+  FOR INSERT WITH CHECK (auth.uid() = reviewer_id);

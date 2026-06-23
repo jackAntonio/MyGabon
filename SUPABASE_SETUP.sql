@@ -82,11 +82,21 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_wallets ENABLE ROW LEVEL SECURITY;
 
--- ✅ CREATE PUBLIC READ POLICIES
-CREATE POLICY "Public read" ON users FOR SELECT USING (true);
+-- ✅ POLICIES D'ACCÈS
+-- users / transactions / user_wallets : données privées, accès restreint au propriétaire.
+-- services / products : catalogue public, lecture ouverte à tous.
+CREATE POLICY "Users can read own row" ON users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Public read" ON services FOR SELECT USING (true);
 CREATE POLICY "Public read" ON products FOR SELECT USING (true);
-CREATE POLICY "Public read" ON transactions FOR SELECT USING (true);
+CREATE POLICY "Buyer or seller can read own transactions" ON transactions
+  FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+
+CREATE POLICY "Users can read own wallet" ON user_wallets FOR SELECT USING (auth.uid() = user_id);
+-- ⚠️ Volontairement aucune policy INSERT/UPDATE côté client sur user_wallets :
+-- les crédits/débits doivent passer par une fonction serveur (RPC SECURITY DEFINER ou
+-- Edge Function) qui valide la transaction réelle avant de toucher au solde, jamais
+-- un UPDATE direct piloté par un montant fourni par le client (sinon un utilisateur
+-- pourrait créditer son propre solde à volonté via l'API REST Supabase).
 
 -- ============================================================
 -- INSERT GABON DEMO DATA (8 USERS)

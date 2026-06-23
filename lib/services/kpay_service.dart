@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
 /// Service Kpay pour paiements Airtel Money et autres méthodes
@@ -249,14 +250,24 @@ class KpayService {
     return gabonPattern.hasMatch(normalized);
   }
 
-  /// Vérifier le webhook signature
+  /// Vérifier le webhook signature (HMAC-SHA256, comparaison en temps constant)
   bool verifyWebhookSignature(String payload, String signature) {
     if (_webhookSecret == null) return false;
 
-    final bytes = utf8.encode('$payload$_webhookSecret');
-    final computed = base64.encode(bytes);
+    final hmac = Hmac(sha256, utf8.encode(_webhookSecret!));
+    final computed = hmac.convert(utf8.encode(payload)).toString();
 
-    return computed == signature;
+    return _constantTimeEquals(computed, signature);
+  }
+
+  /// Comparaison résistante aux attaques par timing
+  bool _constantTimeEquals(String a, String b) {
+    if (a.length != b.length) return false;
+    var result = 0;
+    for (var i = 0; i < a.length; i++) {
+      result |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
+    }
+    return result == 0;
   }
 
   /// Format prix pour affichage

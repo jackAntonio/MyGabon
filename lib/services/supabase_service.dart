@@ -40,6 +40,7 @@ class SupabaseService {
     required String email,
     required String password,
     required String fullName,
+    String? phoneNumber,
   }) async {
     try {
       final response = await _client.auth.signUp(
@@ -54,6 +55,7 @@ class SupabaseService {
           userId: response.user!.id,
           email: email,
           fullName: fullName,
+          phoneNumber: phoneNumber,
         );
 
         // Log audit
@@ -101,6 +103,12 @@ class SupabaseService {
     }
   }
 
+  /// Demander un email de réinitialisation de mot de passe
+  Future<void> resetPassword({required String email}) async {
+    await _client.auth.resetPasswordForEmail(email);
+    await logAuditEvent(action: 'password_reset_requested', details: {'email': email});
+  }
+
   /// Sign out
   Future<void> signOut() async {
     try {
@@ -120,17 +128,19 @@ class SupabaseService {
 
   // ========== USER MANAGEMENT ==========
 
-  /// Créer profil utilisateur dans Firestore
+  /// Créer profil utilisateur dans la table users
   Future<void> _createUserProfile({
     required String userId,
     required String email,
     required String fullName,
+    String? phoneNumber,
   }) async {
     try {
       await _client.from('users').insert({
         'id': userId,
         'email': email,
         'full_name': fullName,
+        if (phoneNumber != null) 'phone_number': phoneNumber,
       });
       debugPrint('✅ User profile créé');
     } catch (e) {
@@ -449,6 +459,9 @@ class SupabaseService {
 
   /// Récupérer solde du portefeuille
   Future<double> getWalletBalance(String userId) async {
+    if (currentUser?.id != userId) {
+      throw Exception('Accès refusé : vous ne pouvez consulter que votre propre portefeuille');
+    }
     try {
       final result = await _client
           .from('user_wallets')
@@ -476,6 +489,9 @@ class SupabaseService {
     required String userId,
     required double amount,
   }) async {
+    if (currentUser?.id != userId) {
+      throw Exception('Accès refusé : vous ne pouvez créditer que votre propre portefeuille');
+    }
     try {
       final currentBalance = await getWalletBalance(userId);
       await _client
@@ -500,6 +516,9 @@ class SupabaseService {
     required String userId,
     required double amount,
   }) async {
+    if (currentUser?.id != userId) {
+      throw Exception('Accès refusé : vous ne pouvez débiter que votre propre portefeuille');
+    }
     try {
       final currentBalance = await getWalletBalance(userId);
       if (currentBalance < amount) {
@@ -525,10 +544,14 @@ class SupabaseService {
 
   /// Récupérer les transactions de l'utilisateur
   Future<List> getUserTransactions(String userId) async {
+    if (currentUser?.id != userId) {
+      throw Exception('Accès refusé : vous ne pouvez consulter que vos propres transactions');
+    }
     try {
       final transactions = await _client
           .from('transactions')
           .select()
+          .or('buyer_id.eq.$userId,seller_id.eq.$userId')
           .order('created_at', ascending: false)
           .limit(50);
       return transactions as List;

@@ -4,10 +4,12 @@
 
 ```
 MODE: PRODUCTION ✅
-API_KEY: kpay_live_1aa96e6134ec1205d50d11b19e44ef4962e783839f5bdef7
-MERCHANT_ID: c21f2e54d0ae97ee48da5f3cb15ef19328d577d111fcc06b50c4ed68c35edf00
-SUPABASE: https://kbggddignhydzxjzdera.supabase.com
+API_KEY: <à récupérer dans ton .env local, KPAY_API_KEY — ne jamais committer cette valeur>
+MERCHANT_ID: <à récupérer dans ton .env local, KPAY_MERCHANT_ID — ne jamais committer cette valeur>
+SUPABASE: <à récupérer dans ton .env local, SUPABASE_URL>
 ```
+
+⚠️ Une vraie clé de production avait été collée ici par erreur (commit `6ee46a9`). Elle doit être considérée comme compromise : régénère-la depuis le dashboard Kpay avant de continuer, même si ce commit n'a pas encore été poussé sur GitHub.
 
 ---
 
@@ -36,10 +38,10 @@ RÈGLES DE TEST:
 ### Étape 1: Vérifier le .env
 ```bash
 # Ouvrir c:\Users\HP\Downloads\MyGabon\.env
-# Vérifier ces lignes existent:
+# Vérifier ces lignes existent (avec les vraies valeurs, jamais committées):
 
-KPAY_API_KEY=kpay_live_1aa96e6134ec1205d50d11b19e44ef4962e783839f5bdef7
-KPAY_MERCHANT_ID=c21f2e54d0ae97ee48da5f3cb15ef19328d577d111fcc06b50c4ed68c35edf00
+KPAY_API_KEY=<ta clé Kpay, uniquement dans .env local>
+KPAY_MERCHANT_ID=<ton merchant id Kpay, uniquement dans .env local>
 ```
 
 ### Étape 2: Préparer l'app

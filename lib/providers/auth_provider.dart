@@ -1,38 +1,36 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_token_service.dart';
-import '../services/secure_storage_service.dart';
-import '../app_services.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/supabase_service.dart';
 
-/// ✅ SÉCURISÉ: Authentification avec Firebase Auth + JWT Tokens
-/// Gère login, registration, token refresh et logout
+/// ✅ Authentification basée sur Supabase Auth.
+/// La session et le rafraîchissement des tokens sont gérés nativement par
+/// supabase_flutter (persistance sécurisée incluse) : pas de JWT maison à gérer ici.
 class AuthProvider extends ChangeNotifier {
-  final _auth = FirebaseAuth.instance;
-  late final AuthTokenService _tokenService;
-  
-  User? _currentUser;
-  String? _accessToken;
-  String? _refreshToken;
+  final SupabaseService _service = SupabaseService();
+  StreamSubscription<AuthState>? _authSub;
+
+  Map<String, dynamic>? _profile;
   String? _errorMessage;
   bool _isLoading = false;
-  
-  AuthProvider({String? jwtSecret}) {
-    // Initialiser token service avec une clé sécurisée
-    final secret = jwtSecret ?? _getDefaultSecret();
-    _tokenService = AuthTokenService(jwtSecret: secret);
-    
-    // Vérifier auth status au démarrage
-    _checkAuthStatus();
+
+  AuthProvider() {
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+      _loadProfile();
+    });
+    _loadProfile();
   }
-  
+
   // Getters
-  User? get currentUser => _currentUser;
-  bool get isLoggedIn => _currentUser != null;
-  String? get accessToken => _accessToken;
+  User? get currentUser => _service.currentUser;
+  Map<String, dynamic>? get profile => _profile;
+  bool get isLoggedIn => _service.isAuthenticated;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
-  
+
+  String get displayName =>
+      (_profile?['full_name'] as String?) ?? currentUser?.email ?? 'Utilisateur';
+
   /// ✅ Login avec email et mot de passe
   Future<void> login({
     required String emailOrPhone,
@@ -41,279 +39,156 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      
+
       if (password.isEmpty || emailOrPhone.isEmpty) {
         throw Exception('Email/Téléphone et mot de passe requis');
       }
-      
-      // Login avec Firebase Auth
-      String email = emailOrPhone;
+
       if (_isPhoneNumber(emailOrPhone)) {
-        // TODO: Implémenter lookup email à partir du téléphone
-        throw Exception('Authentification téléphone non encore implémentée');
+        throw Exception('Connexion par téléphone non encore disponible, utilisez votre email');
       }
-      
-      final credentials = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      
-      if (credentials.user == null) {
-        throw Exception('Authentification échouée');
-      }
-      
-      _currentUser = credentials.user;
-      
-      // Générer tokens
-      await _generateAndSaveTokens(_currentUser!.uid, _currentUser!.email!);
 
-      // 📝 Log audit
-      await AppServices().auditLog.logLogin(
-        email: _currentUser!.email!,
-        success: true,
-      );
+      await _service.signIn(email: emailOrPhone, password: password);
+      await _loadProfile();
 
-      debugPrint('✅ Login réussi: ${_currentUser!.email}');
-      notifyListeners();
-    } on FirebaseAuthException catch (e) {
-      _handleFirebaseError(e);
+      debugPrint('✅ Login réussi: $emailOrPhone');
+    } on AuthException catch (e) {
+      _setError(_translateAuthError(e));
+      rethrow;
     } catch (e) {
-      _setError('Erreur authentification: ${e.toString()}');
+      _setError('Erreur authentification: ${e.toString().replaceFirst('Exception: ', '')}');
+      rethrow;
     } finally {
       _setLoading(false);
     }
   }
-  
-  /// ✅ Registration avec validation
+
+  /// ✅ Inscription avec validation
   Future<void> register({
     required String email,
     required String password,
     required String fullName,
-    required String phoneNumber,
+    String? phoneNumber,
   }) async {
     try {
       _setLoading(true);
       _clearError();
-      
-      // Validation
+
       if (email.isEmpty || password.isEmpty || fullName.isEmpty) {
         throw Exception('Tous les champs sont requis');
       }
-      
       if (password.length < 8) {
         throw Exception('Mot de passe minimum 8 caractères');
       }
-      
-      // Créer user Firebase
-      final credentials = await _auth.createUserWithEmailAndPassword(
+
+      await _service.signUp(
         email: email,
         password: password,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
       );
-      
-      if (credentials.user == null) {
-        throw Exception('Création compte échouée');
-      }
-      
-      // Mettre à jour profile
-      await credentials.user!.updateDisplayName(fullName);
-      await credentials.user!.updatePhotoURL(''); // Avatar placeholder
-      
-      _currentUser = credentials.user;
-      
-      // Générer tokens
-      await _generateAndSaveTokens(_currentUser!.uid, email);
+      await _loadProfile();
 
-      debugPrint('✅ Registration réussi: $email');
-      notifyListeners();
-    } on FirebaseAuthException catch (e) {
-      _handleFirebaseError(e);
+      debugPrint('✅ Inscription réussie: $email');
+    } on AuthException catch (e) {
+      _setError(_translateAuthError(e));
+      rethrow;
     } catch (e) {
-      _setError('Erreur inscription: ${e.toString()}');
+      _setError('Erreur inscription: ${e.toString().replaceFirst('Exception: ', '')}');
+      rethrow;
     } finally {
       _setLoading(false);
     }
   }
-  
-  /// ✅ Refresh access token avec refresh token
-  Future<bool> refreshAccessToken() async {
-    try {
-      final storedRefreshToken = await SecureStorageService.getToken('refresh_token');
-      
-      if (storedRefreshToken == null) {
-        await logout();
-        return false;
-      }
-      
-      // Vérifier refresh token
-      if (!_tokenService.verifyToken(storedRefreshToken)) {
-        await logout();
-        return false;
-      }
-      
-      final userId = _tokenService.getUserIdFromToken(storedRefreshToken);
-      if (userId == null || _currentUser?.email == null) {
-        return false;
-      }
-      
-      // Générer nouvel access token
-      _accessToken = _tokenService.generateAccessToken(
-        userId: userId,
-        email: _currentUser!.email!,
-      );
-      
-      await SecureStorageService.saveToken('access_token', _accessToken!);
-      
-      debugPrint('✅ Access token rafraîchi');
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('❌ Erreur refresh token: $e');
-      return false;
-    }
-  }
-  
-  /// ✅ Logout sécurisé
+
+  /// ✅ Logout
   Future<void> logout() async {
     try {
       _setLoading(true);
-
-      // 📝 Log audit
-      await AppServices().auditLog.logLogout();
-
-      // Supprimer tokens stockés
-      await SecureStorageService.clearAll();
-
-      // Logout Firebase
-      await _auth.signOut();
-
-      _currentUser = null;
-      _accessToken = null;
-      _refreshToken = null;
-
+      await _service.signOut();
+      _profile = null;
       debugPrint('✅ Logout réussi');
-      notifyListeners();
     } catch (e) {
       _setError('Erreur logout: ${e.toString()}');
     } finally {
       _setLoading(false);
     }
   }
-  
+
   /// ✅ Reset mot de passe
   Future<void> resetPassword({required String email}) async {
     try {
       _setLoading(true);
       _clearError();
-      
+
       if (email.isEmpty) {
         throw Exception('Email requis');
       }
-      
-      await _auth.sendPasswordResetEmail(email: email);
+
+      await _service.resetPassword(email: email);
       debugPrint('✅ Email de reset envoyé à: $email');
-    } on FirebaseAuthException catch (e) {
-      _handleFirebaseError(e);
+    } on AuthException catch (e) {
+      _setError(_translateAuthError(e));
+      rethrow;
     } catch (e) {
-      _setError('Erreur: ${e.toString()}');
+      _setError('Erreur: ${e.toString().replaceFirst('Exception: ', '')}');
+      rethrow;
     } finally {
       _setLoading(false);
     }
   }
-  
+
   // --- PRIVATE METHODS ---
-  
-  /// Générer et sauvegarder tokens
-  Future<void> _generateAndSaveTokens(String userId, String email) async {
-    _accessToken = _tokenService.generateAccessToken(
-      userId: userId,
-      email: email,
-    );
-    
-    _refreshToken = _tokenService.generateRefreshToken(userId: userId);
-    
-    // Sauvegarder tokens dans stockage sécurisé
-    await SecureStorageService.saveToken('access_token', _accessToken!);
-    await SecureStorageService.saveToken('refresh_token', _refreshToken!);
-  }
-  
-  /// Vérifier status auth au démarrage
-  Future<void> _checkAuthStatus() async {
-    try {
-      _currentUser = _auth.currentUser;
-      
-      if (_currentUser != null) {
-        final storedAccessToken = await SecureStorageService.getToken('access_token');
-        
-        if (storedAccessToken != null && _tokenService.verifyToken(storedAccessToken)) {
-          _accessToken = storedAccessToken;
-          debugPrint('✅ Session restaurée: ${_currentUser!.email}');
-        } else {
-          // Essayer de rafraîchir
-          await refreshAccessToken();
-        }
-      }
-      
+
+  Future<void> _loadProfile() async {
+    if (!_service.isAuthenticated) {
+      _profile = null;
       notifyListeners();
-    } catch (e) {
-      debugPrint('❌ Erreur vérification auth: $e');
+      return;
     }
+    _profile = await _service.getUserProfile(currentUser!.id);
+    notifyListeners();
   }
-  
-  /// Gérer erreurs Firebase
-  void _handleFirebaseError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        _setError('Utilisateur non trouvé');
-        break;
-      case 'wrong-password':
-        _setError('Mot de passe incorrect');
-        break;
-      case 'email-already-in-use':
-        _setError('Cet email est déjà utilisé');
-        break;
-      case 'weak-password':
-        _setError('Mot de passe trop faible (min. 8 caractères)');
-        break;
-      case 'invalid-email':
-        _setError('Format email invalide');
-        break;
-      case 'account-exists-with-different-credential':
-        _setError('Un compte existe avec ce email');
-        break;
-      case 'operation-not-allowed':
-        _setError('Authentification non activée');
-        break;
-      case 'too-many-requests':
-        _setError('Trop de tentatives. Réessayez plus tard');
-        break;
-      default:
-        _setError('Erreur authentification: ${e.message}');
+
+  String _translateAuthError(AuthException e) {
+    final message = e.message.toLowerCase();
+    if (message.contains('invalid login credentials')) {
+      return 'Email ou mot de passe incorrect';
     }
+    if (message.contains('user already registered')) {
+      return 'Cet email est déjà utilisé';
+    }
+    if (message.contains('password should be at least')) {
+      return 'Mot de passe trop faible (min. 8 caractères)';
+    }
+    if (message.contains('email not confirmed')) {
+      return 'Email non confirmé, vérifiez votre boîte mail';
+    }
+    return e.message;
   }
-  
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
   }
-  
+
   void _setError(String message) {
     _errorMessage = message;
     debugPrint('❌ $message');
     notifyListeners();
   }
-  
+
   void _clearError() {
     _errorMessage = null;
   }
-  
+
   bool _isPhoneNumber(String value) {
-    return value.startsWith('+') || value.length >= 9;
+    return !value.contains('@') && (value.startsWith('+') || value.length >= 8);
   }
-  
-  /// Clé par défaut (à remplacer par variable d'environnement en production)
-  String _getDefaultSecret() {
-    // ⚠️ EN PRODUCTION: Charger depuis .env ou secrets manager
-    return 'default-jwt-secret-minimum-32-chars-required-for-production';
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 }
-

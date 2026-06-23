@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../models/product.dart';
-import 'payment/checkout_screen_complete.dart';
+import 'payment/payment_method_selection_screen.dart';
 
 /// Full-screen marketplace product detail page
 class MarketplaceDetailScreen extends StatefulWidget {
@@ -498,14 +498,14 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
               ),
               const SizedBox(width: 12),
 
-              // MyGabon payment button (primary)
+              // Payment button with multiple options
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CheckoutScreenComplete(
+                        builder: (context) => PaymentMethodSelectionScreen(
                           product: widget.product,
                         ),
                       ),
@@ -516,7 +516,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                     backgroundColor: AppColors.primary,
                   ),
                   child: Text(
-                    'Payer via MyGabon',
+                    'Procéder au paiement',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: AppColors.white,
                         ),

@@ -52,6 +52,7 @@ macos/Flutter/flutter_export_environment.sh
 .env
 .env.local
 .env.*.local
+env.json
 
 # Security keys
 *.jks

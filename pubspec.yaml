@@ -61,6 +61,9 @@ dependencies:
   supabase_flutter: ^2.5.0
   supabase: ^2.1.0
 
+  # Payments - Apple Pay & Google Pay
+  pay: ^2.1.0
+
   # Firebase dependencies (commented for web build)
   # firebase_core: ^2.0.0
   # cloud_firestore: ^4.0.0
@@ -81,4 +84,3 @@ flutter:
 
   assets:
     - assets/images/
-    - .env
