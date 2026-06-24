@@ -322,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final grossAmount = (t['gross_amount'] as num?)?.toDouble() ?? 0;
     final visibleFee = (t['visible_fee'] as num?)?.toDouble() ?? 0;
     final netToSeller = (t['net_to_seller'] as num?)?.toDouble() ?? grossAmount;
-    // Vente : le vendeur reçoit le net après commission (10%), pas le prix affiché.
+    // Vente : le vendeur reçoit le net après commission (5%), pas le prix affiché.
     // Achat : l'acheteur a payé le prix + frais de service (5%).
     final amount = isSale ? netToSeller : grossAmount + visibleFee;
 

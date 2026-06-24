@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/material.dart';
+import '../utils/secure_hive.dart';
 
 /// Service for caching data locally using Hive
 /// Enables offline access to previously loaded services and products
@@ -25,7 +26,9 @@ class CacheService {
 
       _servicesBox = await Hive.openBox(servicesBoxName);
       _productsBox = await Hive.openBox(productsBoxName);
-      _usersBox = await Hive.openBox(usersBoxName);
+      // ✅ Chiffrée : contient des profils utilisateurs (téléphone, etc.),
+      // à la différence du catalogue public services/products.
+      _usersBox = await SecureHive.openEncryptedBox(usersBoxName);
       _metaBox = await Hive.openBox<Map<dynamic, dynamic>>(cacheMetaBoxName);
 
       _initialized = true;

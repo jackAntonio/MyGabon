@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'secure_local_storage.dart';
 
 /// ✅ Service Supabase - Backend principal pour GabonConnect
 class SupabaseService {
@@ -23,6 +24,14 @@ class SupabaseService {
       await Supabase.initialize(
         url: url,
         anonKey: anonKey,
+        authOptions: FlutterAuthClientOptions(
+          // ✅ Session (refresh token inclus) chiffrée via flutter_secure_storage
+          // au lieu du SharedPreferences en clair par défaut.
+          localStorage: SecureLocalStorage(
+            persistSessionKey:
+                'sb-${Uri.parse(url).host.split(".").first}-auth-token',
+          ),
+        ),
       );
       _client = Supabase.instance.client;
       _initialized = true;
@@ -164,11 +173,26 @@ class SupabaseService {
     }
   }
 
-  /// Update user profile
+  /// Update user profile.
+  /// ✅ Paramètres nommés explicites (pas de Map générique) : seules ces
+  /// colonnes peuvent être modifiées par ce point d'entrée. C'est aussi
+  /// imposé côté base (GRANT UPDATE limité, cf. migration
+  /// 20260624_security_hardening.sql) : verified/rating/email/id ne
+  /// peuvent être changés que par des RPC dédiées.
   Future<void> updateUserProfile({
     required String userId,
-    required Map<String, dynamic> updates,
+    String? fullName,
+    String? phoneNumber,
+    String? avatarUrl,
+    String? bio,
   }) async {
+    final updates = <String, dynamic>{
+      if (fullName != null) 'full_name': fullName,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (bio != null) 'bio': bio,
+    };
+    if (updates.isEmpty) return;
     try {
       await _client.from('users').update(updates).eq('id', userId);
 
@@ -180,24 +204,17 @@ class SupabaseService {
   }
 
   // ========== OTP & VERIFICATION (Phase 2) ==========
+  // ✅ L'OTP est généré, haché et vérifié exclusivement côté serveur
+  // (RPC request_phone_otp / confirm_phone_otp, SECURITY DEFINER). Le client
+  // ne voit jamais le code et ne peut pas positionner users.verified
+  // lui-même (cf. migration 20260624_security_hardening.sql).
 
-  /// Envoyer OTP par SMS
-  Future<bool> sendOTP({
-    required String phoneNumber,
-    required String otp,
-  }) async {
+  /// Demander l'envoi d'un OTP par SMS au numéro donné
+  Future<bool> sendOTP({required String phoneNumber}) async {
     try {
-      // Sauvegarder OTP en base
-      await _client.from('otp_logs').insert({
-        'phone_number': phoneNumber,
-        'otp_code': otp,
-        'attempts': 0,
+      await _client.rpc('request_phone_otp', params: {
+        'p_phone_number': phoneNumber,
       });
-
-      // TODO: Appeler Twilio ou Edge Function pour envoyer SMS réel
-      // Pour l'instant: simulation
-      debugPrint('📱 OTP simulé envoyé: $otp à $phoneNumber');
-
       return true;
     } catch (e) {
       debugPrint('❌ Erreur envoi OTP: $e');
@@ -205,30 +222,26 @@ class SupabaseService {
     }
   }
 
-  /// Vérifier OTP
+  /// Vérifier l'OTP saisi par l'utilisateur ; positionne users.verified
+  /// côté serveur en cas de succès.
   Future<bool> verifyOTP({
     required String phoneNumber,
     required String otp,
   }) async {
     try {
-      final result = await _client
-          .from('user_verifications')
-          .update({'verified': true, 'verified_at': DateTime.now().toIso8601String()})
-          .eq('phone_number', phoneNumber)
-          .eq('otp_code', otp)
-          .eq('verified', false);
+      final success = await _client.rpc('confirm_phone_otp', params: {
+        'p_phone_number': phoneNumber,
+        'p_code': otp,
+      }) as bool;
 
-      if (result.isEmpty) {
-        throw Exception('OTP invalide ou expiré');
+      if (success) {
+        await logAuditEvent(
+          action: 'phone_verified',
+          details: {'phone': _maskPhone(phoneNumber)},
+        );
       }
 
-      // Log verification
-      await logAuditEvent(
-        action: 'phone_verified',
-        details: {'phone': _maskPhone(phoneNumber)},
-      );
-
-      return true;
+      return success;
     } catch (e) {
       debugPrint('❌ Erreur vérification OTP: $e');
       return false;
@@ -370,6 +383,7 @@ class SupabaseService {
   Future<List<Map<String, dynamic>>> getMessages(String otherUserId) async {
     final userId = currentUser?.id;
     if (userId == null) return [];
+    if (!_isValidUuid(otherUserId)) return [];
     try {
       final messages = await _client
           .from('messages')
@@ -402,7 +416,7 @@ class SupabaseService {
   /// interlocuteur), construite côté client à partir des messages échangés.
   Future<List<Map<String, dynamic>>> getConversations() async {
     final userId = currentUser?.id;
-    if (userId == null) return [];
+    if (userId == null || !_isValidUuid(userId)) return [];
     try {
       final messages = await _client
           .from('messages')
@@ -446,6 +460,15 @@ class SupabaseService {
     if (phone.length < 4) return '****';
     return '*' * (phone.length - 4) + phone.substring(phone.length - 4);
   }
+
+  /// Valide qu'une valeur est bien un UUID avant de l'interpoler dans un
+  /// filtre PostgREST (.or(...)) : empêche une valeur contenant des
+  /// caractères de syntaxe de filtre (virgule, parenthèse, opérateur) de
+  /// modifier la requête envoyée au serveur.
+  static final RegExp _uuidPattern = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
+  bool _isValidUuid(String value) => _uuidPattern.hasMatch(value);
 
   // ========== PRODUCTS / MARKETPLACE ==========
 
@@ -607,6 +630,7 @@ class SupabaseService {
     if (currentUser?.id != userId) {
       throw Exception('Accès refusé : vous ne pouvez consulter que vos propres transactions');
     }
+    if (!_isValidUuid(userId)) return [];
     try {
       final transactions = await _client
           .from('transactions')
@@ -630,10 +654,14 @@ class SupabaseService {
     double deliveryFee = 0,
   }) async {
     try {
-      // Calculer les frais
+      // ⚠️ Ces montants ne sont qu'indicatifs côté client : un trigger
+      // serveur (enforce_transaction_pricing, migration
+      // 20260626_enforce_transaction_pricing.sql) les recalcule depuis
+      // products.price à l'INSERT — un client modifié ne peut pas créer
+      // une transaction à un prix arbitraire.
       final visibleFee = grossAmount * 0.05;
-      final actualFee = grossAmount * 0.10;
-      final netToSeller = grossAmount * 0.90;
+      final actualFee = grossAmount * 0.05;
+      final netToSeller = grossAmount * 0.95;
 
       final result = await _client
           .from('transactions')
@@ -683,6 +711,20 @@ class SupabaseService {
       debugPrint('❌ Erreur finalisation transaction: $e');
       return false;
     }
+  }
+
+  /// Observe le statut d'une transaction (paiement mobile money externe,
+  /// Kpay/Airtel). Le statut ne passe à 'success'/'failed' que via le
+  /// webhook serveur (Edge Function kpay-webhook -> confirm_external_payment
+  /// / fail_external_payment, réservées à service_role) — jamais déclenché
+  /// par ce client, qui se contente d'observer.
+  Stream<Map<String, dynamic>?> watchTransactionStatus(String transactionId) {
+    if (!_isValidUuid(transactionId)) return const Stream.empty();
+    return _client
+        .from('transactions')
+        .stream(primaryKey: ['id'])
+        .eq('id', transactionId)
+        .map((rows) => rows.isEmpty ? null : rows.first);
   }
 
   // ========== ADMINISTRATION ==========
@@ -839,33 +881,6 @@ class SupabaseService {
       return true;
     } catch (e) {
       debugPrint('❌ Erreur finalisation livraison: $e');
-      return false;
-    }
-  }
-
-  /// Mettre à jour le statut d'une transaction
-  Future<bool> updateTransactionStatus({
-    required String transactionId,
-    required String status,
-  }) async {
-    try {
-      await _client
-          .from('transactions')
-          .update({
-            'status': status,
-            'completed_at': status == 'success' ? DateTime.now().toIso8601String() : null,
-          })
-          .eq('id', transactionId);
-
-      await logAuditEvent(
-        action: 'transaction_updated',
-        resourceId: transactionId,
-        details: {'new_status': status},
-      );
-
-      return true;
-    } catch (e) {
-      debugPrint('❌ Erreur mise à jour transaction: $e');
       return false;
     }
   }

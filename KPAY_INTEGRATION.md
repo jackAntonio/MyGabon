@@ -1,386 +1,227 @@
-# 🔐 Intégration Kpay - Paiements Airtel Money
+# 🔐 Intégration Kpay - Paiement Airtel Money (Gabon)
 
 ## 📋 Vue d'ensemble
 
-Kpay est la solution de paiement intégrée pour MyGabon permettant les paiements **Airtel Money** en Afrique Centrale, particulièrement au Gabon.
+Kpay (https://kpay.site) est l'agrégateur mobile money utilisé par MyGabon
+pour les paiements **Airtel Money** au Gabon (provider `AIRTEL_GAB`, seul
+opérateur Gabon listé dans leur documentation officielle — **Moov Money
+Gabon n'est pas supporté par Kpay** et n'est donc pas proposé dans l'app).
+
+⚠️ Toutes les infos ci-dessous viennent de https://kpay.site/documentation
+(consultée le 2026-06-25). Aucune valeur n'est inventée, mais aucun compte
+marchand réel n'a encore été testé en conditions réelles — à valider à la
+première transaction sandbox.
 
 ### ✅ Fonctionnalités
-- Initiation de paiement Airtel Money
-- Vérification OTP automatique
-- Confirmation de paiement
-- Gestion des erreurs
-- Support multi-devises (XAF, USD, EUR)
-- Webhooks pour notifications
+- Initiation de paiement Airtel Money (mode USSD)
+- Validation directe par le client sur son téléphone (pas d'OTP saisi dans l'app)
+- Webhook serveur-à-serveur comme seule autorité sur le statut final
+- Polling de statut possible en complément (`GET /payments/:id`)
 
 ---
 
-## 🚀 Configuration Kpay
+## 🏗️ Architecture (important)
 
-### 1. Créer un compte Kpay
+**Aucune clé Kpay ne vit dans l'app Flutter.** `X-API-Key` et surtout
+`X-Secret-Key` (explicitement nommée "Secret key" par Kpay) ne doivent
+jamais être compilées dans un binaire mobile, extractible d'un APK/IPA —
+règle explicite du projet ("Jamais exposer les clés API paiement dans le
+code Flutter").
 
-1. Aller sur: https://kpay.africa
-2. S'inscrire en tant que marchand
-3. Vérifier votre email
-4. Créer votre profil marchand
+```
+App Flutter (KpayService)
+   │  supabase.functions.invoke('kpay-initiate', {transactionId, phoneNumber})
+   │  (JWT de l'utilisateur connecté, pas de secret Kpay)
+   ▼
+Edge Function kpay-initiate (supabase/functions/kpay-initiate)
+   │  vérifie via RLS que l'appelant est bien l'acheteur de la transaction
+   │  POST https://admin.kpay.site/api/v1/payments/init
+   │  Headers: X-API-Key + X-Secret-Key (secrets Edge Function)
+   ▼
+Kpay → SMS/USSD envoyé au téléphone de l'acheteur → il valide avec son code PIN mobile money
+   │
+   ▼
+Kpay envoie un webhook serveur-à-serveur (signature HMAC)
+   ▼
+Edge Function kpay-webhook (supabase/functions/kpay-webhook)
+   │  vérifie la signature, appelle confirm_external_payment / fail_external_payment
+   │  (RPC réservées au rôle service_role, jamais au client)
+   ▼
+transactions.status passe à 'success'/'failed' → l'app l'observe via Supabase Realtime
+```
 
-### 2. Obtenir les credentials
+Le client (`mobile_money_screen.dart`) ne fait jamais que : créer la
+transaction, demander l'initiation, puis **attendre** la confirmation
+serveur. Il ne peut jamais déclarer lui-même un paiement réussi.
 
-#### Dashboard Kpay
-- Aller dans **Settings → API Keys**
-- Copier:
-  - `API_KEY` (clé API secrète)
-  - `MERCHANT_ID` (identifiant commerçant)
-  - `WEBHOOK_SECRET` (optionnel, pour les notifications)
+---
 
-### 3. Configurer .env
+## 🚀 Configuration
+
+### 1. Compte marchand Kpay
+1. https://kpay.site → créer un compte, créer une "Application" dans le dashboard
+2. Récupérer la paire de clés sandbox : `kpay_test_...` (X-API-Key) et `sk_test_...` (X-Secret-Key)
+3. Compléter le KYC pour obtenir les clés `kpay_live_...` / `sk_live_...` en production
+
+### 2. Secrets Edge Functions (jamais dans env.json / --dart-define)
 
 ```bash
-# .env
-KPAY_API_KEY=your_api_key_from_kpay_dashboard
-KPAY_MERCHANT_ID=your_merchant_id_from_kpay_dashboard
-KPAY_WEBHOOK_SECRET=your_webhook_secret_optional
+supabase functions deploy kpay-initiate
+supabase functions deploy kpay-webhook
+supabase secrets set KPAY_API_KEY=kpay_test_xxxxx
+supabase secrets set KPAY_SECRET_KEY=sk_test_xxxxx
+supabase secrets set KPAY_WEBHOOK_SECRET=xxxxx
 ```
 
-### 4. Configuration du Webhook (optionnel)
-
-```bash
-# Dans Kpay Dashboard:
-# Settings → Webhooks
-# Callback URL: https://mygabon.app/api/payment/callback
-# Return URL: mygabon://payment-success
-
-# Notez le WEBHOOK_SECRET généré
+### 3. Webhook côté dashboard Kpay
+Dans le dashboard Kpay (Application → Webhooks), configurer l'URL de
+callback (dépôts) :
+```
+https://<project-ref>.supabase.co/functions/v1/kpay-webhook
 ```
 
 ---
 
-## 🔄 Flux de Paiement Airtel Money
+## 🔄 Flux de paiement réel
 
-### 1. Checkout (CheckoutScreenComplete)
-```
-Utilisateur clique "Payer via Airtel Money"
-    ↓
-Choisit numéro Airtel (06XXXXXXXX ou +241XXXXXXXX)
-    ↓
-Clique "Procéder au paiement"
-```
-
-### 2. Initiation (AirtelMoneyScreen)
-```
-App appelle: kpay.initiateAirtelPayment()
-    ↓
-Kpay envoie SMS avec instruction à l'utilisateur
-    ↓
-Utilisateur voit écran "Envoi du code OTP"
-```
-
-### 3. Saisie OTP
-```
-Utilisateur reçoit OTP sur son téléphone Airtel
-    ↓
-Rentre le code OTP (6 chiffres)
-    ↓
-Timer: 60 secondes avant expiration
-```
-
-### 4. Confirmation
-```
-App appelle: kpay.confirmAirtelPayment(transactionId, otp)
-    ↓
-Kpay valide l'OTP auprès d'Airtel Money
-    ↓
-Paiement confirmé ✅
-    ↓
-Écran de succès avec reçu
-```
+1. **Initiation** : `mobile_money_screen.dart` crée la transaction Supabase
+   (`status='pending'`, `payment_method='airtel_money'`), puis appelle
+   `KpayService().initiateAirtelMoneyPayment(transactionId, phoneNumber)`.
+2. **Edge Function `kpay-initiate`** vérifie que l'appelant est l'acheteur,
+   puis `POST /payments/init` avec `{amount, provider: 'AIRTEL_GAB',
+   phoneNumber, externalId: transactionId}`.
+3. **Validation utilisateur** : Kpay déclenche la procédure côté opérateur
+   (USSD). L'utilisateur valide directement sur son téléphone avec son code
+   PIN Airtel Money — **il n'y a pas d'OTP à saisir dans l'app MyGabon**
+   (contrairement à ce que décrivait une version précédente de ce doc).
+4. **Confirmation** : Kpay envoie un webhook server-to-server à
+   `kpay-webhook`, qui vérifie la signature puis crédite le vendeur et passe
+   la transaction à `success`/`failed`.
+5. **L'app observe** ce changement via `SupabaseService().watchTransactionStatus()`
+   (Supabase Realtime) et navigue vers l'écran de succès.
 
 ---
 
-## 📱 Numéros de Téléphone Acceptés
+## 🌍 Pays et opérateurs supportés (Kpay, /documentation/providers)
 
-### Format Gabon
-```
-✅ Acceptés:
-- +241XXXXXXXX (format international)
-- 06XXXXXXXX (format local)
-- 237XXXXXXXX (code pays)
-
-❌ Rejetés:
-- 06 XXXX XXXX (espaces)
-- 06-XXXX-XXXX (tirets)
-- XXXXXXXX (sans préfixe)
-```
-
-### Validation
-```dart
-if (!kpayService.isValidGabonPhone(phoneNumber)) {
-  // Afficher erreur
-}
-```
+| Pays | Opérateurs |
+|---|---|
+| Bénin | `MTN_MOMO_BEN`, `MOOV_BEN` |
+| Cameroun | `MTN_MOMO_CMR`, `ORANGE_CMR` |
+| Côte d'Ivoire | `MTN_MOMO_CIV`, `ORANGE_CIV` |
+| RD Congo | `VODACOM_MPESA_COD`, `AIRTEL_COD`, `ORANGE_COD` |
+| **Gabon** | **`AIRTEL_GAB`** (seul opérateur — pas de Moov) |
+| Congo | `AIRTEL_COG`, `MTN_MOMO_COG` |
+| Rwanda | `AIRTEL_RWA`, `MTN_MOMO_RWA` |
+| Kenya | `MPESA_KEN` |
+| Sénégal | `FREE_SEN`, `ORANGE_SEN` |
+| Ouganda | `AIRTEL_OAPI_UGA`, `MTN_MOMO_UGA` |
+| Zambie | `AIRTEL_OAPI_ZMB`, `MTN_MOMO_ZMB`, `ZAMTEL_ZMB` |
 
 ---
 
-## 💰 Montants et Devises
+## 📡 Référence API
 
-### Devises supportées
-```
-XAF  - Franc CFA (Gabon) - Défaut
-USD  - Dollar américain
-EUR  - Euro
-GBP  - Livre sterling
-```
+**Base URL** : `https://admin.kpay.site/api/v1`
 
-### Montants minimums/maximums
+**Authentification** (headers sur chaque requête) :
 ```
-Minimum: 100 FCFA
-Maximum: 10 000 000 FCFA (par transaction)
+X-API-Key: kpay_test_xxxxx   (ou kpay_live_xxxxx en prod)
+X-Secret-Key: sk_test_xxxxx  (ou sk_live_xxxxx en prod)
+Content-Type: application/json
 ```
 
-### Exemple de transaction
-```dart
-final response = await kpay.initiateAirtelPayment(
-  phoneNumber: '+241612345678',
-  amount: 850000,  // 850 000 FCFA
-  productName: 'iPhone 14 Pro',
-  productId: 'prod_12345',
-);
+**Initier un paiement** — `POST /payments/init`
+```json
+{ "amount": 5000, "provider": "AIRTEL_GAB", "phoneNumber": "24106XXXXXXX", "externalId": "<notre transactions.id>" }
 ```
+Réponse `201` :
+```json
+{ "id": "pay_abc123", "status": "PENDING", "reference": "KPAY-...", "amount": 5000, "currency": "XAF", "provider": "AIRTEL_GAB", "phoneNumber": "..." }
+```
+
+**Vérifier le statut** — `GET /payments/:id` → même forme, `status` parmi
+`PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED`.
+
+**Codes d'échec (sandbox)** : `PAYER_LIMIT_REACHED`, `PAYER_NOT_FOUND`,
+`PAYMENT_NOT_APPROVED`, `UNSPECIFIED_FAILURE`, `RECIPIENT_NOT_FOUND`.
 
 ---
 
-## ⚠️ Gestion des Erreurs
+## 🔐 Webhook (`/documentation/webhooks`)
 
-### Codes d'erreur Kpay
-
-```
-'INVALID_PHONE'         → Numéro invalide
-'INSUFFICIENT_BALANCE'  → Solde insuffisant
-'OTP_EXPIRED'          → OTP expiré
-'OTP_INVALID'          → OTP incorrect
-'TRANSACTION_FAILED'   → Paiement échoué
-'NETWORK_ERROR'        → Problème connexion
-```
-
-### Gestion dans l'app
-
-```dart
-try {
-  final response = await kpay.initiateAirtelPayment(...);
-  if (response.success) {
-    // Succès
-  } else {
-    // Erreur: response.message
-  }
-} on KpayException catch (e) {
-  // Gérer l'exception
-  showErrorSnackBar(e.message);
-}
-```
-
----
-
-## 🔍 Vérification du Statut
-
-### Vérifier manuellement le statut
-```dart
-final status = await kpay.checkPaymentStatus(
-  transactionId: 'txn_123456',
-);
-
-if (status.isCompleted) {
-  print('Paiement confirmé');
-} else if (status.isPending) {
-  print('En attente...');
-} else if (status.isFailed) {
-  print('Paiement échoué');
-}
-```
-
-### Propriétés du statut
-```dart
-KpayPaymentStatus {
-  transactionId: String,
-  status: String,           // 'completed', 'pending', 'failed'
-  amount: double,
-  phoneNumber: String,
-  paidAt: DateTime?,
-  message: String?,
-}
-```
-
----
-
-## 🔐 Webhooks & Callbacks
-
-### Configuration des webhooks
-
-1. **Callback URL** - Pour les notifications serveur
-   ```
-   https://mygabon.app/api/payment/callback
-   ```
-
-2. **Return URL** - Deep link après paiement
-   ```
-   mygabon://payment-success
-   ```
-
-### Vérifier la signature webhook
-
-```dart
-bool isValid = kpayService.verifyWebhookSignature(
-  payload: jsonEncode(webhookData),
-  signature: headerSignature,
-);
-
-if (isValid) {
-  // Traiter le webhook en confiance
-}
-```
-
-### Exemple de payload webhook
-
+- Header de signature : **`X-KPAY-Signature`**
+- Algorithme : **HMAC-SHA256 (hex), calculé sur le corps brut JSON reçu**
+  (pas re-sérialisé) — comparaison en temps constant côté serveur.
+- Payload :
 ```json
 {
-  "transaction_id": "txn_123456",
-  "status": "completed",
-  "amount": 850000,
-  "currency": "XAF",
-  "phone_number": "+241612345678",
-  "reference": "prod_12345",
-  "timestamp": "2026-06-22T10:30:00Z",
-  "signature": "base64_encoded_signature"
+  "event": "payment.completed",
+  "paymentId": "pay_abc123",
+  "reference": "KPAY-DEP-12345",
+  "status": "COMPLETED",
+  "amount": 5000,
+  "phoneNumber": "24106XXXXXXX",
+  "externalId": "<notre transactions.id>",
+  "metadata": {},
+  "completedAt": "2026-05-14T10:02:30.000Z",
+  "failedAt": null,
+  "failureReason": null,
+  "timestamp": "2026-05-14T10:02:31.000Z"
 }
 ```
+On retrouve notre transaction par **`externalId`** (jamais par `reference`,
+qui est un identifiant interne Kpay). `status` : `COMPLETED | FAILED | CANCELLED`.
 
 ---
 
-## 📊 Suivi des Transactions
+## 🧪 Numéros de test sandbox
 
-### Dans Supabase
+⚠️ La documentation Kpay ne liste des numéros de test que pour le **Cameroun**
+(`MTN_MOMO_CMR`/`ORANGE_CMR`). **Aucun numéro de test n'est documenté pour
+`AIRTEL_GAB`** — à demander au support Kpay avant de tester en sandbox sur
+le Gabon, ou à découvrir empiriquement une fois les clés `kpay_test_...`
+obtenues.
 
-Les transactions Kpay sont stockées dans la table `transactions`:
+Numéros Cameroun connus (pour référence du mécanisme) :
+- `237653456789` → `COMPLETED` (succès garanti)
+- `237653456129` → `SUBMITTED` (reste en attente)
+- `237653456019/029/039/069` → `FAILED` (codes d'échec différents)
+
+---
+
+## 📊 Suivi des transactions (Supabase)
 
 ```sql
-SELECT * FROM transactions 
-WHERE payment_method = 'airtel_money' 
+SELECT * FROM transactions
+WHERE payment_method = 'airtel_money'
 ORDER BY created_at DESC;
 ```
 
-### Colonnes importantes
-
-```sql
-transaction_id      -- ID unique Kpay
-buyer_id           -- Utilisateur qui paie
-seller_id          -- Vendeur qui reçoit
-product_id         -- Produit acheté
-gross_amount       -- Montant brut
-visible_fee        -- Frais visibles (5%)
-actual_fee         -- Frais réels (10%)
-net_to_seller      -- Montant net au vendeur
-payment_method     -- 'airtel_money'
-status             -- 'pending', 'success', 'failed'
-created_at         -- Timestamp création
-completed_at       -- Timestamp confirmation
-```
+Colonnes clés : `gross_amount`, `visible_fee`/`actual_fee` (5% chacun,
+identiques — pas de frais caché), `net_to_seller`, `status`
+(`pending`/`success`/`failed`), `transaction_reference` (= `paymentId` Kpay
+une fois confirmé), `notes` (raison d'échec si applicable).
 
 ---
 
-## 🧪 Mode Test/Simulation
+## ⚠️ Sans credentials Kpay réels
 
-### Sans credentials Kpay réels
-
-Si `KPAY_API_KEY` ou `KPAY_MERCHANT_ID` manquent, l'app utilise la **simulation**:
-
-```dart
-// Toujours simulé en développement
-if (kpayApiKey == null || kpayMerchantId == null) {
-  debugPrint('⚠️ Kpay credentials non trouvés - mode simulation');
-  // Les paiements sont simulés localement
-}
-```
-
-### Paiements simulés
-
-```
-Numéro test: 06XXXXXXXX
-OTP test: 123456
-Montant test: Tous les montants acceptés
-Résultat: Succès garanti en simulation
-```
+Sans `KPAY_API_KEY`/`KPAY_SECRET_KEY` configurées comme secrets des Edge
+Functions, `kpay-initiate` répond `503 Kpay non configuré côté serveur` —
+l'app affiche l'erreur, ne plante pas. Pas de mode simulation automatique.
 
 ---
 
-## 📞 Support Kpay
+## ✅ Checklist avant mise en production
 
-### Documentation
-- https://kpay.africa/docs
-- https://api.kpay.africa/docs
-
-### API Endpoints
-
-```
-Base URL: https://api.kpay.africa/api/v1
-
-POST   /payments/initiate      → Initier un paiement
-POST   /payments/confirm       → Confirmer avec OTP
-GET    /payments/status/:id    → Vérifier le statut
-POST   /payments/refund        → Remboursement
-```
-
-### Support technique
-- Email: support@kpay.africa
-- Phone: +237 XXX XXX XXX
-- Slack: kpay-support.slack.com
+- [ ] Compte marchand Kpay + KYC validé (clés `kpay_live_...`)
+- [ ] `supabase secrets set KPAY_API_KEY=... KPAY_SECRET_KEY=... KPAY_WEBHOOK_SECRET=...`
+- [ ] `supabase functions deploy kpay-initiate kpay-webhook`
+- [ ] URL de webhook configurée dans le dashboard Kpay
+- [ ] Test de bout en bout avec un vrai numéro Airtel Money Gabon
+- [ ] Vérifier que `transactions.status` passe bien à `success` et que le wallet vendeur est crédité
 
 ---
 
-## ✅ Checklist d'implémentation
-
-- [ ] Créer compte Kpay
-- [ ] Obtenir API_KEY et MERCHANT_ID
-- [ ] Ajouter credentials dans .env
-- [ ] Tester avec numéro réel (mode production)
-- [ ] Configurer webhooks (optionnel)
-- [ ] Tester flux complet de paiement
-- [ ] Vérifier transactions dans Supabase
-- [ ] Mettre à jour support client
-
----
-
-## 🎯 Prochaines étapes
-
-### Phase 1 - Actuel (Production)
-- [x] Intégration Kpay complète
-- [x] Paiements Airtel Money
-- [x] Gestion OTP
-- [x] Écran de succès
-
-### Phase 2 - À venir
-- [ ] Remboursements automatiques
-- [ ] Paiements récurrents
-- [ ] Porte-monnaie Airtel Money
-- [ ] Support Orange Money
-- [ ] Support MTN Money
-- [ ] Paiements par scan QR
-
-### Phase 3 - Avancé
-- [ ] Paiements B2B
-- [ ] Factures automatiques
-- [ ] Réconciliation comptable
-- [ ] Rapports d'audit
-- [ ] API pour partenaires
-
----
-
-## 📝 Notes
-
-- Les frais Kpay sont déjà inclus dans `actual_fee`
-- Les frais visibles (5%) sont affichés à l'utilisateur
-- Les frais réels (10%) incluent commission Kpay (~3%) + commission MyGabon (7%)
-- Les remboursements sont manuels actuellement
-- Support multi-devise via Kpay (conversion automatique)
-
----
-
-**MyGabon + Kpay** | Paiements Airtel Money sécurisés | 🔐
-
+**MyGabon + Kpay** | Paiement Airtel Money Gabon, confirmé exclusivement côté serveur | 🔐

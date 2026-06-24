@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import '../models/security_models.dart';
 import '../services/verification_service.dart';
+import '../services/supabase_service.dart';
 import '../utils/security_utils.dart';
-import '../app_services.dart';
 
 /// Provider for managing user verification (phone, ID)
+/// ✅ L'OTP est généré/vérifié côté serveur (SupabaseService -> RPC
+/// request_phone_otp/confirm_phone_otp). Ce provider ne génère plus
+/// l'OTP en local et ne le compare jamais lui-même.
 class VerificationProvider extends ChangeNotifier {
   final VerificationService _verificationService;
-  
+
   UserVerification? _currentUserVerification;
   bool _isVerifying = false;
   String? _verificationError;
-  String? _otpSent;
   int _otpResendCountdown = 0;
-  
+
   VerificationProvider(this._verificationService);
-  
+
   // Getters
   UserVerification? get currentUserVerification => _currentUserVerification;
   bool get isVerifying => _isVerifying;
   String? get verificationError => _verificationError;
-  String? get otpSent => _otpSent;
   int get otpResendCountdown => _otpResendCountdown;
   
   bool get isPhoneVerified => _currentUserVerification?.phoneVerified ?? false;
@@ -44,7 +45,8 @@ class VerificationProvider extends ChangeNotifier {
     }
   }
   
-  /// Send OTP to phone number
+  /// Demande l'envoi d'un OTP au numéro donné (génération + hachage +
+  /// stockage entièrement côté serveur, cf. RPC request_phone_otp).
   Future<bool> sendPhoneOTP(String phoneNumber) async {
     try {
       if (!SecurityValidator.isValidPhoneNumber(phoneNumber)) {
@@ -57,14 +59,7 @@ class VerificationProvider extends ChangeNotifier {
       _verificationError = null;
       notifyListeners();
 
-      // 📱 Générer OTP (6 digits)
-      final otp = _generateOTP();
-
-      // 📤 Envoyer via SMS
-      final sent = await AppServices().sms.sendOTP(
-        phoneNumber: phoneNumber,
-        otp: otp,
-      );
+      final sent = await SupabaseService().sendOTP(phoneNumber: phoneNumber);
 
       if (!sent) {
         _verificationError = 'Failed to send OTP. Please check phone number.';
@@ -73,13 +68,6 @@ class VerificationProvider extends ChangeNotifier {
         return false;
       }
 
-      // 📝 Log audit
-      await AppServices().auditLog.logPhoneVerification(
-        phoneNumber: phoneNumber,
-        verified: false,
-      );
-
-      _otpSent = otp;
       _otpResendCountdown = 60; // 60 seconds before resend allowed
 
       _isVerifying = false;
@@ -94,12 +82,8 @@ class VerificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Generate 6-digit OTP
-  String _generateOTP() {
-    return (100000 + DateTime.now().millisecond % 900000).toString();
-  }
-  
-  /// Verify OTP
+  /// Vérifie l'OTP saisi auprès du serveur (RPC confirm_phone_otp), qui
+  /// positionne lui-même users.verified en cas de succès.
   Future<bool> verifyPhoneOTP(String phoneNumber, String otp) async {
     try {
       if (otp.length != 6 || int.tryParse(otp) == null) {
@@ -112,15 +96,10 @@ class VerificationProvider extends ChangeNotifier {
       _verificationError = null;
       notifyListeners();
 
-      // Vérifier OTP correspond à celui envoyé
-      if (_otpSent != otp) {
-        _verificationError = 'Invalid OTP. Please try again.';
-        _isVerifying = false;
-        notifyListeners();
-        return false;
-      }
-
-      final isValid = await _verificationService.verifyOTP(phoneNumber, otp);
+      final isValid = await SupabaseService().verifyOTP(
+        phoneNumber: phoneNumber,
+        otp: otp,
+      );
 
       if (!isValid) {
         _verificationError = 'Invalid OTP. Please try again.';
@@ -129,25 +108,18 @@ class VerificationProvider extends ChangeNotifier {
         return false;
       }
 
-      // Mark phone as verified
+      // Mise en cache locale (UI uniquement, le serveur reste la source de
+      // vérité pour users.verified).
       if (_currentUserVerification != null) {
         await _verificationService.markPhoneVerified(
           _currentUserVerification!.userId,
           phoneNumber,
         );
 
-        // 📝 Log successful verification
-        await AppServices().auditLog.logPhoneVerification(
-          phoneNumber: phoneNumber,
-          verified: true,
-        );
-
-        // Reload verification status
         await loadUserVerification(_currentUserVerification!.userId);
       }
 
       _isVerifying = false;
-      _otpSent = null;
       notifyListeners();
       return true;
     } catch (e) {
@@ -194,10 +166,9 @@ class VerificationProvider extends ChangeNotifier {
     }
   }
   
-  /// Clear OTP
-  Future<void> clearOTP(String phoneNumber) async {
-    await _verificationService.clearOTP(phoneNumber);
-    _otpSent = null;
+  /// Réinitialise le compte à rebours de renvoi (l'OTP lui-même vit
+  /// côté serveur et expire automatiquement après 5 minutes).
+  void clearOTP(String phoneNumber) {
     _otpResendCountdown = 0;
     notifyListeners();
   }

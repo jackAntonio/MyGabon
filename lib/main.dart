@@ -43,6 +43,11 @@ const _twilioAuthToken = String.fromEnvironment('TWILIO_AUTH_TOKEN');
 const _twilioPhoneNumber = String.fromEnvironment('TWILIO_PHONE_NUMBER');
 const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+// ⚠️ Aucune clé Kpay ici (KPAY_API_KEY/KPAY_SECRET_KEY/KPAY_WEBHOOK_SECRET) :
+// un APK/IPA est extractible, donc une clé "Secret key" ne doit JAMAIS être
+// compilée dans l'app. Ces credentials vivent uniquement comme secrets des
+// Edge Functions kpay-initiate / kpay-webhook (`supabase secrets set ...`),
+// jamais côté client — cf. supabase/functions/kpay-initiate/index.ts.
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

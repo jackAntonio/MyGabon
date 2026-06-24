@@ -90,24 +90,13 @@ class _PaymentMethodSelectionScreenState
               context,
               icon: '📱',
               title: 'Airtel Money',
-              subtitle: 'Paiement par SMS OTP',
+              subtitle: 'Validation directe sur votre téléphone',
               value: 'airtel',
             ),
 
             const SizedBox(height: 12),
 
-            // Option 3: Moov Money
-            _buildPaymentOption(
-              context,
-              icon: '📲',
-              title: 'Moov Money',
-              subtitle: 'Paiement par SMS OTP',
-              value: 'moov',
-            ),
-
-            const SizedBox(height: 12),
-
-            // Option 4: Cash
+            // Option 3: Cash
             _buildPaymentOption(
               context,
               icon: '💵',
@@ -116,8 +105,8 @@ class _PaymentMethodSelectionScreenState
               value: 'cash',
             ),
 
-            // Numéro mobile money (affiché seulement si Airtel/Moov sélectionné)
-            if (_selectedMethod == 'airtel' || _selectedMethod == 'moov') ...[
+            // Numéro Airtel Money (affiché seulement si Airtel sélectionné)
+            if (_selectedMethod == 'airtel') ...[
               const SizedBox(height: 16),
               _buildPhoneInput(context),
             ],
@@ -323,11 +312,10 @@ class _PaymentMethodSelectionScreenState
   }
 
   Widget _buildPhoneInput(BuildContext context) {
-    final label = _selectedMethod == 'moov' ? 'Numéro Moov' : 'Numéro Airtel';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Theme.of(context).textTheme.titleSmall),
+        Text('Numéro Airtel Money', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         TextField(
           onChanged: (value) => setState(() => _phoneNumber = value),
@@ -470,11 +458,7 @@ class _PaymentMethodSelectionScreenState
         break;
 
       case 'airtel':
-        _handleMobileMoneyPayment(context, fees, provider: 'airtel', providerLabel: 'Airtel Money');
-        break;
-
-      case 'moov':
-        _handleMobileMoneyPayment(context, fees, provider: 'moov', providerLabel: 'Moov Money');
+        _handleMobileMoneyPayment(context, fees);
         break;
 
       case 'cash':
@@ -552,14 +536,12 @@ class _PaymentMethodSelectionScreenState
 
   void _handleMobileMoneyPayment(
     BuildContext context,
-    FeeCalculation fees, {
-    required String provider,
-    required String providerLabel,
-  }) {
+    FeeCalculation fees,
+  ) {
     if (Validators.validatePhone(_phoneNumber) != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Veuillez entrer un numéro $providerLabel valide'),
+        const SnackBar(
+          content: Text('Veuillez entrer un numéro Airtel Money valide'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -574,8 +556,6 @@ class _PaymentMethodSelectionScreenState
           visibleFee: fees.visibleFee,
           totalAmount: fees.totalWithVisibleFee,
           phoneNumber: _phoneNumber,
-          provider: provider,
-          providerLabel: providerLabel,
         ),
       ),
     );

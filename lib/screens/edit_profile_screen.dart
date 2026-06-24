@@ -41,10 +41,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final userId = SupabaseService().currentUser?.id;
       if (userId == null) throw Exception('Non connecté');
 
-      await SupabaseService().updateUserProfile(userId: userId, updates: {
-        'full_name': _nameController.text.trim(),
-        'phone_number': _phoneController.text.trim(),
-      });
+      await SupabaseService().updateUserProfile(
+        userId: userId,
+        fullName: _nameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

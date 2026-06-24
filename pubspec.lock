@@ -73,14 +73,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
-  bcrypt:
-    dependency: "direct main"
-    description:
-      name: bcrypt
-      sha256: "6073a700cbbc59f1d4ab27cd532755e3de5e676c4941f535f351374df849270b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -266,7 +258,7 @@ packages:
     source: hosted
     version: "1.0.9"
   dart_jsonwebtoken:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: dart_jsonwebtoken
       sha256: "00a0812d2aeaeb0d30bcbc4dd3cee57971dbc0ab2216adf4f0247f37793f15ef"
@@ -305,22 +297,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.3"
-  dio:
-    dependency: "direct main"
-    description:
-      name: dio
-      sha256: aff32c08f92787a557dd5c0145ac91536481831a01b4648136373cddb0e64f8c
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.9.2"
-  dio_web_adapter:
-    dependency: transitive
-    description:
-      name: dio_web_adapter
-      sha256: "2f9e64323a7c3c7ef69567d5c800424a11f8337b8b228bad02524c9fb3c1f340"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.2"
   ed25519_edwards:
     dependency: transitive
     description:

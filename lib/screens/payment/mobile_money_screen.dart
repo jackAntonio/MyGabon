@@ -1,20 +1,24 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/kpay_service.dart';
+import '../../services/supabase_service.dart';
 import 'success_screen.dart';
 
-/// Écran de paiement mobile money (Airtel Money ou Moov Money) avec
-/// intégration Kpay. [provider] est la clé technique envoyée à Kpay
-/// ('airtel' ou 'moov') ; [providerLabel] est le nom affiché à l'utilisateur.
+/// Écran de paiement Airtel Money (Gabon) avec intégration Kpay.
+///
+/// La doc officielle Kpay ne décrit aucune étape de confirmation par OTP
+/// dans l'app : après l'initiation, l'utilisateur valide directement sur
+/// son téléphone (USSD Airtel). Le statut final n'arrive que via le
+/// webhook serveur (jamais déclaré par ce client) ; cet écran attend
+/// simplement cette confirmation via Supabase Realtime.
 class MobileMoneyScreen extends StatefulWidget {
   final Product product;
   final double visibleFee;
   final double totalAmount;
   final String phoneNumber;
-  final String provider;
-  final String providerLabel;
 
   const MobileMoneyScreen({
     Key? key,
@@ -22,8 +26,6 @@ class MobileMoneyScreen extends StatefulWidget {
     required this.visibleFee,
     required this.totalAmount,
     required this.phoneNumber,
-    required this.provider,
-    required this.providerLabel,
   }) : super(key: key);
 
   @override
@@ -32,12 +34,12 @@ class MobileMoneyScreen extends StatefulWidget {
 
 class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
   late final kpay = KpayService();
-  String _transactionId = '';
-  String _step = 'sending'; // sending, otp, confirming, success
-  String _otp = '';
+  String? _supabaseTransactionId;
+  String _step = 'sending'; // sending, waiting_server, error, success
   bool _isLoading = false;
-  int _secondsRemaining = 60;
   String _errorMessage = '';
+  StreamSubscription<Map<String, dynamic>?>? _statusSubscription;
+  Timer? _serverTimeoutTimer;
 
   @override
   void initState() {
@@ -45,42 +47,61 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
     _initiatePayment();
   }
 
+  @override
+  void dispose() {
+    _statusSubscription?.cancel();
+    _serverTimeoutTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _initiatePayment() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
+      _step = 'sending';
     });
 
     try {
-      debugPrint('🔄 Initiating ${widget.providerLabel} payment...');
+      debugPrint('🔄 Initiating Airtel Money payment...');
 
-      final response = await kpay.initiateMobileMoneyPayment(
-        provider: widget.provider,
-        phoneNumber: widget.phoneNumber,
-        amount: widget.totalAmount,
-        productName: widget.product.title,
+      // ✅ La transaction Supabase est créée avant l'appel Kpay : son ID
+      // sert d'externalId envoyé à Kpay, pour que le webhook (confirmé
+      // côté serveur) puisse la retrouver directement.
+      final supabaseTransactionId = await SupabaseService().createTransaction(
+        sellerId: widget.product.sellerId,
         productId: widget.product.id,
+        grossAmount: widget.product.price,
+        paymentMethod: 'airtel_money',
+      );
+
+      if (supabaseTransactionId == null) {
+        throw Exception('Impossible de créer la transaction');
+      }
+      _supabaseTransactionId = supabaseTransactionId;
+
+      final response = await kpay.initiateAirtelMoneyPayment(
+        transactionId: supabaseTransactionId,
+        phoneNumber: widget.phoneNumber,
       );
 
       if (response.success) {
         setState(() {
-          _transactionId = response.transactionId;
-          _step = 'otp';
+          _step = 'waiting_server';
           _isLoading = false;
         });
-
-        _startOtpTimer();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Code OTP envoyé au ${widget.phoneNumber}'),
+              content: Text('Validez le paiement sur votre téléphone (${widget.phoneNumber})'),
               backgroundColor: AppColors.success,
             ),
           );
         }
+
+        _waitForServerConfirmation();
       } else {
-        throw KpayException(response.message);
+        throw KpayException(response.message ?? 'Erreur initiation paiement');
       }
     } catch (e) {
       setState(() {
@@ -100,83 +121,62 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
     }
   }
 
-  void _startOtpTimer() {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted && _secondsRemaining > 0 && _step == 'otp') {
-        setState(() => _secondsRemaining--);
-        _startOtpTimer();
-      }
-    });
-  }
+  /// Observe la transaction Supabase jusqu'à ce que le webhook Kpay
+  /// (server-to-server) la marque 'success' ou 'failed'. Timeout de 30s :
+  /// le paiement continue en arrière-plan même si l'utilisateur quitte
+  /// l'écran (la confirmation finale sera visible dans l'historique).
+  void _waitForServerConfirmation() {
+    if (_supabaseTransactionId == null) return;
 
-  Future<void> _confirmPayment() async {
-    if (_otp.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez entrer le code OTP'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    try {
-      debugPrint('✔️ Confirming payment with OTP...');
-
-      final response = await kpay.confirmMobileMoneyPayment(
-        transactionId: _transactionId,
-        otp: _otp,
-      );
-
-      if (response.success) {
-        setState(() {
-          _step = 'success';
-          _isLoading = false;
-        });
-
-        await Future.delayed(const Duration(seconds: 1));
-
+    _statusSubscription = SupabaseService()
+        .watchTransactionStatus(_supabaseTransactionId!)
+        .listen((row) {
+      final status = row?['status'] as String?;
+      if (status == 'success') {
+        _statusSubscription?.cancel();
+        _serverTimeoutTimer?.cancel();
         if (!mounted) return;
-
+        setState(() => _step = 'success');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => PaymentSuccessScreen(
               product: widget.product,
               totalAmount: widget.totalAmount,
-              transactionId: _transactionId,
+              transactionId: _supabaseTransactionId!,
             ),
           ),
         );
-      } else {
-        throw KpayException(response.message);
+      } else if (status == 'failed') {
+        _statusSubscription?.cancel();
+        _serverTimeoutTimer?.cancel();
+        if (!mounted) return;
+        setState(() {
+          _step = 'error';
+          _errorMessage = row?['notes'] as String? ??
+              'Le paiement a été refusé par Airtel Money';
+        });
       }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e.toString();
-      });
+    });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur confirmation: $_errorMessage'),
-            backgroundColor: AppColors.error,
+    _serverTimeoutTimer = Timer(const Duration(seconds: 30), () {
+      if (!mounted || _step != 'waiting_server') return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La confirmation prend plus de temps que prévu. '
+            'Vous serez notifié dès que le paiement sera confirmé.',
           ),
-        );
-      }
-    }
+          backgroundColor: AppColors.warning,
+        ),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: _step == 'waiting_server' || _step == 'error',
       child: Scaffold(
         body: SafeArea(
           child: SingleChildScrollView(
@@ -194,9 +194,9 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
                   const SizedBox(height: 40),
                   _buildSteps(),
                   const SizedBox(height: 40),
-                  if (_step == 'otp') _buildOtpInput(),
                   if (_step == 'error') _buildErrorState(),
                   if (_step == 'sending') _buildSendingState(),
+                  if (_step == 'waiting_server') _buildWaitingServerState(),
                   const SizedBox(height: 32),
                   _buildActionButtons(),
                 ],
@@ -232,7 +232,7 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
     return Column(
       children: [
         Text(
-          'Paiement ${widget.providerLabel}',
+          'Paiement Airtel Money',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -240,7 +240,7 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Confirmez votre paiement sur votre téléphone',
+          'Validez le paiement directement sur votre téléphone',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppColors.grey600,
               ),
@@ -280,7 +280,7 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Numéro ${widget.providerLabel}',
+              Text('Numéro Airtel Money',
                   style: Theme.of(context).textTheme.bodySmall),
               Text(
                 widget.phoneNumber,
@@ -313,15 +313,15 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
   Widget _buildSteps() {
     final currentStepIndex = _step == 'sending'
         ? 0
-        : _step == 'otp'
-            ? 1
-            : 2;
+        : _step == 'success'
+            ? 2
+            : 1;
 
     return Column(
       children: [
-        _buildStep(1, 'Envoi du code', currentStepIndex >= 0),
+        _buildStep(1, 'Initiation du paiement', currentStepIndex >= 0),
         const SizedBox(height: 16),
-        _buildStep(2, 'Vérification OTP', currentStepIndex >= 1),
+        _buildStep(2, 'Validation sur votre téléphone', currentStepIndex >= 1),
         const SizedBox(height: 16),
         _buildStep(3, 'Paiement confirmé', currentStepIndex >= 2),
       ],
@@ -385,7 +385,7 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Envoi du code OTP en cours...',
+              'Initiation du paiement en cours...',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.primary,
                   ),
@@ -396,50 +396,35 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
     );
   }
 
-  Widget _buildOtpInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Code OTP', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 12),
-        TextField(
-          onChanged: (value) => setState(() => _otp = value),
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
-          decoration: InputDecoration(
-            hintText: '000000',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            counterText: '',
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (_secondsRemaining > 0)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.schedule, color: AppColors.warning, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Code valide dans $_secondsRemaining secondes',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
+  Widget _buildWaitingServerState() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'En attente de votre validation sur votre téléphone...',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.primary,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -504,7 +489,7 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _initiatePayment,
+              onPressed: _isLoading ? null : _initiatePayment,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: AppColors.primary,
@@ -534,30 +519,16 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _confirmPayment,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: AppColors.primary,
+    if (_step == 'waiting_server') {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Continuer en arrière-plan'),
         ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
-                'Confirmer le paiement',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.white,
-                    ),
-              ),
-      ),
-    );
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

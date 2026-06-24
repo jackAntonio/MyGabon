@@ -140,7 +140,7 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
                       Text(
                         'Si payé via MyGabon Wallet : vous recevrez '
                         '${PaymentService.calculateFees(double.parse(_priceController.text)).netToSeller.toStringAsFixed(0)} FCFA '
-                        '(commission plateforme 10%)',
+                        '(commission plateforme 5%)',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.grey600,
                             ),

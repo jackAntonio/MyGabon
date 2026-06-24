@@ -95,10 +95,10 @@ class FraudDetectionService {
     String? listingId,
     List<String>? evidenceUrls,
   }) async {
-    if (!SecurityValidator.isSafeInput(description)) {
+    if (description.trim().isEmpty || description.length > 1000) {
       throw Exception('Invalid report description');
     }
-    
+
     final report = FraudReport(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       reporterId: reporterId,

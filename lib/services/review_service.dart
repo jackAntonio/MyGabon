@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/security_models.dart';
-import '../utils/security_utils.dart';
 
 /// Service for managing user reviews and ratings
 class ReviewService {
@@ -39,25 +38,22 @@ class ReviewService {
     if (rating < 1 || rating > 5) {
       throw Exception('Rating must be between 1 and 5');
     }
-    
-    if (!SecurityValidator.isSafeInput(comment)) {
-      throw Exception('Review comment contains invalid content');
-    }
-    
-    if (comment.length < 10) {
+
+    final trimmedComment = comment.trim();
+    if (trimmedComment.length < 10) {
       throw Exception('Review must be at least 10 characters');
     }
-    
-    if (comment.length > 500) {
+
+    if (trimmedComment.length > 500) {
       throw Exception('Review must not exceed 500 characters');
     }
-    
+
     final review = UserReview(
       id: const Uuid().v4(),
       reviewerId: reviewerId,
       revieweeId: revieweeId,
       rating: rating,
-      comment: SecurityValidator.sanitizeInput(comment),
+      comment: trimmedComment,
       tags: tags ?? [],
       recommendsUser: recommendsUser,
     );

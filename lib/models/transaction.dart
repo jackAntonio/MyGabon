@@ -13,8 +13,8 @@ class Transaction {
   final String sellerId;
   final String productId;
   final double grossAmount;
-  final double visibleFee;     // 5% shown to user
-  final double actualFee;      // 10% actually deducted
+  final double visibleFee;     // 5% affiché à l'utilisateur
+  final double actualFee;      // 5% réellement prélevé (identique à l'affiché)
   final double netToSeller;
   final PaymentMethod paymentMethod;
   final TransactionStatus status;

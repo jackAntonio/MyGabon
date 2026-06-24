@@ -56,12 +56,6 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "bcrypt",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/bcrypt-1.2.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.7"
-    },
-    {
       "name": "boolean_selector",
       "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/boolean_selector-2.1.2",
       "packageUri": "lib/",
@@ -228,18 +222,6 @@
       "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus_platform_interface-7.0.3",
       "packageUri": "lib/",
       "languageVersion": "3.7"
-    },
-    {
-      "name": "dio",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/dio-5.9.2",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "dio_web_adapter",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/dio_web_adapter-2.1.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
     },
     {
       "name": "ed25519_edwards",

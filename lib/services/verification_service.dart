@@ -2,17 +2,19 @@ import 'dart:async';
 import 'package:hive/hive.dart';
 import '../models/security_models.dart';
 import '../utils/security_utils.dart';
+import '../utils/secure_hive.dart';
 
-/// Service for managing user verification (phone OTP, ID verification)
+/// Cache local du statut de vérification (lecture rapide pour l'UI).
+/// ⚠️ Non autoritaire : la génération/vérification de l'OTP téléphone se
+/// fait exclusivement côté serveur (SupabaseService -> RPC
+/// request_phone_otp/confirm_phone_otp), seul habilité à positionner
+/// users.verified. Ce service ne fait que refléter localement ce résultat
+/// pour l'affichage, et ne doit jamais être utilisé comme preuve de
+/// vérification (ex: pour débloquer une fonctionnalité sensible).
 class VerificationService {
   static const String _verificationBoxName = 'verification_cache';
-  static const String _otpBoxName = 'otp_cache';
 
   late Box<dynamic> _verificationBox;
-  late Box<dynamic> _otpBox;
-
-  final Map<String, int> _otpAttempts = {};
-  final Map<String, DateTime> _otpExpiry = {};
 
   static final VerificationService _instance = VerificationService._internal();
 
@@ -22,70 +24,10 @@ class VerificationService {
 
   VerificationService._internal();
 
-  /// Initialize Hive boxes
+  /// Initialize Hive box (chiffrée : ID/téléphone sont des données
+  /// personnelles sensibles).
   Future<void> init() async {
-    _verificationBox = await Hive.openBox(_verificationBoxName);
-    _otpBox = await Hive.openBox(_otpBoxName);
-  }
-
-  /// Send OTP to phone number (simulated - integrate with SMS service)
-  Future<String> sendOTPToPhone(String phoneNumber) async {
-    if (!SecurityValidator.isValidPhoneNumber(phoneNumber)) {
-      throw Exception('Invalid phone number format');
-    }
-
-    final otp = SecurityUtils.generateOTP();
-    final sanitizedPhone = SecurityValidator.sanitizeInput(phoneNumber);
-
-    // Store OTP with expiry (5 minutes)
-    _otpBox.put(sanitizedPhone, {
-      'otp': otp,
-      'createdAt': DateTime.now().toIso8601String(),
-      'attempts': 0,
-    });
-
-    _otpAttempts[sanitizedPhone] = 0;
-    _otpExpiry[sanitizedPhone] = DateTime.now().add(const Duration(minutes: 5));
-
-    // TODO: Integrate with actual SMS service (Twilio, AWS SNS, etc.)
-    // For now, simulated
-    print('OTP for $phoneNumber: $otp (simulated SMS)');
-
-    return 'OTP_SENT_${sanitizedPhone.substring(sanitizedPhone.length - 4)}';
-  }
-
-  /// Verify OTP
-  Future<bool> verifyOTP(String phoneNumber, String otp) async {
-    if (otp.length != 6 || int.tryParse(otp) == null) {
-      return false;
-    }
-
-    final sanitizedPhone = SecurityValidator.sanitizeInput(phoneNumber);
-
-    // Check expiry
-    if (_otpExpiry[sanitizedPhone] == null ||
-        DateTime.now().isAfter(_otpExpiry[sanitizedPhone]!)) {
-      return false;
-    }
-
-    // Check attempts (max 5)
-    if ((_otpAttempts[sanitizedPhone] ?? 0) >= 5) {
-      return false;
-    }
-
-    final storedData = _otpBox.get(sanitizedPhone);
-    if (storedData == null) {
-      return false;
-    }
-
-    final storedOtp = storedData['otp'] as String;
-
-    if (otp != storedOtp) {
-      _otpAttempts[sanitizedPhone] = (_otpAttempts[sanitizedPhone] ?? 0) + 1;
-      return false;
-    }
-
-    return true;
+    _verificationBox = await SecureHive.openEncryptedBox(_verificationBoxName);
   }
 
   /// Mark phone as verified
@@ -123,7 +65,7 @@ class VerificationService {
       phoneVerifiedAt: verification.phoneVerifiedAt,
       idVerified: true,
       idType: idType,
-      idNumber: SecurityUtils.encryptIdNumber(idNumber),
+      idNumber: SecurityUtils.maskIdNumber(idNumber),
       idVerifiedAt: DateTime.now(),
     );
 
@@ -152,14 +94,6 @@ class VerificationService {
     }
 
     return verifiedUsers;
-  }
-
-  /// Clear OTP for phone
-  Future<void> clearOTP(String phoneNumber) async {
-    final sanitized = SecurityValidator.sanitizeInput(phoneNumber);
-    _otpBox.delete(sanitized);
-    _otpAttempts.remove(sanitized);
-    _otpExpiry.remove(sanitized);
   }
 
   /// Cleanup old verifications
