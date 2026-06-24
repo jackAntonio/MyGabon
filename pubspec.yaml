@@ -61,6 +61,10 @@ dependencies:
   # Payments - Apple Pay & Google Pay
   pay: ^3.3.0
 
+  # Image handling & upload
+  image_picker: ^1.0.0
+  image_cropper: ^5.0.0
+
   # Firebase dependencies (commented for web build)
   # firebase_core: ^2.0.0
   # cloud_firestore: ^4.0.0

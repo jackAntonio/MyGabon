@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../services/payment_service.dart';
+import '../services/image_upload_service.dart';
+import '../widgets/image_picker_widget.dart';
+import 'package:uuid/uuid.dart';
 
 /// Écran pour publier une annonce (produit) sur le marché MyGabon.
 class PostAnnouncementScreen extends StatefulWidget {
@@ -21,6 +24,8 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
   String _selectedLocation = 'Libreville';
   int _quantity = 1;
   bool _isSubmitting = false;
+  List<String> _imageUrls = [];
+  final String _productId = const Uuid().v4(); // ID unique pour le produit
 
   static const _categories = [
     'Électronique',
@@ -193,32 +198,14 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
                       setState(() => _selectedLocation = value ?? 'Libreville'),
                 ),
               ),
-              _buildFormSection(
-                context,
-                title: 'Photo',
-                child: Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.grey100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.grey300),
-                  ),
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_a_photo_outlined,
-                            color: AppColors.grey500, size: 28),
-                        SizedBox(height: 8),
-                        Text('Ajout de photo bientôt disponible',
-                            style: TextStyle(color: AppColors.grey500)),
-                      ],
-                    ),
-                  ),
-                ),
+              ImagePickerWidget(
+                productId: _productId,
+                maxImages: 5,
+                onImagesSelected: (urls) {
+                  setState(() => _imageUrls = urls);
+                },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
