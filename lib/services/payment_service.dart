@@ -20,6 +20,7 @@ class FeeCalculation {
 class PaymentService {
   static const double VISIBLE_FEE_RATE = 0.05;  // 5% shown to user
   static const double ACTUAL_FEE_RATE = 0.10;   // 10% actually deducted
+  static const double standardDeliveryFee = 5000; // FCFA, livraison MyGabon
 
   /// Calculate fees for a transaction
   static FeeCalculation calculateFees(double grossAmount) {

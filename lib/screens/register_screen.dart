@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/custom_textfield.dart';
@@ -17,7 +17,9 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _emailOrPhone;
+  String? _fullName;
+  String? _email;
+  String? _phoneNumber;
   String? _password;
   bool _loading = false;
   String? _error;
@@ -25,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      appBar: AppBar(title: const Text('Créer un compte')),
       backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
@@ -35,18 +37,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Create account', style: Theme.of(context).textTheme.titleLarge),
+                Text('Rejoindre MyGabon', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 24),
-                if (_error != null)
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                if (_error != null) ...[
+                  Text(_error!, style: const TextStyle(color: AppColors.error)),
+                  const SizedBox(height: 16),
+                ],
                 CustomTextField(
-                  label: 'Email or Phone',
+                  label: 'Nom complet',
                   validator: Validators.validateNotEmpty,
-                  onSaved: (v) => _emailOrPhone = v,
+                  onSaved: (v) => _fullName = v,
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(
-                  label: 'Password',
+                  label: 'Email',
+                  validator: Validators.validateEmail,
+                  onSaved: (v) => _email = v,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Téléphone',
+                  validator: Validators.validatePhone,
+                  onSaved: (v) => _phoneNumber = v,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Mot de passe',
                   obscureText: true,
                   validator: Validators.validateNotEmpty,
                   onSaved: (v) => _password = v,
@@ -55,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _loading
                     ? const Center(child: CircularProgressIndicator())
                     : CustomButton(
-                        label: 'Register',
+                        label: 'S\'inscrire',
                         onPressed: _submit,
                       ),
                 const SizedBox(height: 12),
@@ -63,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Already have an account? Login'),
+                  child: const Text('Déjà un compte ? Connectez-vous'),
                 ),
               ],
             ),
@@ -81,14 +97,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _error = null;
       });
       try {
-        await Provider.of<AuthProvider>(context, listen: false)
-            .register(emailOrPhone: _emailOrPhone!, password: _password!);
+        await Provider.of<AuthProvider>(context, listen: false).register(
+          email: _email!,
+          password: _password!,
+          fullName: _fullName!,
+          phoneNumber: _phoneNumber,
+        );
       } catch (e) {
-        _error = 'Registration failed';
+        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
       }
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) setState(() => _loading = false);
     }
   }
 }

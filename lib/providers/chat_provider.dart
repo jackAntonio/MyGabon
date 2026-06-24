@@ -1,21 +1,49 @@
 import 'package:flutter/material.dart';
 import '../models/chat_model.dart';
+import '../services/supabase_service.dart';
 
-/// Chat provider containing conversations and messages skeleton.
+/// Provider de messagerie : liste des conversations + envoi de messages.
+/// Le fil d'une conversation ouverte est géré directement par
+/// ChatDetailScreen via le flux temps réel de SupabaseService.
 class ChatProvider extends ChangeNotifier {
-  List<ChatModel> _conversations = [];
+  final SupabaseService _service = SupabaseService();
+
+  List<Conversation> _conversations = [];
+  bool _loading = true;
+
+  List<Conversation> get conversations => _conversations;
+  bool get isLoading => _loading;
 
   ChatProvider() {
-    _conversations = [
-      ChatModel(name: 'Jean', lastMessage: 'Are you available?', timestamp: '10:20'),
-      ChatModel(name: 'Marie', lastMessage: 'Thanks for the info', timestamp: '09:15'),
-    ];
+    loadConversations();
   }
 
-  List<ChatModel> get conversations => _conversations;
-
-  void sendMessage(String convoId, String message) {
-    // TODO: append message to conversation
+  Future<void> loadConversations() async {
+    _loading = true;
     notifyListeners();
+
+    final rawConversations = await _service.getConversations();
+    final result = <Conversation>[];
+
+    for (final raw in rawConversations) {
+      final otherUserId = raw['other_user_id'] as String;
+      final profile = await _service.getPublicProfile(otherUserId);
+      result.add(Conversation(
+        otherUserId: otherUserId,
+        otherUserName: profile?['full_name'] as String? ?? 'Utilisateur',
+        otherUserAvatar: profile?['avatar_url'] as String?,
+        lastMessage: raw['content'] as String,
+        lastTimestamp: DateTime.parse(raw['created_at'] as String),
+      ));
+    }
+
+    result.sort((a, b) => b.lastTimestamp.compareTo(a.lastTimestamp));
+    _conversations = result;
+    _loading = false;
+    notifyListeners();
+  }
+
+  Future<bool> sendMessage(String otherUserId, String content) {
+    return _service.sendMessage(receiverId: otherUserId, content: content);
   }
 }

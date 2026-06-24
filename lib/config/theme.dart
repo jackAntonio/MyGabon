@@ -7,6 +7,7 @@ class AppColors {
   static const Color accent = Color(0xFFF4C430); // Electric Yellow
   static const Color darkBg = Color(0xFF0A1628); // Deep Navy
   static const Color white = Color(0xFFFFFFFF);
+  static const Color background = grey50; // Fond clair par défaut des écrans
 
   // Semantic Colors
   static const Color success = Color(0xFF22C55E);

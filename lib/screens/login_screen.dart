@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/custom_textfield.dart';
 import '../widgets/custom_button.dart';
 import '../utils/validators.dart';
 
-/// Login screen with email/phone & password fields.
+/// Écran de connexion (email + mot de passe).
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -24,9 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
       backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
@@ -36,27 +34,52 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Welcome back', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 24),
-                if (_error != null)
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(
+                  'MyGabon',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Content de vous revoir',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                ),
+                const SizedBox(height: 32),
+                if (_error != null) ...[
+                  Text(_error!, style: const TextStyle(color: AppColors.error)),
+                  const SizedBox(height: 16),
+                ],
                 CustomTextField(
-                  label: 'Email or Phone',
+                  label: 'Email ou téléphone',
                   validator: Validators.validateNotEmpty,
                   onSaved: (v) => _emailOrPhone = v,
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(
-                  label: 'Password',
+                  label: 'Mot de passe',
                   obscureText: true,
                   validator: Validators.validateNotEmpty,
                   onSaved: (v) => _password = v,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _showResetPasswordDialog,
+                    child: const Text('Mot de passe oublié ?'),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 _loading
                     ? const Center(child: CircularProgressIndicator())
                     : CustomButton(
-                        label: 'Login',
+                        label: 'Se connecter',
                         onPressed: _submit,
                       ),
                 const SizedBox(height: 12),
@@ -64,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.pushNamed(context, '/register');
                   },
-                  child: const Text('Don\'t have an account? Register'),
+                  child: const Text('Pas encore de compte ? Inscrivez-vous'),
                 ),
               ],
             ),
@@ -85,11 +108,48 @@ class _LoginScreenState extends State<LoginScreen> {
         await Provider.of<AuthProvider>(context, listen: false)
             .login(emailOrPhone: _emailOrPhone!, password: _password!);
       } catch (e) {
-        _error = 'Login failed';
+        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
       }
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _showResetPasswordDialog() {
+    final controller = TextEditingController(text: _emailOrPhone);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Réinitialiser le mot de passe'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Votre email'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await Provider.of<AuthProvider>(context, listen: false)
+                    .resetPassword(email: controller.text.trim());
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Email de réinitialisation envoyé')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                );
+              }
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    );
   }
 }

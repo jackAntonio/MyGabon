@@ -4,7 +4,7 @@ import '../models/monetization_models.dart';
 import '../providers/monetization_provider.dart';
 import '../screens/subscription_screen.dart';
 import '../screens/analytics_screen.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 /// Monetization profile section widget
 class MonetizationProfileSection extends StatelessWidget {

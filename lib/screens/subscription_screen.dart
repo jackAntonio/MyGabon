@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/monetization_models.dart';
 import '../providers/monetization_provider.dart';
 import '../widgets/monetization_widgets.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
+import '../services/supabase_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({Key? key}) : super(key: key);
@@ -18,7 +19,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = 'current_user_id'; // Get from auth provider
+    _userId = SupabaseService().currentUser?.id ?? '';
     _loadSubscription();
   }
 

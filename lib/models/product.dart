@@ -13,6 +13,7 @@ class Product {
   final String sellerId;
   final String sellerName;
   final double sellerRating;
+  final bool sellerVerified;
   final String condition; // Neuf, Bon état, Occasion
   final String location; // City in Gabon
   final DateTime createdAt;
@@ -30,6 +31,7 @@ class Product {
     required this.sellerId,
     required this.sellerName,
     required this.sellerRating,
+    this.sellerVerified = false,
     required this.condition,
     required this.location,
     required this.createdAt,

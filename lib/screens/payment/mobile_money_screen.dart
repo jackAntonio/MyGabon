@@ -3,28 +3,34 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/kpay_service.dart';
-import 'success_screen_complete.dart';
+import 'success_screen.dart';
 
-/// Écran de paiement Airtel Money avec intégration Kpay
-class AirtelMoneyScreen extends StatefulWidget {
+/// Écran de paiement mobile money (Airtel Money ou Moov Money) avec
+/// intégration Kpay. [provider] est la clé technique envoyée à Kpay
+/// ('airtel' ou 'moov') ; [providerLabel] est le nom affiché à l'utilisateur.
+class MobileMoneyScreen extends StatefulWidget {
   final Product product;
   final double visibleFee;
   final double totalAmount;
   final String phoneNumber;
+  final String provider;
+  final String providerLabel;
 
-  const AirtelMoneyScreen({
+  const MobileMoneyScreen({
     Key? key,
     required this.product,
     required this.visibleFee,
     required this.totalAmount,
     required this.phoneNumber,
+    required this.provider,
+    required this.providerLabel,
   }) : super(key: key);
 
   @override
-  State<AirtelMoneyScreen> createState() => _AirtelMoneyScreenState();
+  State<MobileMoneyScreen> createState() => _MobileMoneyScreenState();
 }
 
-class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
+class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
   late final kpay = KpayService();
   String _transactionId = '';
   String _step = 'sending'; // sending, otp, confirming, success
@@ -39,11 +45,6 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
     _initiatePayment();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   Future<void> _initiatePayment() async {
     setState(() {
       _isLoading = true;
@@ -51,10 +52,10 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
     });
 
     try {
-      debugPrint('🔄 Initiating Airtel payment...');
+      debugPrint('🔄 Initiating ${widget.providerLabel} payment...');
 
-      // Appeler Kpay pour initier le paiement
-      final response = await kpay.initiateAirtelPayment(
+      final response = await kpay.initiateMobileMoneyPayment(
+        provider: widget.provider,
         phoneNumber: widget.phoneNumber,
         amount: widget.totalAmount,
         productName: widget.product.title,
@@ -73,9 +74,7 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Code OTP envoyé au ${widget.phoneNumber}',
-              ),
+              content: Text('Code OTP envoyé au ${widget.phoneNumber}'),
               backgroundColor: AppColors.success,
             ),
           );
@@ -129,8 +128,7 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
     try {
       debugPrint('✔️ Confirming payment with OTP...');
 
-      // Confirmer le paiement avec Kpay
-      final response = await kpay.confirmAirtelPayment(
+      final response = await kpay.confirmMobileMoneyPayment(
         transactionId: _transactionId,
         otp: _otp,
       );
@@ -141,7 +139,6 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
           _isLoading = false;
         });
 
-        // Attendre 1 seconde avant de naviguer
         await Future.delayed(const Duration(seconds: 1));
 
         if (!mounted) return;
@@ -149,7 +146,7 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => PaymentSuccessScreenComplete(
+            builder: (context) => PaymentSuccessScreen(
               product: widget.product,
               totalAmount: widget.totalAmount,
               transactionId: _transactionId,
@@ -189,31 +186,18 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 40),
-
-                  // Animated phone icon
                   _buildAnimatedIcon(),
                   const SizedBox(height: 32),
-
-                  // Title and subtitle
                   _buildHeader(),
                   const SizedBox(height: 40),
-
-                  // Payment details
                   _buildPaymentDetails(),
                   const SizedBox(height: 40),
-
-                  // Step indicator
                   _buildSteps(),
                   const SizedBox(height: 40),
-
-                  // OTP input or confirmation
                   if (_step == 'otp') _buildOtpInput(),
                   if (_step == 'error') _buildErrorState(),
                   if (_step == 'sending') _buildSendingState(),
-
                   const SizedBox(height: 32),
-
-                  // Action buttons
                   _buildActionButtons(),
                 ],
               ),
@@ -248,7 +232,7 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
     return Column(
       children: [
         Text(
-          'Paiement Airtel Money',
+          'Paiement ${widget.providerLabel}',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -256,7 +240,7 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Confirmez votre paiement sur votre téléphone Airtel',
+          'Confirmez votre paiement sur votre téléphone',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppColors.grey600,
               ),
@@ -296,7 +280,7 @@ class _AirtelMoneyScreenState extends State<AirtelMoneyScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Numéro Airtel',
+              Text('Numéro ${widget.providerLabel}',
                   style: Theme.of(context).textTheme.bodySmall),
               Text(
                 widget.phoneNumber,

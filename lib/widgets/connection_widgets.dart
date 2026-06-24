@@ -235,10 +235,9 @@ class OptimizedListLoader extends StatelessWidget {
     return Consumer<ConnectivityService>(
       builder: (context, connectivity, _) {
         return ListView.builder(
-          scrollCacheExtent: ScrollCacheExtent.pixels(
-              connectivity.connectionQuality == ConnectionQuality.poor
-                  ? 100 // Reduced cache extent for poor connections
-                  : 500),
+          cacheExtent: connectivity.connectionQuality == ConnectionQuality.poor
+              ? 100 // Reduced cache extent for poor connections
+              : 500,
           controller: controller, // Normal cache extent
           itemCount: itemCount + (isLoading ? 1 : 0) + (!hasReachedEnd ? 1 : 0),
           itemBuilder: (context, index) {

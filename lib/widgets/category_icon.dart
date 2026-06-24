@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 /// Small icon with label for category display.
 class CategoryIcon extends StatefulWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const CategoryIcon({Key? key, required this.icon, required this.label})
-      : super(key: key);
+  const CategoryIcon({
+    Key? key,
+    required this.icon,
+    required this.label,
+    this.onTap,
+  }) : super(key: key);
 
   @override
   State<CategoryIcon> createState() => _CategoryIconState();
@@ -36,22 +41,25 @@ class _CategoryIconState extends State<CategoryIcon>
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _controller,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: ScaleTransition(
+        scale: _controller,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(widget.icon, size: 24, color: AppColors.primary),
             ),
-            child: Icon(widget.icon, size: 24, color: AppColors.primary),
-          ),
-          const SizedBox(height: 4),
-          Text(widget.label, style: const TextStyle(fontSize: 12)),
-        ],
+            const SizedBox(height: 4),
+            Text(widget.label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
       ),
     );
   }

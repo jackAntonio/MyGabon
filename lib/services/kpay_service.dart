@@ -56,10 +56,11 @@ class KpayService {
     debugPrint('✅ Kpay initialisé avec merchant: $merchantId');
   }
 
-  // ========== AIRTEL MONEY ==========
+  // ========== MOBILE MONEY (Airtel Money, Moov Money) ==========
 
-  /// Initier un paiement Airtel Money
-  Future<KpayPaymentResponse> initiateAirtelPayment({
+  /// Initier un paiement mobile money. [provider] : 'airtel' ou 'moov'.
+  Future<KpayPaymentResponse> initiateMobileMoneyPayment({
+    required String provider,
     required String phoneNumber,
     required double amount,
     required String productName,
@@ -81,13 +82,13 @@ class KpayService {
         'currency': 'XAF', // Franc CFA
         'description': productName,
         'reference': transactionId,
-        'payment_method': 'airtel',
+        'payment_method': provider,
         'callback_url': 'https://mygabon.app/api/payment/callback',
         'return_url': 'mygabon://payment-success',
         'notification_language': 'fr',
       };
 
-      debugPrint('📤 Initiating Airtel payment: $transactionId');
+      debugPrint('📤 Initiating $provider payment: $transactionId');
 
       final response = await _dio.post(
         '/payments/initiate',
@@ -165,8 +166,8 @@ class KpayService {
     }
   }
 
-  /// Confirmer un paiement Airtel (après OTP)
-  Future<KpayConfirmResponse> confirmAirtelPayment({
+  /// Confirmer un paiement mobile money (après OTP)
+  Future<KpayConfirmResponse> confirmMobileMoneyPayment({
     required String transactionId,
     required String otp,
   }) async {

@@ -3,12 +3,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
 
-class PaymentSuccessScreenComplete extends StatelessWidget {
+class PaymentSuccessScreen extends StatelessWidget {
   final Product product;
   final double totalAmount;
   final String transactionId;
 
-  const PaymentSuccessScreenComplete({
+  const PaymentSuccessScreen({
     Key? key,
     required this.product,
     required this.totalAmount,

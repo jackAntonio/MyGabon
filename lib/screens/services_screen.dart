@@ -1,70 +1,196 @@
 import 'package:flutter/material.dart';
-import '../widgets/service_card.dart';
 import 'package:provider/provider.dart';
-import '../widgets/skeleton_loader.dart';
+import '../config/theme.dart';
 import '../providers/service_provider.dart';
+import '../widgets/service_card.dart';
+import '../widgets/skeleton_loader.dart';
 
-/// Services / Announcements screen showing a list of nearby services.
+/// Écran des services proposés par les prestataires gabonais.
+class ServicesScreen extends StatefulWidget {
+  final String? initialCategory;
 
-class ServicesScreen extends StatelessWidget {
-  const ServicesScreen({Key? key}) : super(key: key);
+  const ServicesScreen({Key? key, this.initialCategory}) : super(key: key);
+
+  @override
+  State<ServicesScreen> createState() => _ServicesScreenState();
+}
+
+class _ServicesScreenState extends State<ServicesScreen> {
+  late String _selectedCategory = widget.initialCategory ?? 'Tous';
+  final List<String> _categories = const [
+    'Tous',
+    'Électricité',
+    'Nettoyage',
+    'Informatique',
+    'Menuiserie',
+    'Beauté',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCategory != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ServiceProvider>().filterByCategory(widget.initialCategory!);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ServiceProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Services & Announcements')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 2)),
-                ],
-              ),
-              child: TextField(
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Search services...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+      appBar: AppBar(title: const Text('Services')),
+      body: RefreshIndicator(
+        onRefresh: provider.refreshServices,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.1),
+                      AppColors.accent.withValues(alpha: 0.05),
+                    ],
+                  ),
                 ),
-                onChanged: provider.search,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Services près de chez vous',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Électriciens, ménage, informatique et bien plus, partout au Gabon',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.grey600,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.search),
+                          hintText: 'Rechercher un service...',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onChanged: provider.search,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: provider.isLoading
-                ? ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: 3,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: SkeletonLoader(
-                            height: 100,
-                            borderRadius: BorderRadius.circular(16)),
-                      );
-                    },
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: provider.services.length,
-                    itemBuilder: (context, index) {
-                      final service = provider.services[index];
-                      return ServiceCard(service: service);
-                    },
-                  ),
-          ),
-        ],
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 56,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  children: _categories
+                      .map((category) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(category),
+                              selected: _selectedCategory == category,
+                              onSelected: (selected) {
+                                setState(() => _selectedCategory =
+                                    selected ? category : 'Tous');
+                                if (category == 'Tous') {
+                                  provider.clearFilters();
+                                } else {
+                                  provider.filterByCategory(category);
+                                }
+                              },
+                              backgroundColor: AppColors.white,
+                              selectedColor: AppColors.primary,
+                              labelStyle: TextStyle(
+                                color: _selectedCategory == category
+                                    ? AppColors.white
+                                    : AppColors.grey900,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: _selectedCategory == category
+                                      ? AppColors.primary
+                                      : AppColors.grey300,
+                                ),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.all(24),
+              sliver: provider.isLoading
+                  ? SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.75,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => SkeletonLoader(
+                            height: 220, borderRadius: BorderRadius.circular(20)),
+                        childCount: 6,
+                      ),
+                    )
+                  : provider.services.isEmpty
+                      ? SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 60),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  const Icon(Icons.search_off,
+                                      size: 48, color: AppColors.grey400),
+                                  const SizedBox(height: 12),
+                                  const Text('Aucun service trouvé',
+                                      style: TextStyle(color: AppColors.grey600)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      : SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.75,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) =>
+                                ServiceCard(service: provider.services[index]),
+                            childCount: provider.services.length,
+                          ),
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }

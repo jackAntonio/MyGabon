@@ -27,6 +27,7 @@
         "http",
         "intl",
         "json_annotation",
+        "pay",
         "provider",
         "riverpod_annotation",
         "shimmer",
@@ -137,6 +138,18 @@
       ]
     },
     {
+      "name": "pay",
+      "version": "3.3.0",
+      "dependencies": [
+        "flutter",
+        "flutter_localizations",
+        "meta",
+        "pay_android",
+        "pay_ios",
+        "pay_platform_interface"
+      ]
+    },
+    {
       "name": "supabase",
       "version": "2.13.0",
       "dependencies": [
@@ -187,7 +200,7 @@
     },
     {
       "name": "intl",
-      "version": "0.19.0",
+      "version": "0.20.2",
       "dependencies": [
         "clock",
         "meta",
@@ -797,6 +810,40 @@
         "stream_channel",
         "string_scanner",
         "term_glyph"
+      ]
+    },
+    {
+      "name": "pay_platform_interface",
+      "version": "2.0.0",
+      "dependencies": [
+        "flutter",
+        "yaml"
+      ]
+    },
+    {
+      "name": "pay_ios",
+      "version": "1.2.0",
+      "dependencies": [
+        "flutter",
+        "pay_platform_interface"
+      ]
+    },
+    {
+      "name": "pay_android",
+      "version": "3.2.0",
+      "dependencies": [
+        "flutter",
+        "flutter_localizations",
+        "pay_platform_interface"
+      ]
+    },
+    {
+      "name": "flutter_localizations",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter",
+        "intl",
+        "path"
       ]
     },
     {

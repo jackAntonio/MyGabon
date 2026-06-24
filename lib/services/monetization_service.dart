@@ -293,18 +293,18 @@ class FeaturedListingService {
 }
 
 /// Service for managing payments and transactions
-class PaymentService {
+class RevenuePaymentService {
   static const String _transactionBoxName = 'transactions';
 
   late Box<dynamic> _transactionBox;
 
-  static final PaymentService _instance = PaymentService._internal();
+  static final RevenuePaymentService _instance = RevenuePaymentService._internal();
 
-  factory PaymentService() {
+  factory RevenuePaymentService() {
     return _instance;
   }
 
-  PaymentService._internal();
+  RevenuePaymentService._internal();
 
   /// Initialize Hive box
   Future<void> init() async {

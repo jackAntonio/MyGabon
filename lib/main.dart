@@ -16,8 +16,10 @@ import 'providers/chat_provider.dart';
 import 'providers/verification_provider.dart';
 import 'providers/review_provider.dart';
 import 'providers/fraud_detection_provider.dart';
+import 'providers/monetization_provider.dart';
+import 'providers/analytics_provider.dart';
 
-import 'utils/theme.dart';
+import 'config/theme.dart';
 
 import 'services/notification_service.dart';
 import 'services/geolocation_service.dart';
@@ -27,6 +29,9 @@ import 'services/offline_queue_service.dart';
 import 'services/verification_service.dart';
 import 'services/review_service.dart';
 import 'services/fraud_detection_service.dart';
+import 'services/supabase_service.dart';
+import 'services/monetization_service.dart';
+import 'services/analytics_service.dart';
 
 import 'widgets/connection_widgets.dart';
 import 'app_services.dart';
@@ -36,18 +41,21 @@ import 'app_services.dart';
 const _twilioAccountSid = String.fromEnvironment('TWILIO_ACCOUNT_SID');
 const _twilioAuthToken = String.fromEnvironment('TWILIO_AUTH_TOKEN');
 const _twilioPhoneNumber = String.fromEnvironment('TWILIO_PHONE_NUMBER');
-const _jwtSecret = String.fromEnvironment('JWT_SECRET');
+const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (_jwtSecret.length < 32) {
+  if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
     throw Exception(
-      'JWT_SECRET manquant ou trop court. '
-      'Lancez avec --dart-define-from-file=env.json (voir env.json.example), '
-      'JWT_SECRET doit faire au moins 32 caractères.',
+      'SUPABASE_URL / SUPABASE_ANON_KEY manquants. '
+      'Lancez avec --dart-define-from-file=env.json (voir env.json.example).',
     );
   }
+
+  // Initialiser Supabase (backend principal : auth, base de données, RLS)
+  await SupabaseService().init(url: _supabaseUrl, anonKey: _supabaseAnonKey);
 
   // Initialiser AppServices avec Twilio credentials
   await AppServices().init(
@@ -64,15 +72,19 @@ void main() async {
   await ReviewService().init();
   await FraudDetectionService().init();
 
-  runApp(const GabonConnectApp(jwtSecret: _jwtSecret));
+  // Initialize monetization & analytics services
+  await SubscriptionService().init();
+  await FeaturedListingService().init();
+  await RevenuePaymentService().init();
+  await AnalyticsService().init();
+
+  runApp(const GabonConnectApp());
 }
 
 /// Root of the GabonConnect application.
 /// Sets up MaterialApp with bottom navigation and responsive theme.
 class GabonConnectApp extends StatefulWidget {
-  final String jwtSecret;
-
-  const GabonConnectApp({Key? key, required this.jwtSecret}) : super(key: key);
+  const GabonConnectApp({Key? key}) : super(key: key);
 
   @override
   State<GabonConnectApp> createState() => _GabonConnectAppState();
@@ -112,8 +124,7 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
       providers: [
         ChangeNotifierProvider.value(value: _connectivityService),
         ChangeNotifierProvider.value(value: _offlineQueueService),
-        ChangeNotifierProvider(
-            create: (_) => AuthProvider(jwtSecret: widget.jwtSecret)),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(
           create: (_) => ServiceProvider(_connectivityService),
         ),
@@ -127,11 +138,20 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
         ChangeNotifierProvider(create: (_) => ReviewProvider(ReviewService())),
         ChangeNotifierProvider(
             create: (_) => FraudDetectionProvider(FraudDetectionService())),
+        // Monétisation & analytics (abonnement Pro, annonces en vedette, revenus)
+        ChangeNotifierProvider(
+            create: (_) => SubscriptionProvider(SubscriptionService())),
+        ChangeNotifierProvider(
+            create: (_) => FeaturedListingProvider(FeaturedListingService())),
+        ChangeNotifierProvider(
+            create: (_) => PaymentProvider(RevenuePaymentService())),
+        ChangeNotifierProvider(
+            create: (_) => AnalyticsProvider(AnalyticsService())),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           return MaterialApp(
-            title: 'GabonConnect',
+            title: 'MyGabon',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
@@ -209,12 +229,12 @@ class _MainScaffoldState extends State<MainScaffold> {
             selectedIndex: _currentIndex,
             onDestinationSelected: _onTap,
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+              NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
               NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-              NavigationDestination(icon: Icon(Icons.add_box), label: 'Post'),
+              NavigationDestination(icon: Icon(Icons.add_box), label: 'Publier'),
               NavigationDestination(
-                  icon: Icon(Icons.store), label: 'Marketplace'),
-              NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+                  icon: Icon(Icons.store), label: 'Marché'),
+              NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
             ],
           ),
         ),

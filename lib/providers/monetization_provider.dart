@@ -199,7 +199,7 @@ class FeaturedListingProvider extends ChangeNotifier {
 
 /// Provider for managing payments and revenue
 class PaymentProvider extends ChangeNotifier {
-  final PaymentService _paymentService;
+  final RevenuePaymentService _paymentService;
   
   RevenueSummary? _revenueSummary;
   List<MonetizedTransaction> _transactions = [];

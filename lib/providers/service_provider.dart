@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/service_model.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/demo_data.dart';
 
 /// Provides list of services with caching, pagination, and offline support
 class ServiceProvider extends ChangeNotifier {
@@ -31,7 +32,6 @@ class ServiceProvider extends ChangeNotifier {
       _loading = true;
       notifyListeners();
 
-      // Try to load from cache first
       final cachedServices = CacheService.getServices('services_page_0');
 
       if (cachedServices != null) {
@@ -41,7 +41,6 @@ class ServiceProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      // If offline, show cached data, otherwise fetch fresh data
       if (_connectivityService?.isOnlineMode ?? true) {
         await _fetchServicesPage(0);
       }
@@ -74,7 +73,6 @@ class ServiceProvider extends ChangeNotifier {
   /// Fetch services with pagination and caching
   Future<void> _fetchServicesPage(int page) async {
     try {
-      // Check cache first
       final cacheKey = 'services_page_$page';
       final cached = CacheService.getServices(cacheKey);
 
@@ -90,7 +88,6 @@ class ServiceProvider extends ChangeNotifier {
         return;
       }
 
-      // Simulate network request with retry logic
       if (_connectivityService != null) {
         await _connectivityService!.retryWithBackoff(() async {
           await Future.delayed(const Duration(milliseconds: 500));
@@ -100,8 +97,10 @@ class ServiceProvider extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      // Generate dummy data (replace with API call)
-      final newServices = _generateDummyServices(page);
+      // TODO: remplacer par un vrai fetch Supabase (table `services`) une
+      // fois le catalogue alimenté en production ; pour l'instant on sert
+      // les données de démo gabonaises (demo_data.dart).
+      final newServices = _servicesForPage(page);
 
       if (newServices.length < _pageSize) {
         _hasReachedEnd = true;
@@ -113,7 +112,6 @@ class ServiceProvider extends ChangeNotifier {
         _services.addAll(newServices);
       }
 
-      // Cache the result
       final jsonData = newServices.map((s) => _serviceToJson(s)).toList();
       await CacheService.cacheServices(cacheKey, jsonData);
 
@@ -132,10 +130,8 @@ class ServiceProvider extends ChangeNotifier {
     if (category.isEmpty) {
       _filteredServices = [];
     } else {
-      _filteredServices = _services
-          .where((s) =>
-              s.description.toLowerCase().contains(category.toLowerCase()))
-          .toList();
+      _filteredServices =
+          _services.where((s) => s.category == category).toList();
     }
     notifyListeners();
   }
@@ -145,11 +141,12 @@ class ServiceProvider extends ChangeNotifier {
     if (query.isEmpty) {
       _filteredServices = [];
     } else {
+      final q = query.toLowerCase();
       _filteredServices = _services
           .where((s) =>
-              s.title.toLowerCase().contains(query.toLowerCase()) ||
-              s.description.toLowerCase().contains(query.toLowerCase()) ||
-              s.location.toLowerCase().contains(query.toLowerCase()))
+              s.title.toLowerCase().contains(q) ||
+              s.description.toLowerCase().contains(q) ||
+              s.location.toLowerCase().contains(q))
           .toList();
     }
 
@@ -172,50 +169,54 @@ class ServiceProvider extends ChangeNotifier {
     await _fetchServicesPage(0);
   }
 
-  /// Helper: Generate dummy services
-  List<ServiceModel> _generateDummyServices(int page) {
-    final start = page * _pageSize;
-    final dummyTitles = [
-      'Plumbing Repair',
-      'Computer Repair',
-      'Electrical Work',
-      'Cleaning Service',
-      'Gardening',
-      'Painting',
-      'Car Repair',
-      'Mobile Repair',
-      'Carpentry',
-      'Tutoring',
-      'Photography',
-      'Writing Services',
-      'Video Editing',
-      'Graphic Design',
-      'Coaching',
-    ];
+  /// Construire la page de services de démo (villes gabonaises variées).
+  List<ServiceModel> _servicesForPage(int page) {
+    if (page > 0) return [];
 
-    final services = <ServiceModel>[];
-    for (int i = start; i < start + _pageSize && i < 100; i++) {
-      services.add(
-        ServiceModel(
-          title: dummyTitles[i % dummyTitles.length],
-          description:
-              'Professional service in category ${(i ~/ dummyTitles.length) + 1}',
-          location: 'Libreville',
-          rating: 4.0 + (i % 10) / 10,
-        ),
+    final rawServices = gabonDemoData['services'] as List<dynamic>;
+    final rawUsers = gabonDemoData['users'] as List<dynamic>;
+    final locations = ['Libreville', 'Port-Gentil', 'Franceville', 'Lambaréné'];
+
+    return rawServices.asMap().entries.map((entry) {
+      final i = entry.key;
+      final raw = entry.value as Map<String, dynamic>;
+      final provider = rawUsers.cast<Map<String, dynamic>>().firstWhere(
+            (u) => u['id'] == raw['provider_id'],
+            orElse: () => const {},
+          );
+      return ServiceModel(
+        id: raw['id'] as String,
+        providerId: raw['provider_id'] as String,
+        providerName: raw['provider_name'] as String,
+        providerVerified: provider['verified'] as bool? ?? false,
+        title: raw['title'] as String,
+        description: raw['description'] as String,
+        price: (raw['price'] as num).toDouble(),
+        category: _capitalize(raw['category'] as String),
+        location: locations[i % locations.length],
+        rating: (raw['rating'] as num).toDouble(),
+        reviewsCount: (raw['reviews_count'] as num?)?.toInt() ?? 0,
       );
-    }
-
-    return services;
+    }).toList();
   }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
   /// Helper: Convert ServiceModel to JSON
   Map<String, dynamic> _serviceToJson(ServiceModel service) {
     return {
+      'id': service.id,
+      'provider_id': service.providerId,
+      'provider_name': service.providerName,
+      'provider_avatar': service.providerAvatar,
       'title': service.title,
       'description': service.description,
+      'price': service.price,
+      'category': service.category,
       'location': service.location,
       'rating': service.rating,
+      'reviews_count': service.reviewsCount,
     };
   }
 
@@ -224,10 +225,17 @@ class ServiceProvider extends ChangeNotifier {
     if (json is List) {
       return json
           .map((item) => ServiceModel(
+                id: item['id'] as String? ?? '',
+                providerId: item['provider_id'] as String? ?? '',
+                providerName: item['provider_name'] as String? ?? 'Prestataire',
+                providerAvatar: item['provider_avatar'] as String?,
                 title: item['title'] as String? ?? 'Service',
                 description: item['description'] as String? ?? '',
-                location: item['location'] as String? ?? 'Unknown',
+                price: (item['price'] as num?)?.toDouble() ?? 0,
+                category: item['category'] as String? ?? 'Autres',
+                location: item['location'] as String? ?? 'Libreville',
                 rating: (item['rating'] as num?)?.toDouble() ?? 4.0,
+                reviewsCount: (item['reviews_count'] as num?)?.toInt() ?? 0,
               ))
           .toList();
     }

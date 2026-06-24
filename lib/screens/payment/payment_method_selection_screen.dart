@@ -2,16 +2,23 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/payment_service.dart';
-import 'checkout_screen.dart';
-import 'airtel_confirmation_screen.dart';
+import '../../services/apple_pay_service.dart';
+import '../../services/supabase_service.dart';
+import '../../utils/validators.dart';
+import 'mobile_money_screen.dart';
+import 'success_screen.dart';
 
-/// Écran de sélection de méthode de paiement (Apple Pay + Options existantes)
+/// Écran de sélection de méthode de paiement : MyGabon Wallet et Airtel Money
+/// en priorité (marché gabonais), Apple Pay / Google Pay en options
+/// additionnelles, paiement en espèces en dernier recours.
 class PaymentMethodSelectionScreen extends StatefulWidget {
   final Product product;
+  final double deliveryFee;
 
   const PaymentMethodSelectionScreen({
     Key? key,
     required this.product,
+    this.deliveryFee = 0,
   }) : super(key: key);
 
   @override
@@ -22,6 +29,22 @@ class PaymentMethodSelectionScreen extends StatefulWidget {
 class _PaymentMethodSelectionScreenState
     extends State<PaymentMethodSelectionScreen> {
   String _selectedMethod = 'mygabon'; // Défaut
+  String _phoneNumber = '';
+  bool _isProcessing = false;
+  double? _walletBalance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWalletBalance();
+  }
+
+  Future<void> _loadWalletBalance() async {
+    final userId = SupabaseService().currentUser?.id;
+    if (userId == null) return;
+    final balance = await SupabaseService().getWalletBalance(userId);
+    if (mounted) setState(() => _walletBalance = balance);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,42 +72,20 @@ class _PaymentMethodSelectionScreenState
             ),
             const SizedBox(height: 16),
 
-            // Option 1: Apple Pay
-            _buildPaymentOption(
-              context,
-              icon: '🍎',
-              title: 'Apple Pay',
-              subtitle: 'Paiement sécurisé avec Apple Pay',
-              value: 'apple_pay',
-              isNew: true,
-            ),
-
-            const SizedBox(height: 12),
-
-            // Option 2: Google Pay
-            _buildPaymentOption(
-              context,
-              icon: '🔵',
-              title: 'Google Pay',
-              subtitle: 'Paiement rapide avec Google Pay',
-              value: 'google_pay',
-              isNew: true,
-            ),
-
-            const SizedBox(height: 12),
-
-            // Option 3: MyGabon Wallet
+            // Option 1: MyGabon Wallet
             _buildPaymentOption(
               context,
               icon: '💰',
               title: 'MyGabon Wallet',
-              subtitle: 'Solde: 485 750 FCFA',
+              subtitle: _walletBalance == null
+                  ? 'Chargement du solde...'
+                  : 'Solde : ${_walletBalance!.toStringAsFixed(0)} FCFA',
               value: 'mygabon',
             ),
 
             const SizedBox(height: 12),
 
-            // Option 4: Airtel Money
+            // Option 2: Airtel Money
             _buildPaymentOption(
               context,
               icon: '📱',
@@ -95,7 +96,18 @@ class _PaymentMethodSelectionScreenState
 
             const SizedBox(height: 12),
 
-            // Option 5: Cash
+            // Option 3: Moov Money
+            _buildPaymentOption(
+              context,
+              icon: '📲',
+              title: 'Moov Money',
+              subtitle: 'Paiement par SMS OTP',
+              value: 'moov',
+            ),
+
+            const SizedBox(height: 12),
+
+            // Option 4: Cash
             _buildPaymentOption(
               context,
               icon: '💵',
@@ -104,23 +116,71 @@ class _PaymentMethodSelectionScreenState
               value: 'cash',
             ),
 
+            // Numéro mobile money (affiché seulement si Airtel/Moov sélectionné)
+            if (_selectedMethod == 'airtel' || _selectedMethod == 'moov') ...[
+              const SizedBox(height: 16),
+              _buildPhoneInput(context),
+            ],
+
+            const SizedBox(height: 24),
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: AppColors.grey200),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  'Autres options de paiement',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                ),
+                children: [
+                  // Option : Apple Pay
+                  _buildPaymentOption(
+                    context,
+                    icon: '🍎',
+                    title: 'Apple Pay',
+                    subtitle: 'Paiement sécurisé avec Apple Pay',
+                    value: 'apple_pay',
+                  ),
+                  const SizedBox(height: 12),
+                  // Option : Google Pay
+                  _buildPaymentOption(
+                    context,
+                    icon: '🔵',
+                    title: 'Google Pay',
+                    subtitle: 'Paiement rapide avec Google Pay',
+                    value: 'google_pay',
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 32),
 
             // Bouton Continuer
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _handlePayment(context, fees),
+                onPressed: _isProcessing ? null : () => _handlePayment(context, fees),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: AppColors.primary,
                 ),
-                child: Text(
-                  'Continuer',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: AppColors.white,
+                child: _isProcessing
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Continuer',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: AppColors.white,
+                            ),
                       ),
-                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -129,15 +189,15 @@ class _PaymentMethodSelectionScreenState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
+                color: AppColors.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.info.withOpacity(0.3),
+                  color: AppColors.info.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.lock_outline,
                     color: AppColors.info,
                     size: 18,
@@ -215,6 +275,24 @@ class _PaymentMethodSelectionScreenState
               ),
             ],
           ),
+          if (widget.deliveryFee > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Frais de livraison',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.grey600,
+                  ),
+                ),
+                Text(
+                  '${widget.deliveryFee.toStringAsFixed(0)} FCFA',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Container(
             height: 1,
@@ -231,7 +309,7 @@ class _PaymentMethodSelectionScreenState
                 ),
               ),
               Text(
-                '${fees.totalWithVisibleFee.toStringAsFixed(0)} FCFA',
+                '${(fees.totalWithVisibleFee + widget.deliveryFee).toStringAsFixed(0)} FCFA',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -241,6 +319,25 @@ class _PaymentMethodSelectionScreenState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPhoneInput(BuildContext context) {
+    final label = _selectedMethod == 'moov' ? 'Numéro Moov' : 'Numéro Airtel';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        TextField(
+          onChanged: (value) => setState(() => _phoneNumber = value),
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            hintText: '+241XXXXXXXX ou 06XXXXXXXX',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -259,7 +356,7 @@ class _PaymentMethodSelectionScreenState
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.05) : AppColors.white,
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : AppColors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.grey200,
@@ -306,7 +403,7 @@ class _PaymentMethodSelectionScreenState
                             color: AppColors.accent,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text(
+                          child: const Text(
                             'NOUVEAU',
                             style: TextStyle(
                               fontSize: 10,
@@ -361,50 +458,189 @@ class _PaymentMethodSelectionScreenState
   void _handlePayment(BuildContext context, FeeCalculation fees) {
     switch (_selectedMethod) {
       case 'apple_pay':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Apple Pay - Intégration en cours...'),
-            backgroundColor: AppColors.info,
-          ),
-        );
-        // TODO: Intégrer ApplePayService
+        _handleExternalWalletPayment(context, fees, isApplePay: true);
         break;
 
       case 'google_pay':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Google Pay - Intégration en cours...'),
-            backgroundColor: AppColors.info,
-          ),
-        );
-        // TODO: Intégrer GooglePayService
+        _handleExternalWalletPayment(context, fees, isApplePay: false);
         break;
 
       case 'mygabon':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CheckoutScreen(product: widget.product),
-          ),
-        );
+        _handleMyGabonPayment(context, fees);
         break;
 
       case 'airtel':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AirtelConfirmationScreen(
-              product: widget.product,
-              visibleFee: fees.visibleFee,
-              totalAmount: fees.totalWithVisibleFee,
-            ),
-          ),
-        );
+        _handleMobileMoneyPayment(context, fees, provider: 'airtel', providerLabel: 'Airtel Money');
+        break;
+
+      case 'moov':
+        _handleMobileMoneyPayment(context, fees, provider: 'moov', providerLabel: 'Moov Money');
         break;
 
       case 'cash':
         _showCashModal(context, fees);
         break;
+    }
+  }
+
+  /// Paiement via le portefeuille MyGabon : débite l'acheteur, crédite le
+  /// vendeur de façon atomique côté serveur (RPC complete_marketplace_transaction).
+  Future<void> _handleMyGabonPayment(
+    BuildContext context,
+    FeeCalculation fees,
+  ) async {
+    final userId = SupabaseService().currentUser?.id;
+    if (userId == null) return;
+
+    final totalDue = fees.totalWithVisibleFee + widget.deliveryFee;
+
+    setState(() => _isProcessing = true);
+    try {
+      final balance = await SupabaseService().getWalletBalance(userId);
+      if (balance < totalDue) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Solde insuffisant'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
+      final transactionId = await SupabaseService().createTransaction(
+        sellerId: widget.product.sellerId,
+        productId: widget.product.id,
+        grossAmount: widget.product.price,
+        paymentMethod: 'mygabon_wallet',
+        deliveryFee: widget.deliveryFee,
+      );
+
+      if (transactionId == null) {
+        throw Exception('Impossible de créer la transaction');
+      }
+
+      final success =
+          await SupabaseService().completeMarketplaceTransaction(transactionId);
+      if (!success) {
+        throw Exception('Le paiement a échoué');
+      }
+
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentSuccessScreen(
+            product: widget.product,
+            totalAmount: totalDue,
+            transactionId: transactionId,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur: ${e.toString().replaceFirst('Exception: ', '')}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  void _handleMobileMoneyPayment(
+    BuildContext context,
+    FeeCalculation fees, {
+    required String provider,
+    required String providerLabel,
+  }) {
+    if (Validators.validatePhone(_phoneNumber) != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Veuillez entrer un numéro $providerLabel valide'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MobileMoneyScreen(
+          product: widget.product,
+          visibleFee: fees.visibleFee,
+          totalAmount: fees.totalWithVisibleFee,
+          phoneNumber: _phoneNumber,
+          provider: provider,
+          providerLabel: providerLabel,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleExternalWalletPayment(
+    BuildContext context,
+    FeeCalculation fees, {
+    required bool isApplePay,
+  }) async {
+    final service = applePayService;
+    final available = isApplePay
+        ? await service.isAvailable()
+        : await service.isGooglePayAvailable();
+
+    if (!available) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isApplePay
+                ? 'Apple Pay non disponible sur cet appareil'
+                : 'Google Pay non disponible sur cet appareil',
+          ),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
+    final success = isApplePay
+        ? await service.processPayment(
+            product: widget.product,
+            totalAmount: fees.totalWithVisibleFee,
+            visibleFee: fees.visibleFee,
+            countryCode: 'GA',
+          )
+        : await service.processGooglePayment(
+            product: widget.product,
+            totalAmount: fees.totalWithVisibleFee,
+            visibleFee: fees.visibleFee,
+          );
+
+    if (!context.mounted) return;
+
+    if (success) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentSuccessScreen(
+            product: widget.product,
+            totalAmount: fees.totalWithVisibleFee,
+            transactionId: DateTime.now().millisecondsSinceEpoch.toString(),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isApplePay
+              ? 'Paiement Apple Pay annulé ou échoué'
+              : 'Paiement Google Pay annulé ou échoué'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -428,7 +664,7 @@ class _PaymentMethodSelectionScreenState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
+                color: AppColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -455,14 +691,14 @@ class _PaymentMethodSelectionScreenState
             ),
             const SizedBox(height: 12),
             _buildInstructionStep(context, 1, 'Contactez le vendeur'),
-            _buildInstructionStep(context, 2, 'Convenus du lieu de rendez-vous'),
+            _buildInstructionStep(context, 2, 'Convenez du lieu de rendez-vous'),
             _buildInstructionStep(context, 3, 'Effectuez le paiement en espèces'),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Comprendre'),
+                child: const Text('Compris'),
               ),
             ),
           ],
@@ -479,7 +715,7 @@ class _PaymentMethodSelectionScreenState
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),

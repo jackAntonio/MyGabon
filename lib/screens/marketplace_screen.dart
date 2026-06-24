@@ -14,7 +14,7 @@ class MarketplaceScreen extends StatelessWidget {
     final provider = Provider.of<MarketplaceProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Marketplace')),
+      appBar: AppBar(title: const Text('Marché')),
       body: Column(
         children: [
           Padding(
@@ -33,7 +33,7 @@ class MarketplaceScreen extends StatelessWidget {
               child: TextField(
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search),
-                  hintText: 'Search products...',
+                  hintText: 'Rechercher un produit...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),

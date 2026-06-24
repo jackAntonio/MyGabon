@@ -366,13 +366,77 @@ class SupabaseService {
     }
   }
 
-  /// Subscribe to messages realtime (disabled - API not available in this version)
-  void subscribeToMessages({
-    required String userId,
-    required Function(Map<String, dynamic>) onNewMessage,
-  }) {
-    debugPrint('📡 Realtime subscriptions disabled in current Supabase version');
-    // Realtime subscriptions will be implemented in a future update
+  /// Récupérer le fil de messages avec un interlocuteur donné (les deux sens)
+  Future<List<Map<String, dynamic>>> getMessages(String otherUserId) async {
+    final userId = currentUser?.id;
+    if (userId == null) return [];
+    try {
+      final messages = await _client
+          .from('messages')
+          .select()
+          .or('and(sender_id.eq.$userId,receiver_id.eq.$otherUserId),'
+              'and(sender_id.eq.$otherUserId,receiver_id.eq.$userId)')
+          .order('created_at', ascending: true);
+      return List<Map<String, dynamic>>.from(messages);
+    } catch (e) {
+      debugPrint('❌ Erreur récupération messages: $e');
+      return [];
+    }
+  }
+
+  /// Flux temps réel des messages envoyés par [otherUserId] à l'utilisateur
+  /// courant (les messages envoyés par moi sont ajoutés en local de façon
+  /// optimiste après sendMessage, pas besoin de les re-streamer).
+  Stream<List<Map<String, dynamic>>> streamIncomingMessages(String otherUserId) {
+    final userId = currentUser?.id;
+    if (userId == null) return const Stream.empty();
+    return _client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('sender_id', otherUserId)
+        .order('created_at')
+        .map((rows) => rows.where((r) => r['receiver_id'] == userId).toList());
+  }
+
+  /// Liste des conversations de l'utilisateur courant (dernier message par
+  /// interlocuteur), construite côté client à partir des messages échangés.
+  Future<List<Map<String, dynamic>>> getConversations() async {
+    final userId = currentUser?.id;
+    if (userId == null) return [];
+    try {
+      final messages = await _client
+          .from('messages')
+          .select()
+          .or('sender_id.eq.$userId,receiver_id.eq.$userId')
+          .order('created_at', ascending: false);
+
+      final byOtherUser = <String, Map<String, dynamic>>{};
+      for (final m in messages) {
+        final otherId =
+            m['sender_id'] == userId ? m['receiver_id'] : m['sender_id'];
+        byOtherUser.putIfAbsent(otherId as String, () => m);
+      }
+      return byOtherUser.entries
+          .map((e) => {'other_user_id': e.key, ...e.value})
+          .toList();
+    } catch (e) {
+      debugPrint('❌ Erreur récupération conversations: $e');
+      return [];
+    }
+  }
+
+  /// Profil public (nom, avatar, vérifié, note) — sans email/téléphone.
+  Future<Map<String, dynamic>?> getPublicProfile(String userId) async {
+    try {
+      return await _client
+          .from('profiles_public')
+          .select()
+          .eq('id', userId)
+          .single();
+    } catch (e) {
+      debugPrint('❌ Erreur récupération profil public: $e');
+      return null;
+    }
   }
 
   // ========== HELPER METHODS ==========
@@ -484,7 +548,8 @@ class SupabaseService {
     }
   }
 
-  /// Créditer le portefeuille
+  /// Créditer le portefeuille via la fonction RPC adjust_wallet_balance
+  /// (le client n'a aucun droit d'UPDATE direct sur user_wallets, cf. policies RLS).
   Future<bool> creditWallet({
     required String userId,
     required double amount,
@@ -493,15 +558,14 @@ class SupabaseService {
       throw Exception('Accès refusé : vous ne pouvez créditer que votre propre portefeuille');
     }
     try {
-      final currentBalance = await getWalletBalance(userId);
-      await _client
-          .from('user_wallets')
-          .update({'balance': currentBalance + amount})
-          .eq('user_id', userId);
+      final newBalance = await _client.rpc('adjust_wallet_balance', params: {
+        'p_user_id': userId,
+        'p_amount': amount,
+      });
 
       await logAuditEvent(
         action: 'wallet_credited',
-        details: {'amount': amount, 'new_balance': currentBalance + amount},
+        details: {'amount': amount, 'new_balance': newBalance},
       );
 
       return true;
@@ -511,7 +575,8 @@ class SupabaseService {
     }
   }
 
-  /// Débiter le portefeuille
+  /// Débiter le portefeuille via la fonction RPC adjust_wallet_balance
+  /// (le client n'a aucun droit d'UPDATE direct sur user_wallets, cf. policies RLS).
   Future<bool> debitWallet({
     required String userId,
     required double amount,
@@ -520,19 +585,14 @@ class SupabaseService {
       throw Exception('Accès refusé : vous ne pouvez débiter que votre propre portefeuille');
     }
     try {
-      final currentBalance = await getWalletBalance(userId);
-      if (currentBalance < amount) {
-        throw Exception('Solde insuffisant');
-      }
-
-      await _client
-          .from('user_wallets')
-          .update({'balance': currentBalance - amount})
-          .eq('user_id', userId);
+      final newBalance = await _client.rpc('adjust_wallet_balance', params: {
+        'p_user_id': userId,
+        'p_amount': -amount,
+      });
 
       await logAuditEvent(
         action: 'wallet_debited',
-        details: {'amount': amount, 'new_balance': currentBalance - amount},
+        details: {'amount': amount, 'new_balance': newBalance},
       );
 
       return true;
@@ -567,6 +627,7 @@ class SupabaseService {
     required String productId,
     required double grossAmount,
     required String paymentMethod,
+    double deliveryFee = 0,
   }) async {
     try {
       // Calculer les frais
@@ -586,6 +647,8 @@ class SupabaseService {
             'net_to_seller': netToSeller,
             'payment_method': paymentMethod,
             'status': 'pending',
+            'delivery_fee': deliveryFee,
+            'delivery_status': deliveryFee > 0 ? 'pending' : 'none',
           })
           .select()
           .single();
@@ -604,6 +667,179 @@ class SupabaseService {
     } catch (e) {
       debugPrint('❌ Erreur création transaction: $e');
       return null;
+    }
+  }
+
+  /// Finaliser un paiement MyGabon Wallet : débite l'acheteur, crédite le
+  /// vendeur et marque la transaction "success", de façon atomique côté
+  /// serveur (RPC complete_marketplace_transaction).
+  Future<bool> completeMarketplaceTransaction(String transactionId) async {
+    try {
+      await _client.rpc('complete_marketplace_transaction', params: {
+        'p_transaction_id': transactionId,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur finalisation transaction: $e');
+      return false;
+    }
+  }
+
+  // ========== ADMINISTRATION ==========
+
+  /// Vérifier si l'utilisateur courant est administrateur
+  Future<bool> isAdmin() async {
+    final userId = currentUser?.id;
+    if (userId == null) return false;
+    try {
+      final result = await _client
+          .from('admin_users')
+          .select('user_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+      return result != null;
+    } catch (e) {
+      debugPrint('❌ Erreur vérification admin: $e');
+      return false;
+    }
+  }
+
+  // ========== LIVREURS ==========
+
+  /// Soumettre une candidature livreur (soumise à étude de dossier)
+  Future<bool> submitDriverApplication({
+    required String fullName,
+    required String phoneNumber,
+    required String vehicleType,
+    String? zone,
+  }) async {
+    try {
+      await _client.from('driver_applications').insert({
+        'user_id': currentUser!.id,
+        'full_name': fullName,
+        'phone_number': phoneNumber,
+        'vehicle_type': vehicleType,
+        'zone': zone,
+      });
+
+      await logAuditEvent(
+        action: 'driver_application_submitted',
+        details: {'vehicle_type': vehicleType},
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur soumission candidature livreur: $e');
+      return false;
+    }
+  }
+
+  /// Récupérer la dernière candidature livreur de l'utilisateur courant
+  Future<Map<String, dynamic>?> getMyDriverApplication() async {
+    final userId = currentUser?.id;
+    if (userId == null) return null;
+    try {
+      final result = await _client
+          .from('driver_applications')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      return result;
+    } catch (e) {
+      debugPrint('❌ Erreur récupération candidature: $e');
+      return null;
+    }
+  }
+
+  /// Récupérer les candidatures en attente (admin uniquement, RLS l'impose)
+  Future<List<Map<String, dynamic>>> getPendingDriverApplications() async {
+    try {
+      final result = await _client
+          .from('driver_applications')
+          .select()
+          .eq('status', 'pending')
+          .order('created_at', ascending: true);
+      return List<Map<String, dynamic>>.from(result);
+    } catch (e) {
+      debugPrint('❌ Erreur récupération candidatures: $e');
+      return [];
+    }
+  }
+
+  /// Approuver ou refuser une candidature livreur (admin uniquement)
+  Future<bool> reviewDriverApplication({
+    required String applicationId,
+    required bool approve,
+    String? reason,
+  }) async {
+    try {
+      await _client.rpc('review_driver_application', params: {
+        'p_application_id': applicationId,
+        'p_approve': approve,
+        'p_reason': reason,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur traitement candidature: $e');
+      return false;
+    }
+  }
+
+  /// Livraisons disponibles à réclamer (livreurs approuvés uniquement, RLS l'impose)
+  Future<List<Map<String, dynamic>>> getAvailableDeliveries() async {
+    try {
+      final result = await _client
+          .from('transactions')
+          .select()
+          .eq('delivery_status', 'pending')
+          .order('created_at', ascending: true);
+      return List<Map<String, dynamic>>.from(result);
+    } catch (e) {
+      debugPrint('❌ Erreur récupération livraisons disponibles: $e');
+      return [];
+    }
+  }
+
+  /// Mes livraisons en cours (réclamées par moi, pas encore livrées)
+  Future<List<Map<String, dynamic>>> getMyDeliveries() async {
+    final userId = currentUser?.id;
+    if (userId == null) return [];
+    try {
+      final result = await _client
+          .from('transactions')
+          .select()
+          .eq('driver_id', userId)
+          .eq('delivery_status', 'claimed')
+          .order('created_at', ascending: true);
+      return List<Map<String, dynamic>>.from(result);
+    } catch (e) {
+      debugPrint('❌ Erreur récupération mes livraisons: $e');
+      return [];
+    }
+  }
+
+  /// Réclamer une livraison disponible
+  Future<bool> claimDelivery(String transactionId) async {
+    try {
+      await _client.rpc('claim_delivery', params: {'p_transaction_id': transactionId});
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur réclamation livraison: $e');
+      return false;
+    }
+  }
+
+  /// Marquer une livraison effectuée : crédite 50% des frais de livraison
+  /// au livreur de façon atomique côté serveur (RPC complete_delivery).
+  Future<bool> completeDelivery(String transactionId) async {
+    try {
+      await _client.rpc('complete_delivery', params: {'p_transaction_id': transactionId});
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur finalisation livraison: $e');
+      return false;
     }
   }
 

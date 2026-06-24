@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/analytics_models.dart';
 import '../providers/analytics_provider.dart';
 import '../widgets/monetization_widgets.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
+import '../services/supabase_service.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = 'current_user_id'; // Get from auth provider
+    _userId = SupabaseService().currentUser?.id ?? '';
     _loadAnalytics();
   }
 

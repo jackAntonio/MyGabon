@@ -50,8 +50,7 @@ class HttpClientService {
           debugPrint('❌ Certificat non approuvé pour: $host');
           return false;
         }
-        ..connectionTimeout = const Duration(seconds: 15)
-        ..badCertificateCallback;
+        ..connectionTimeout = const Duration(seconds: 15);
       
       return IOClient(httpClient);
     } catch (e) {

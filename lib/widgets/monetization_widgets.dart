@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/monetization_models.dart';
 import '../providers/monetization_provider.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 /// Subscription plan card
 class SubscriptionPlanCard extends StatelessWidget {

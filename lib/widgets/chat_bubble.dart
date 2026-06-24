@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 /// Simple chat bubble for UI-only chat screen.
 class ChatBubble extends StatelessWidget {

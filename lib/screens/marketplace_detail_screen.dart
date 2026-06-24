@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../models/product.dart';
+import '../services/payment_service.dart';
+import '../widgets/verified_badge.dart';
 import 'payment/payment_method_selection_screen.dart';
 
 /// Full-screen marketplace product detail page
@@ -223,9 +225,20 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.product.sellerName,
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.product.sellerName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (widget.product.sellerVerified) ...[
+                      const SizedBox(width: 8),
+                      const VerifiedSellerBadge(size: 11),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -417,7 +430,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '5 000 FCFA',
+                    '${PaymentService.standardDeliveryFee.toStringAsFixed(0)} FCFA',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.success,
@@ -507,6 +520,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                       MaterialPageRoute(
                         builder: (context) => PaymentMethodSelectionScreen(
                           product: widget.product,
+                          deliveryFee: PaymentService.standardDeliveryFee,
                         ),
                       ),
                     );

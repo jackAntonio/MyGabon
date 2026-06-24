@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/product_model.dart';
+import '../models/product.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/demo_data.dart';
 
 /// Marketplace provider with caching, pagination, and offline support
 class MarketplaceProvider extends ChangeNotifier {
-  List<ProductModel> _products = [];
-  List<ProductModel> _filteredProducts = [];
+  List<Product> _products = [];
+  List<Product> _filteredProducts = [];
   bool _loading = true;
   bool _loadingMore = false;
   int _currentPage = 0;
@@ -15,7 +16,7 @@ class MarketplaceProvider extends ChangeNotifier {
 
   final ConnectivityService? _connectivityService;
 
-  List<ProductModel> get products =>
+  List<Product> get products =>
       _filteredProducts.isEmpty ? _products : _filteredProducts;
   bool get isLoading => _loading;
   bool get isLoadingMore => _loadingMore;
@@ -31,7 +32,6 @@ class MarketplaceProvider extends ChangeNotifier {
       _loading = true;
       notifyListeners();
 
-      // Try to load from cache first
       final cachedProducts = CacheService.getProducts('products_page_0');
 
       if (cachedProducts != null) {
@@ -41,7 +41,6 @@ class MarketplaceProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      // If offline, show cached data, otherwise fetch fresh data
       if (_connectivityService?.isOnlineMode ?? true) {
         await _fetchProductsPage(0);
       }
@@ -74,7 +73,6 @@ class MarketplaceProvider extends ChangeNotifier {
   /// Fetch products with pagination and caching
   Future<void> _fetchProductsPage(int page) async {
     try {
-      // Check cache first
       final cacheKey = 'products_page_$page';
       final cached = CacheService.getProducts(cacheKey);
 
@@ -90,7 +88,6 @@ class MarketplaceProvider extends ChangeNotifier {
         return;
       }
 
-      // Simulate network request with retry logic
       if (_connectivityService != null) {
         await _connectivityService!.retryWithBackoff(() async {
           await Future.delayed(const Duration(milliseconds: 500));
@@ -100,8 +97,10 @@ class MarketplaceProvider extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      // Generate dummy data (replace with API call)
-      final newProducts = _generateDummyProducts(page);
+      // TODO: remplacer par un vrai fetch Supabase (table `products`) une fois
+      // le catalogue alimenté en production ; pour l'instant on sert les
+      // données de démo gabonaises (demo_data.dart) en pages de _pageSize.
+      final newProducts = _productsForPage(page);
 
       if (newProducts.length < _pageSize) {
         _hasReachedEnd = true;
@@ -113,8 +112,7 @@ class MarketplaceProvider extends ChangeNotifier {
         _products.addAll(newProducts);
       }
 
-      // Cache the result
-      final jsonData = newProducts.map((p) => _productToJson(p)).toList();
+      final jsonData = newProducts.map((p) => p.toJson()).toList();
       await CacheService.cacheProducts(cacheKey, jsonData);
 
       _currentPage = page;
@@ -132,10 +130,12 @@ class MarketplaceProvider extends ChangeNotifier {
     if (query.isEmpty) {
       _filteredProducts = [];
     } else {
+      final q = query.toLowerCase();
       _filteredProducts = _products
           .where((p) =>
-              p.name.toLowerCase().contains(query.toLowerCase()) ||
-              p.location.toLowerCase().contains(query.toLowerCase()))
+              p.title.toLowerCase().contains(q) ||
+              p.location.toLowerCase().contains(q) ||
+              (p.category?.toLowerCase().contains(q) ?? false))
           .toList();
     }
     notifyListeners();
@@ -165,60 +165,47 @@ class MarketplaceProvider extends ChangeNotifier {
     await _fetchProductsPage(0);
   }
 
-  /// Helper: Generate dummy products
-  List<ProductModel> _generateDummyProducts(int page) {
-    final start = page * _pageSize;
-    final dummyNames = [
-      'Used Laptop',
-      'Smartphone',
-      'Tablet',
-      'Camera',
-      'Headphones',
-      'Keyboard',
-      'Mouse',
-      'Monitor',
-      'Speakers',
-      'Printer',
-      'Router',
-      'Hard Drive',
-      'SSD',
-      'RAM',
-      'GPU',
-    ];
+  /// Construire la page de produits de démo (villes et conditions gabonaises
+  /// variées pour donner un catalogue plus riche que les 5 entrées de base).
+  List<Product> _productsForPage(int page) {
+    if (page > 0) return [];
 
-    final products = <ProductModel>[];
-    for (int i = start; i < start + _pageSize && i < 100; i++) {
-      products.add(
-        ProductModel(
-          name: dummyNames[i % dummyNames.length],
-          price: 500000 + (i * 50000),
-          location: 'Libreville',
-        ),
+    final rawProducts = gabonDemoData['products'] as List<dynamic>;
+    final rawUsers = gabonDemoData['users'] as List<dynamic>;
+    final locations = ['Libreville', 'Port-Gentil', 'Franceville', 'Lambaréné'];
+    final conditions = ['Neuf', 'Bon état', 'Occasion'];
+
+    return rawProducts.asMap().entries.map((entry) {
+      final i = entry.key;
+      final raw = entry.value as Map<String, dynamic>;
+      final seller = rawUsers.cast<Map<String, dynamic>>().firstWhere(
+            (u) => u['id'] == raw['seller_id'],
+            orElse: () => const {},
+          );
+      return Product(
+        id: raw['id'] as String,
+        title: raw['title'] as String,
+        description: raw['description'] as String,
+        price: (raw['price'] as num).toDouble(),
+        category: raw['category'] as String?,
+        imageUrl: null,
+        sellerId: raw['seller_id'] as String,
+        sellerName: raw['seller_name'] as String,
+        sellerRating: (raw['rating'] as num).toDouble(),
+        sellerVerified: seller['verified'] as bool? ?? false,
+        condition: conditions[i % conditions.length],
+        location: locations[i % locations.length],
+        createdAt: DateTime.now().subtract(Duration(days: i)),
+        quantity: 1,
+        published: true,
       );
-    }
-
-    return products;
+    }).toList();
   }
 
-  /// Helper: Convert ProductModel to JSON
-  Map<String, dynamic> _productToJson(ProductModel product) {
-    return {
-      'name': product.name,
-      'price': product.price,
-      'location': product.location,
-    };
-  }
-
-  /// Helper: Parse products from JSON
-  List<ProductModel> _parseProductsFromJson(dynamic json) {
+  /// Helper: Parse products from JSON (cache)
+  List<Product> _parseProductsFromJson(dynamic json) {
     if (json is List) {
-      return json
-          .map((item) => ProductModel(
-                name: item['name'] as String? ?? 'Product',
-                price: (item['price'] as num?)?.toInt() ?? 0,
-                location: item['location'] as String? ?? 'Unknown',
-              ))
-          .toList();
+      return json.map((item) => Product.fromJson(item as Map<String, dynamic>)).toList();
     }
     return [];
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/security_models.dart';
 import '../providers/fraud_detection_provider.dart';
-import '../utils/colors.dart';
+import '../config/theme.dart';
 
 /// Verification badge widget
 class VerificationBadge extends StatelessWidget {
