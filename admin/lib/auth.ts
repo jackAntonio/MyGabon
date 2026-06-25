@@ -1,0 +1,109 @@
+import bcrypt from 'bcryptjs'
+import { supabase } from './supabase'
+
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10)
+}
+
+export async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
+  return bcrypt.compare(password, hash)
+}
+
+export async function getAdminByEmail(email: string) {
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('email', email)
+    .single()
+
+  if (error) return null
+  return data
+}
+
+export async function validateAdminLogin(
+  email: string,
+  password: string
+) {
+  try {
+    const admin = await getAdminByEmail(email)
+
+    if (!admin) {
+      return { error: 'Email ou mot de passe incorrect' }
+    }
+
+    if (admin.status === 'suspended') {
+      return { error: 'Compte suspendu' }
+    }
+
+    if (admin.status === 'inactive') {
+      return { error: 'Compte inactif' }
+    }
+
+    // Check if locked due to failed attempts
+    if (admin.locked_until && new Date(admin.locked_until) > new Date()) {
+      return { error: 'Compte verrouillé. Réessayez plus tard.' }
+    }
+
+    const isPasswordValid = await verifyPassword(password, admin.password_hash)
+
+    if (!isPasswordValid) {
+      // Increment failed login attempts
+      const failedAttempts = (admin.failed_login_attempts || 0) + 1
+      const shouldLock = failedAttempts >= 5
+
+      await supabase
+        .from('admin_users')
+        .update({
+          failed_login_attempts: failedAttempts,
+          locked_until: shouldLock
+            ? new Date(Date.now() + 15 * 60 * 1000).toISOString()
+            : null,
+        })
+        .eq('id', admin.id)
+
+      if (shouldLock) {
+        return { error: 'Trop de tentatives. Compte verrouillé 15 minutes.' }
+      }
+
+      return { error: 'Email ou mot de passe incorrect' }
+    }
+
+    // Reset failed attempts and update last login
+    await supabase
+      .from('admin_users')
+      .update({
+        failed_login_attempts: 0,
+        locked_until: null,
+        last_login: new Date().toISOString(),
+      })
+      .eq('id', admin.id)
+
+    return { admin }
+  } catch (error) {
+    console.error('Login error:', error)
+    return { error: 'Erreur lors du login' }
+  }
+}
+
+export async function logAdminAction(
+  adminId: string,
+  action: string,
+  resourceType?: string,
+  resourceId?: string,
+  changes?: any
+) {
+  try {
+    await supabase.from('admin_audit_logs').insert({
+      admin_id: adminId,
+      action,
+      resource_type: resourceType,
+      resource_id: resourceId,
+      changes,
+    })
+  } catch (error) {
+    console.error('Error logging action:', error)
+  }
+}
