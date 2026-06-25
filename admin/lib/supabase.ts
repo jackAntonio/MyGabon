@@ -1,8 +1,14 @@
+import 'server-only'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+// ⚠️ import 'server-only' fait échouer le build si ce module est jamais
+// importé depuis un composant client — supabaseAdmin (service_role) ne doit
+// exister que côté serveur (route handlers / NextAuth), jamais dans un bundle
+// envoyé au navigateur.
 
 // Client-side Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -13,7 +19,7 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 export type Database = {
   public: {
     Tables: {
-      admin_users: {
+      dashboard_admins: {
         Row: {
           id: string
           email: string
@@ -30,8 +36,8 @@ export type Database = {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['admin_users']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['admin_users']['Insert']>
+        Insert: Omit<Database['public']['Tables']['dashboard_admins']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['dashboard_admins']['Insert']>
       }
       image_moderation: {
         Row: {

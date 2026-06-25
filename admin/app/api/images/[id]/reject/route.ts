@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requirePermission } from '@/lib/apiAuth'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { session, response } = await requirePermission('images:reject')
+    if (response) return response
 
+    const { id } = await params
     const body = await request.json()
     const { reason, notes } = body
 
@@ -29,11 +27,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .update({
         status: 'rejected',
         reason_rejected: reason,
-        reviewed_by: (session.user as any).id,
+        reviewed_by: (session!.user as any).id,
         reviewed_at: new Date().toISOString(),
         notes,
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -44,10 +42,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Log audit
     await supabaseAdmin.from('admin_audit_logs').insert({
-      admin_id: (session.user as any).id,
+      admin_id: (session!.user as any).id,
       action: 'image_rejected',
       resource_type: 'image_moderation',
-      resource_id: params.id,
+      resource_id: id,
       changes: {
         status: { from: 'pending', to: 'rejected' },
         reason,

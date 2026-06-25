@@ -9,6 +9,8 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [totpCode, setTotpCode] = useState('')
+  const [totpRequired, setTotpRequired] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -21,10 +23,17 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
+        totpCode: totpRequired ? totpCode : undefined,
         redirect: false,
       })
 
-      if (result?.error) {
+      if (result?.error === 'totp_required') {
+        // Mot de passe correct mais 2FA activée : on redemande juste le
+        // code, sans jamais confirmer explicitement que le mot de passe
+        // était bon (évite l'énumération d'identifiants valides).
+        setTotpRequired(true)
+        setError('Entrez le code de votre application d\'authentification')
+      } else if (result?.error) {
         setError(result.error)
       } else if (result?.ok) {
         router.push('/admin')
@@ -89,9 +98,31 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
                 required
-                disabled={isLoading}
+                disabled={isLoading || totpRequired}
               />
             </div>
+
+            {/* 2FA Code Field */}
+            {totpRequired && (
+              <div>
+                <label htmlFor="totpCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Code de vérification (2FA)
+                </label>
+                <input
+                  id="totpCode"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  placeholder="123456"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  required
+                  autoFocus
+                  disabled={isLoading}
+                />
+              </div>
+            )}
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between text-sm">
@@ -113,14 +144,6 @@ export default function LoginPage() {
               {isLoading ? 'Connexion en cours...' : 'Se connecter'}
             </button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-xs font-semibold text-blue-900 mb-2">🔐 Identifiants de test:</p>
-            <p className="text-xs text-blue-800">
-              <span className="font-mono">admin@mygabon.com</span> / <span className="font-mono">admin123</span>
-            </p>
-          </div>
         </div>
 
         {/* Footer */}

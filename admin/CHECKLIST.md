@@ -5,7 +5,7 @@ Complete checklist of all implemented features and components.
 ## Phase 1: Authentication ✅
 
 ### Database Setup
-- [x] Create admin_users table
+- [x] Create dashboard_admins table
 - [x] Create admin_audit_logs table
 - [x] Create admin_sessions table
 - [x] Create admin_permissions table
@@ -99,7 +99,6 @@ Complete checklist of all implemented features and components.
 - [x] useUser(id) - single user
 - [x] useUpdateUser() - update mutation
 - [x] useDeleteUser() - delete mutation
-- [x] useSuspendUser() - suspension mutation
 - [x] Auto-invalidation on mutation success
 
 ## Phase 3: Image Moderation ✅
@@ -298,7 +297,6 @@ Complete checklist of all implemented features and components.
 - [x] useUser(userId)
 - [x] useUpdateUser()
 - [x] useDeleteUser()
-- [x] useSuspendUser()
 
 ### Image Hooks
 - [x] useImageQueue(status, page)

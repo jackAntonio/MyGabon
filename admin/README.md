@@ -172,7 +172,7 @@ Production URL: `https://mygabon-admin.vercel.app`
 
 ### Login not working
 - Check `.env.local` has valid Supabase credentials
-- Verify `admin_users` table exists in Supabase
+- Verify `dashboard_admins` table exists in Supabase
 - Ensure NextAuth secret is set
 
 ### Images not loading

@@ -77,22 +77,3 @@ export function useDeleteUser() {
     },
   })
 }
-
-export function useSuspendUser() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      const res = await fetch(`/api/users/${userId}/suspend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      })
-      if (!res.ok) throw new Error('Failed to suspend user')
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
-    },
-  })
-}

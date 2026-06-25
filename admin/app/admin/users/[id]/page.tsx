@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useUser, useUpdateUser } from '@/lib/hooks/useUsers'
+import { useUser, useUpdateUser, type User } from '@/lib/hooks/useUsers'
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 
@@ -14,10 +14,12 @@ export default function UserDetailPage() {
   const updateUser = useUpdateUser()
 
   const [editMode, setEditMode] = useState(false)
-  const [formData, setFormData] = useState({
+  // Pas d'email ici : modifier users.email depuis ce formulaire ne mettrait
+  // pas à jour le compte Supabase Auth associé (désynchronisation login/email
+  // affiché). L'API /api/users/[id] ignore d'ailleurs ce champ (cf. UPDATABLE_USER_FIELDS).
+  const [formData, setFormData] = useState<Pick<User, 'full_name' | 'status'>>({
     full_name: '',
-    email: '',
-    status: '',
+    status: 'active',
   })
 
   if (isLoading) {
@@ -43,7 +45,6 @@ export default function UserDetailPage() {
   const handleEdit = () => {
     setFormData({
       full_name: user.full_name,
-      email: user.email,
       status: user.status,
     })
     setEditMode(true)
@@ -112,21 +113,10 @@ export default function UserDetailPage() {
                 )}
               </div>
 
-              {/* Email */}
+              {/* Email (lecture seule : géré par Supabase Auth, pas par cette API) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                {editMode ? (
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  />
-                ) : (
-                  <p className="text-gray-900">{user.email}</p>
-                )}
+                <p className="text-gray-900">{user.email}</p>
               </div>
 
               {/* Status */}
@@ -136,12 +126,11 @@ export default function UserDetailPage() {
                   <select
                     value={formData.status}
                     onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
+                      setFormData({ ...formData, status: e.target.value as User['status'] })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                   >
                     <option value="active">Actif</option>
-                    <option value="inactive">Inactif</option>
                     <option value="suspended">Suspendu</option>
                   </select>
                 ) : (

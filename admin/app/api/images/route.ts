@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requirePermission } from '@/lib/apiAuth'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { response } = await requirePermission('images:read')
+    if (response) return response
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')

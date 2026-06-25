@@ -1,5 +1,11 @@
 import bcrypt from 'bcryptjs'
-import { supabase } from './supabase'
+import { authenticator } from 'otplib'
+import { supabaseAdmin } from './supabase'
+
+// ⚠️ Toutes les requêtes de ce fichier utilisent supabaseAdmin (service_role).
+// dashboard_admins et admin_audit_logs n'ont plus aucune policy RLS pour
+// anon/authenticated (cf. admin/SQL_SETUP.sql) : un client anon ne pourrait
+// plus rien y lire ni écrire, ce qui est volontaire.
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
@@ -13,8 +19,8 @@ export async function verifyPassword(
 }
 
 export async function getAdminByEmail(email: string) {
-  const { data, error } = await supabase
-    .from('admin_users')
+  const { data, error } = await supabaseAdmin
+    .from('dashboard_admins')
     .select('*')
     .eq('email', email)
     .single()
@@ -25,7 +31,8 @@ export async function getAdminByEmail(email: string) {
 
 export async function validateAdminLogin(
   email: string,
-  password: string
+  password: string,
+  totpCode?: string
 ) {
   try {
     const admin = await getAdminByEmail(email)
@@ -54,8 +61,8 @@ export async function validateAdminLogin(
       const failedAttempts = (admin.failed_login_attempts || 0) + 1
       const shouldLock = failedAttempts >= 5
 
-      await supabase
-        .from('admin_users')
+      await supabaseAdmin
+        .from('dashboard_admins')
         .update({
           failed_login_attempts: failedAttempts,
           locked_until: shouldLock
@@ -71,9 +78,20 @@ export async function validateAdminLogin(
       return { error: 'Email ou mot de passe incorrect' }
     }
 
+    // 2FA : le mot de passe seul ne suffit pas si l'admin a activé le TOTP.
+    if (admin.two_fa_enabled) {
+      if (!totpCode) {
+        return { error: 'totp_required' }
+      }
+      const isTotpValid = authenticator.check(totpCode, admin.two_fa_secret)
+      if (!isTotpValid) {
+        return { error: 'Code de vérification invalide' }
+      }
+    }
+
     // Reset failed attempts and update last login
-    await supabase
-      .from('admin_users')
+    await supabaseAdmin
+      .from('dashboard_admins')
       .update({
         failed_login_attempts: 0,
         locked_until: null,
@@ -96,7 +114,7 @@ export async function logAdminAction(
   changes?: any
 ) {
   try {
-    await supabase.from('admin_audit_logs').insert({
+    await supabaseAdmin.from('admin_audit_logs').insert({
       admin_id: adminId,
       action,
       resource_type: resourceType,

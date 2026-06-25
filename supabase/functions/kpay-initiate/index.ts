@@ -35,12 +35,27 @@ const KPAY_BASE_URL = "https://admin.kpay.site/api/v1";
 // n'apparaît dans aucune liste officielle des opérateurs supportés).
 const GABON_PROVIDER = "AIRTEL_GAB";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
-};
+// Origines web autorisées à appeler cette fonction depuis un navigateur
+// (ex. "https://app.mygabon.ga,https://admin.mygabon.ga"). Sans configuration,
+// aucune origine n'est reflétée : le navigateur bloque alors l'appel
+// cross-origin (fail-closed). N'affecte pas l'app mobile/les appels
+// serveur-à-serveur, qui n'envoient pas d'en-tête Origin et ne sont pas
+// soumis à CORS.
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+function corsHeadersFor(origin: string | null) {
+  return {
+    "Access-Control-Allow-Origin": origin && ALLOWED_ORIGINS.includes(origin) ? origin : "",
+    "Access-Control-Allow-Headers": "authorization, content-type",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req.headers.get("origin"));
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

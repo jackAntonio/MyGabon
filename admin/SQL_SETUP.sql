@@ -3,8 +3,14 @@
 -- Exécuter ce SQL dans Supabase
 -- ============================================
 
--- 1. TABLE: Admin Users
-CREATE TABLE IF NOT EXISTS admin_users (
+-- 1. TABLE: Dashboard Admins
+-- ⚠️ Nommée `dashboard_admins` (et non `admin_users`) pour ne pas collisionner
+-- avec la table `admin_users` créée par supabase/migrations/20260623_admin_and_drivers.sql
+-- (qui sert un objectif différent : marquer un auth.uid() Supabase comme admin
+-- pour les RLS/RPC de l'app Flutter). Les deux tables s'appelaient `admin_users`
+-- via CREATE TABLE IF NOT EXISTS : selon l'ordre d'exécution, l'une écrasait
+-- silencieusement l'autre.
+CREATE TABLE IF NOT EXISTS dashboard_admins (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
@@ -24,7 +30,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- 2. TABLE: Admin Audit Logs
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  admin_id UUID NOT NULL REFERENCES admin_users(id) ON DELETE SET NULL,
+  admin_id UUID NOT NULL REFERENCES dashboard_admins(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
   resource_type TEXT,
   resource_id TEXT,
@@ -39,7 +45,7 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
 -- 3. TABLE: Admin Sessions
 CREATE TABLE IF NOT EXISTS admin_sessions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  admin_id UUID NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+  admin_id UUID NOT NULL REFERENCES dashboard_admins(id) ON DELETE CASCADE,
   token TEXT UNIQUE NOT NULL,
   ip_address TEXT,
   user_agent TEXT,
@@ -64,7 +70,7 @@ CREATE TABLE IF NOT EXISTS image_moderation (
   ai_analysis_at TIMESTAMP,
 
   -- Review Info
-  reviewed_by UUID REFERENCES admin_users(id),
+  reviewed_by UUID REFERENCES dashboard_admins(id),
   reviewed_at TIMESTAMP,
   review_notes TEXT,
 
@@ -82,14 +88,14 @@ CREATE TABLE IF NOT EXISTS image_moderation (
 CREATE TABLE IF NOT EXISTS wallet_adjustments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  admin_id UUID REFERENCES admin_users(id),
+  admin_id UUID REFERENCES dashboard_admins(id),
   amount DECIMAL(15,2) NOT NULL,
   reason TEXT NOT NULL CHECK (reason IN ('correction', 'refund', 'bonus', 'penalty', 'manual_adjustment')),
   notes TEXT,
   previous_balance DECIMAL(15,2),
   new_balance DECIMAL(15,2),
   requires_approval BOOLEAN DEFAULT FALSE,
-  approved_by UUID REFERENCES admin_users(id),
+  approved_by UUID REFERENCES dashboard_admins(id),
   approved_at TIMESTAMP,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'completed')),
   created_at TIMESTAMP DEFAULT NOW(),
@@ -103,7 +109,7 @@ CREATE TABLE IF NOT EXISTS admin_webhooks (
   events TEXT[] NOT NULL,
   active BOOLEAN DEFAULT TRUE,
   signing_secret TEXT NOT NULL,
-  created_by UUID REFERENCES admin_users(id),
+  created_by UUID REFERENCES dashboard_admins(id),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -142,9 +148,9 @@ CREATE TABLE IF NOT EXISTS admin_permissions (
 -- INDEXES
 -- ============================================
 
-CREATE INDEX idx_admin_users_email ON admin_users(email);
-CREATE INDEX idx_admin_users_role ON admin_users(role);
-CREATE INDEX idx_admin_users_status ON admin_users(status);
+CREATE INDEX idx_dashboard_admins_email ON dashboard_admins(email);
+CREATE INDEX idx_dashboard_admins_role ON dashboard_admins(role);
+CREATE INDEX idx_dashboard_admins_status ON dashboard_admins(status);
 CREATE INDEX idx_admin_audit_logs_admin_id ON admin_audit_logs(admin_id);
 CREATE INDEX idx_admin_audit_logs_resource ON admin_audit_logs(resource_type, resource_id);
 CREATE INDEX idx_admin_audit_logs_created_at ON admin_audit_logs(created_at);
@@ -198,27 +204,22 @@ INSERT INTO admin_permissions (role, permissions) VALUES
 ON CONFLICT (role) DO NOTHING;
 
 -- ============================================
--- CREATE ADMIN USER (Test)
--- Password: admin123 (bcrypt hash)
--- Hash: $2a$10$8TS9F.xIIV7RP.IZFcdP7e8dFYvqWQ8SVvIg2KLFu7zDKVN9YLbJi
+-- CREATE FIRST ADMIN
 -- ============================================
-
-INSERT INTO admin_users (email, password_hash, full_name, role, status)
-VALUES (
-  'admin@mygabon.com',
-  '$2a$10$8TS9F.xIIV7RP.IZFcdP7e8dFYvqWQ8SVvIg2KLFu7zDKVN9YLbJi',
-  'Admin MyGabon',
-  'super_admin',
-  'active'
-)
-ON CONFLICT (email) DO NOTHING;
+-- ⚠️ Aucun compte n'est créé par ce script. Génère ton propre hash bcrypt
+-- (coût >= 10) en local, ex. avec Node :
+--   node -e "console.log(require('bcryptjs').hashSync(process.argv[1], 10))" 'TonMotDePasseLong'
+-- puis exécute manuellement, avec TON email et TON hash :
+--   INSERT INTO dashboard_admins (email, password_hash, full_name, role, status)
+--   VALUES ('toi@example.com', '<hash généré ci-dessus>', 'Ton Nom', 'super_admin', 'active');
+-- Ne committe jamais ce hash ni le mot de passe en clair dans le repo.
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
 
 -- Enable RLS for all tables
-ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dashboard_admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE image_moderation ENABLE ROW LEVEL SECURITY;
@@ -226,20 +227,13 @@ ALTER TABLE wallet_adjustments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_webhooks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_logs ENABLE ROW LEVEL SECURITY;
 
--- Policy: Only admins can read other admins
-CREATE POLICY "Admins can read admin users"
-  ON admin_users FOR SELECT
-  USING (TRUE);
-
--- Policy: Audit logs are read-only
-CREATE POLICY "Audit logs are read-only"
-  ON admin_audit_logs FOR SELECT
-  USING (TRUE);
-
--- Policy: Only logged-in admins can create audit logs
-CREATE POLICY "Admins can insert audit logs"
-  ON admin_audit_logs FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+-- ⚠️ Volontairement AUCUNE policy SELECT/INSERT/UPDATE/DELETE pour anon/authenticated
+-- sur ces tables : RLS "deny by default" une fois activée sans policy. Le backend
+-- Next.js (admin/lib/supabase.ts -> supabaseAdmin) utilise exclusivement la clé
+-- service_role, qui bypass RLS — ce n'est jamais la clé anon/authenticated qui
+-- doit toucher dashboard_admins, admin_audit_logs, image_moderation, etc.
+-- (l'ancienne policy "USING (TRUE)" exposait password_hash et two_fa_secret de
+-- tous les admins à quiconque possède la clé anon publique : ne pas la rétablir.)
 
 -- ============================================
 -- FUNCTIONS & TRIGGERS
@@ -254,9 +248,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger: Update updated_at on admin_users
-CREATE TRIGGER admin_users_updated_at
-  BEFORE UPDATE ON admin_users
+-- Trigger: Update updated_at on dashboard_admins
+CREATE TRIGGER dashboard_admins_updated_at
+  BEFORE UPDATE ON dashboard_admins
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();
 

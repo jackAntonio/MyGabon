@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle } from 'lucide-react'
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error') || 'Unknown error'
 
@@ -14,7 +15,6 @@ export default function AuthErrorPage() {
     OAuthCallback: 'Erreur lors du callback OAuth',
     OAuthCreateAccount: 'Impossible de créer un compte avec ce fournisseur',
     EmailCreateAccount: 'Impossible de créer un compte avec cet email',
-    Callback: 'Erreur lors du callback d\'authentification',
     EmailSignin: 'Vérifiez votre email pour vous connecter',
     EmailSigninError: 'Email fourni ne peut pas être utilisé pour la connexion',
     CredentialsSignin: 'Échec de la connexion. Vérifiez vos identifiants.',
@@ -62,5 +62,13 @@ export default function AuthErrorPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={null}>
+      <AuthErrorContent />
+    </Suspense>
   )
 }

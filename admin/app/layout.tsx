@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import "./globals.css"
-import { SessionProvider } from "next-auth/react"
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -22,9 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable}>
       <body className="bg-background text-foreground">
-        <SessionProvider>
+        <SessionProviderWrapper>
           {children}
-        </SessionProvider>
+        </SessionProviderWrapper>
       </body>
     </html>
   )

@@ -8,14 +8,6 @@ import 'package:flutter/foundation.dart';
 /// (jamais par le client) — pas de hashPassword/verifyPassword ici.
 /// ✅ SÉCURISÉ: OTP générés avec Random.secure()
 class SecurityUtils {
-  /// Générer un token sécurisé (Usage: seulement pour non-critiques)
-  /// Pour tokens d'authentification, utiliser AuthTokenService + JWT
-  static String generateSecureToken(String userId, {int length = 32}) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final data = '$userId:$timestamp:secure_token';
-    return sha256.convert(utf8.encode(data)).toString().substring(0, length);
-  }
-
   /// Masquer un numéro de téléphone pour affichage.
   /// ⚠️ Masquage irréversible (pas du chiffrement) : ne permet pas de
   /// retrouver la valeur d'origine.

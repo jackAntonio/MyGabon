@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { roleHasPermission } from '@/lib/permissions'
 
 export function useAuthProtected() {
   const { data: session, status } = useSession()
@@ -22,17 +23,11 @@ export function useAdminRole() {
   return (session?.user as any)?.role || null
 }
 
+// ⚠️ Décoratif uniquement (masquer un bouton) : la même règle est revérifiée
+// côté serveur dans chaque route API via lib/apiAuth.ts#requirePermission,
+// qui seul fait foi pour l'autorisation réelle.
 export function useCanAccess(permission: string) {
   const { data: session } = useSession()
   const userRole = (session?.user as any)?.role
-
-  const permissions: Record<string, string[]> = {
-    super_admin: ['all'],
-    moderator: ['users:read', 'users:create', 'users:update', 'images:read', 'images:approve', 'images:reject'],
-    analyst: ['analytics:read', 'users:read'],
-    support: ['users:read', 'users:update'],
-  }
-
-  const allowed = permissions[userRole] || []
-  return allowed.includes('all') || allowed.includes(permission)
+  return roleHasPermission(userRole, permission)
 }
