@@ -13,7 +13,7 @@ enum ConnectionQuality {
 /// Detects connection status and estimates network speed for African regions
 class ConnectivityService extends ChangeNotifier {
   late Connectivity _connectivity;
-  late StreamSubscription<ConnectivityResult> _connectivityStream;
+  late StreamSubscription<List<ConnectivityResult>> _connectivityStream;
 
   bool _isConnected = false;
   ConnectionQuality _connectionQuality = ConnectionQuality.offline;
@@ -43,9 +43,8 @@ class ConnectivityService extends ChangeNotifier {
 
   Future<void> _initConnectivity() async {
     try {
-      final result = await _connectivity.checkConnectivity();
-      _lastResult = result;
-      _updateConnectionStatus(_lastResult);
+      final results = await _connectivity.checkConnectivity();
+      _updateConnectionStatus(results);
 
       // Listen to connectivity changes
       _connectivityStream = _connectivity.onConnectivityChanged.listen(
@@ -56,7 +55,20 @@ class ConnectivityService extends ChangeNotifier {
     }
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
+  /// Depuis connectivity_plus v6, plusieurs connexions peuvent être actives
+  /// simultanément (ex. wifi + ethernet) : on retient la "meilleure" pour
+  /// l'estimation de qualité ci-dessous (wifi > mobile > autre > aucune).
+  ConnectivityResult _primaryResult(List<ConnectivityResult> results) {
+    if (results.contains(ConnectivityResult.wifi)) return ConnectivityResult.wifi;
+    if (results.contains(ConnectivityResult.mobile)) return ConnectivityResult.mobile;
+    return results.firstWhere(
+      (r) => r != ConnectivityResult.none,
+      orElse: () => ConnectivityResult.none,
+    );
+  }
+
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
+    final result = _primaryResult(results);
     _lastResult = result;
 
     final isOnline = result != ConnectivityResult.none;

@@ -155,9 +155,12 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION complete_delivery(UUID) TO authenticated;
 
--- ✅ Seed : compte admin initial.
--- Idempotent (ON CONFLICT) ; ne fait rien si l'utilisateur n'existe pas encore
--- (relancer cette ligne après inscription si nécessaire).
-INSERT INTO admin_users (user_id)
-SELECT id FROM users WHERE email = 'jackiningwe@gmail.com'
-ON CONFLICT (user_id) DO NOTHING;
+-- ⚠️ Le seed du premier compte admin ne doit PAS être versionné ici : un
+-- email réel dans une migration commitée devient une cible identifiable
+-- (phishing/credential-stuffing visant le compte super-admin) dès que ce
+-- dépôt est lu par quelqu'un d'autre. À exécuter manuellement, une fois,
+-- dans le SQL editor Supabase (jamais dans un fichier git) :
+--
+--   INSERT INTO admin_users (user_id)
+--   SELECT id FROM users WHERE email = '<email-admin-reel>'
+--   ON CONFLICT (user_id) DO NOTHING;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/security_models.dart';
 import '../providers/fraud_detection_provider.dart';
+import '../services/supabase_service.dart';
 import '../config/theme.dart';
 
 /// Verification badge widget
@@ -363,15 +364,21 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
       return;
     }
 
+    final reporterId = SupabaseService().currentUser?.id;
+    if (reporterId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vous devez être connecté pour signaler un utilisateur')),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
-      // Get current user ID from auth provider
-      // For now, using placeholder
       final fraudProvider = context.read<FraudDetectionProvider>();
 
       await fraudProvider.reportSuspiciousActivity(
-        reporterId: 'current_user_id', // Replace with actual user ID
+        reporterId: reporterId,
         suspiciousUserId: widget.suspiciousUserId,
         reason: _selectedReason,
         description: _descriptionController.text,

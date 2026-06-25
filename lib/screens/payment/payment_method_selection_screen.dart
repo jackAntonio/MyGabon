@@ -462,7 +462,7 @@ class _PaymentMethodSelectionScreenState
         break;
 
       case 'cash':
-        _showCashModal(context, fees);
+        _handleCashPayment(context, fees);
         break;
     }
   }
@@ -561,6 +561,16 @@ class _PaymentMethodSelectionScreenState
     );
   }
 
+  /// Apple Pay / Google Pay : `service.processPayment` ne fait que valider
+  /// le sheet natif via le gateway de test "example" (cf. apple_pay_service.dart)
+  /// — aucun vrai processeur de paiement n'est branché, donc aucune carte
+  /// n'est réellement débitée. On enregistre quand même la transaction côté
+  /// Supabase (pour qu'elle soit tracée), mais on NE LA COMPLÈTE PAS
+  /// automatiquement : il n'existe aucune vérification serveur du paiement
+  /// ici (contrairement à Wallet et Airtel Money), donc la créditer comme
+  /// "success" sur la seule foi du client réintroduirait la faille déjà
+  /// corrigée pour Kpay (cf. migration 20260625_kpay_external_payment.sql).
+  /// Elle reste 'pending' jusqu'à l'intégration d'un vrai processeur.
   Future<void> _handleExternalWalletPayment(
     BuildContext context,
     FeeCalculation fees, {
@@ -602,13 +612,22 @@ class _PaymentMethodSelectionScreenState
     if (!context.mounted) return;
 
     if (success) {
+      final transactionId = await SupabaseService().createTransaction(
+        sellerId: widget.product.sellerId,
+        productId: widget.product.id,
+        grossAmount: widget.product.price,
+        paymentMethod: isApplePay ? 'apple_pay' : 'google_pay',
+        deliveryFee: widget.deliveryFee,
+      );
+
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PaymentSuccessScreen(
             product: widget.product,
             totalAmount: fees.totalWithVisibleFee,
-            transactionId: DateTime.now().millisecondsSinceEpoch.toString(),
+            transactionId: transactionId ?? '',
           ),
         ),
       );
@@ -622,6 +641,24 @@ class _PaymentMethodSelectionScreenState
         ),
       );
     }
+  }
+
+  /// Paiement en espèces : enregistre une transaction 'pending' côté
+  /// Supabase (traçabilité — avant ce correctif, aucune trace n'était
+  /// créée). Reste 'pending' : seul un accord physique entre acheteur et
+  /// vendeur finalise réellement ce paiement, aucune RPC ne le complète
+  /// automatiquement.
+  Future<void> _handleCashPayment(BuildContext context, FeeCalculation fees) async {
+    final transactionId = await SupabaseService().createTransaction(
+      sellerId: widget.product.sellerId,
+      productId: widget.product.id,
+      grossAmount: widget.product.price,
+      paymentMethod: 'cash',
+      deliveryFee: widget.deliveryFee,
+    );
+
+    if (!context.mounted) return;
+    _showCashModal(context, fees);
   }
 
   void _showCashModal(BuildContext context, FeeCalculation fees) {

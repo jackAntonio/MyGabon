@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/service_model.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
-import '../services/demo_data.dart';
+import '../services/supabase_service.dart';
 
 /// Provides list of services with caching, pagination, and offline support
 class ServiceProvider extends ChangeNotifier {
@@ -97,10 +97,11 @@ class ServiceProvider extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      // TODO: remplacer par un vrai fetch Supabase (table `services`) une
-      // fois le catalogue alimenté en production ; pour l'instant on sert
-      // les données de démo gabonaises (demo_data.dart).
-      final newServices = _servicesForPage(page);
+      final rows = await SupabaseService().getServices(
+        page: page,
+        pageSize: _pageSize,
+      );
+      final newServices = rows.map(_serviceFromRow).toList();
 
       if (newServices.length < _pageSize) {
         _hasReachedEnd = true;
@@ -169,35 +170,23 @@ class ServiceProvider extends ChangeNotifier {
     await _fetchServicesPage(0);
   }
 
-  /// Construire la page de services de démo (villes gabonaises variées).
-  List<ServiceModel> _servicesForPage(int page) {
-    if (page > 0) return [];
-
-    final rawServices = gabonDemoData['services'] as List<dynamic>;
-    final rawUsers = gabonDemoData['users'] as List<dynamic>;
-    final locations = ['Libreville', 'Port-Gentil', 'Franceville', 'Lambaréné'];
-
-    return rawServices.asMap().entries.map((entry) {
-      final i = entry.key;
-      final raw = entry.value as Map<String, dynamic>;
-      final provider = rawUsers.cast<Map<String, dynamic>>().firstWhere(
-            (u) => u['id'] == raw['provider_id'],
-            orElse: () => const {},
-          );
-      return ServiceModel(
-        id: raw['id'] as String,
-        providerId: raw['provider_id'] as String,
-        providerName: raw['provider_name'] as String,
-        providerVerified: provider['verified'] as bool? ?? false,
-        title: raw['title'] as String,
-        description: raw['description'] as String,
-        price: (raw['price'] as num).toDouble(),
-        category: _capitalize(raw['category'] as String),
-        location: locations[i % locations.length],
-        rating: (raw['rating'] as num).toDouble(),
-        reviewsCount: (raw['reviews_count'] as num?)?.toInt() ?? 0,
-      );
-    }).toList();
+  /// Convertit une ligne Supabase (table `services`, avec le profil
+  /// prestataire joint sous la clé `provider`) en [ServiceModel].
+  ServiceModel _serviceFromRow(Map<String, dynamic> row) {
+    final provider = row['provider'] as Map<String, dynamic>?;
+    return ServiceModel(
+      id: row['id'] as String,
+      providerId: row['provider_id'] as String,
+      providerName: provider?['full_name'] as String? ?? 'Prestataire',
+      providerVerified: provider?['verified'] as bool? ?? false,
+      title: row['title'] as String,
+      description: row['description'] as String? ?? '',
+      price: (row['price'] as num).toDouble(),
+      category: _capitalize(row['category'] as String? ?? 'Autres'),
+      location: row['location'] as String? ?? 'Libreville',
+      rating: (row['rating'] as num?)?.toDouble() ?? 0,
+      reviewsCount: (row['reviews_count'] as num?)?.toInt() ?? 0,
+    );
   }
 
   String _capitalize(String s) =>

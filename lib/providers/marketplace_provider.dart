@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
-import '../services/demo_data.dart';
+import '../services/supabase_service.dart';
 
 /// Marketplace provider with caching, pagination, and offline support
 class MarketplaceProvider extends ChangeNotifier {
@@ -97,10 +97,11 @@ class MarketplaceProvider extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      // TODO: remplacer par un vrai fetch Supabase (table `products`) une fois
-      // le catalogue alimenté en production ; pour l'instant on sert les
-      // données de démo gabonaises (demo_data.dart) en pages de _pageSize.
-      final newProducts = _productsForPage(page);
+      final rows = await SupabaseService().getAllProducts(
+        page: page,
+        pageSize: _pageSize,
+      );
+      final newProducts = rows.map(_productFromRow).toList();
 
       if (newProducts.length < _pageSize) {
         _hasReachedEnd = true;
@@ -165,41 +166,27 @@ class MarketplaceProvider extends ChangeNotifier {
     await _fetchProductsPage(0);
   }
 
-  /// Construire la page de produits de démo (villes et conditions gabonaises
-  /// variées pour donner un catalogue plus riche que les 5 entrées de base).
-  List<Product> _productsForPage(int page) {
-    if (page > 0) return [];
-
-    final rawProducts = gabonDemoData['products'] as List<dynamic>;
-    final rawUsers = gabonDemoData['users'] as List<dynamic>;
-    final locations = ['Libreville', 'Port-Gentil', 'Franceville', 'Lambaréné'];
-    final conditions = ['Neuf', 'Bon état', 'Occasion'];
-
-    return rawProducts.asMap().entries.map((entry) {
-      final i = entry.key;
-      final raw = entry.value as Map<String, dynamic>;
-      final seller = rawUsers.cast<Map<String, dynamic>>().firstWhere(
-            (u) => u['id'] == raw['seller_id'],
-            orElse: () => const {},
-          );
-      return Product(
-        id: raw['id'] as String,
-        title: raw['title'] as String,
-        description: raw['description'] as String,
-        price: (raw['price'] as num).toDouble(),
-        category: raw['category'] as String?,
-        imageUrl: null,
-        sellerId: raw['seller_id'] as String,
-        sellerName: raw['seller_name'] as String,
-        sellerRating: (raw['rating'] as num).toDouble(),
-        sellerVerified: seller['verified'] as bool? ?? false,
-        condition: conditions[i % conditions.length],
-        location: locations[i % locations.length],
-        createdAt: DateTime.now().subtract(Duration(days: i)),
-        quantity: 1,
-        published: true,
-      );
-    }).toList();
+  /// Convertit une ligne Supabase (table `products`, avec le profil vendeur
+  /// joint sous la clé `seller`) en [Product].
+  Product _productFromRow(Map<String, dynamic> row) {
+    final seller = row['seller'] as Map<String, dynamic>?;
+    return Product(
+      id: row['id'] as String,
+      title: row['title'] as String,
+      description: row['description'] as String? ?? '',
+      price: (row['price'] as num).toDouble(),
+      category: row['category'] as String?,
+      imageUrl: row['image_url'] as String?,
+      sellerId: row['seller_id'] as String,
+      sellerName: seller?['full_name'] as String? ?? 'Vendeur',
+      sellerRating: (seller?['rating'] as num?)?.toDouble() ?? 0,
+      sellerVerified: seller?['verified'] as bool? ?? false,
+      condition: row['condition'] as String? ?? 'Occasion',
+      location: row['location'] as String? ?? 'Libreville',
+      createdAt: DateTime.parse(row['created_at'] as String),
+      quantity: row['quantity'] as int? ?? 1,
+      published: row['published'] as bool? ?? true,
+    );
   }
 
   /// Helper: Parse products from JSON (cache)

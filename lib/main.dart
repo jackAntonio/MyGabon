@@ -38,16 +38,15 @@ import 'app_services.dart';
 
 // Secrets injectés au build via --dart-define-from-file=env.json
 // (jamais via un .env empaqueté comme asset, lisible en dézippant l'APK/IPA).
-const _twilioAccountSid = String.fromEnvironment('TWILIO_ACCOUNT_SID');
-const _twilioAuthToken = String.fromEnvironment('TWILIO_AUTH_TOKEN');
-const _twilioPhoneNumber = String.fromEnvironment('TWILIO_PHONE_NUMBER');
 const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-// ⚠️ Aucune clé Kpay ici (KPAY_API_KEY/KPAY_SECRET_KEY/KPAY_WEBHOOK_SECRET) :
-// un APK/IPA est extractible, donc une clé "Secret key" ne doit JAMAIS être
-// compilée dans l'app. Ces credentials vivent uniquement comme secrets des
-// Edge Functions kpay-initiate / kpay-webhook (`supabase secrets set ...`),
-// jamais côté client — cf. supabase/functions/kpay-initiate/index.ts.
+// ⚠️ Aucune clé Kpay ni Twilio ici (KPAY_API_KEY/KPAY_SECRET_KEY/
+// KPAY_WEBHOOK_SECRET, TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN) : un APK/IPA
+// est extractible, donc un secret ne doit JAMAIS être compilé dans l'app.
+// Ces credentials vivent uniquement comme secrets des Edge Functions
+// kpay-initiate / kpay-webhook / send-otp-sms (`supabase secrets set ...`),
+// jamais côté client — cf. supabase/functions/kpay-initiate/index.ts et
+// supabase/functions/send-otp-sms/index.ts.
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,19 +61,14 @@ void main() async {
   // Initialiser Supabase (backend principal : auth, base de données, RLS)
   await SupabaseService().init(url: _supabaseUrl, anonKey: _supabaseAnonKey);
 
-  // Initialiser AppServices avec Twilio credentials
-  await AppServices().init(
-    twilioAccountSid: _twilioAccountSid,
-    twilioAuthToken: _twilioAuthToken,
-    twilioPhoneNumber: _twilioPhoneNumber,
-  );
+  // Initialiser AppServices (HTTP client, notifications, audit log)
+  await AppServices().init();
 
   // Initialize cache
   await CacheService.init();
 
   // Initialize security services
   await VerificationService().init();
-  await ReviewService().init();
   await FraudDetectionService().init();
 
   // Initialize monetization & analytics services

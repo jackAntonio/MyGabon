@@ -129,6 +129,10 @@ class SupabaseService {
     }
   }
 
+  /// Client Supabase partagé, pour les services de domaine (reviews,
+  /// fraud reports...) qui n'ont pas besoin d'une méthode dédiée ici.
+  SupabaseClient get client => _client;
+
   /// Get current user
   User? get currentUser => _client.auth.currentUser;
 
@@ -204,18 +208,22 @@ class SupabaseService {
   }
 
   // ========== OTP & VERIFICATION (Phase 2) ==========
-  // ✅ L'OTP est généré, haché et vérifié exclusivement côté serveur
-  // (RPC request_phone_otp / confirm_phone_otp, SECURITY DEFINER). Le client
-  // ne voit jamais le code et ne peut pas positionner users.verified
-  // lui-même (cf. migration 20260624_security_hardening.sql).
+  // ✅ L'OTP est généré, haché et vérifié exclusivement côté serveur. La
+  // génération + l'envoi SMS réel passent par l'Edge Function send-otp-sms
+  // (seul endroit où les credentials Twilio peuvent rester côté serveur) ;
+  // la vérification reste le RPC confirm_phone_otp (SECURITY DEFINER). Le
+  // client ne voit jamais le code et ne peut pas positionner
+  // users.verified lui-même (cf. migrations 20260624_security_hardening.sql
+  // et 20260628_drop_legacy_request_phone_otp.sql).
 
   /// Demander l'envoi d'un OTP par SMS au numéro donné
   Future<bool> sendOTP({required String phoneNumber}) async {
     try {
-      await _client.rpc('request_phone_otp', params: {
-        'p_phone_number': phoneNumber,
+      final response = await _client.functions.invoke('send-otp-sms', body: {
+        'phoneNumber': phoneNumber,
       });
-      return true;
+      final data = response.data as Map<String, dynamic>?;
+      return data?['success'] == true;
     } catch (e) {
       debugPrint('❌ Erreur envoi OTP: $e');
       return false;
@@ -331,21 +339,26 @@ class SupabaseService {
     }
   }
 
-  /// Récupérer services
+  /// Récupérer services publiés, page par page, avec le profil du
+  /// prestataire (nom, note, vérifié) joint depuis `users`.
   Future<List<Map<String, dynamic>>> getServices({
     String? category,
-    int limit = 20,
+    int page = 0,
+    int pageSize = 20,
   }) async {
     try {
       var query = _client
           .from('services')
-          .select()
-          .eq('published', true)
-          .limit(limit);
+          .select('*, provider:users!provider_id(full_name, rating, verified)')
+          .eq('published', true);
 
-      query = query.order('created_at', ascending: false);
+      if (category != null && category.isNotEmpty) {
+        query = query.eq('category', category);
+      }
 
-      final services = await query;
+      final services = await query
+          .order('created_at', ascending: false)
+          .range(page * pageSize, page * pageSize + pageSize - 1);
       return List<Map<String, dynamic>>.from(services);
     } catch (e) {
       debugPrint('❌ Erreur récupération services: $e');
@@ -473,29 +486,29 @@ class SupabaseService {
   // ========== PRODUCTS / MARKETPLACE ==========
 
   /// Récupérer tous les produits
-  Future<List> getAllProducts() async {
+  /// Récupérer produits publiés, page par page, avec le profil du vendeur
+  /// (nom, note, vérifié) joint depuis `users`. [category] filtre si fourni.
+  Future<List<Map<String, dynamic>>> getAllProducts({
+    String? category,
+    int page = 0,
+    int pageSize = 20,
+  }) async {
     try {
-      final products = await _client
+      var query = _client
           .from('products')
-          .select()
-          .order('created_at', ascending: false);
-      return products as List;
+          .select('*, seller:users!seller_id(full_name, rating, verified)')
+          .eq('published', true);
+
+      if (category != null && category.isNotEmpty) {
+        query = query.eq('category', category);
+      }
+
+      final products = await query
+          .order('created_at', ascending: false)
+          .range(page * pageSize, page * pageSize + pageSize - 1);
+      return List<Map<String, dynamic>>.from(products);
     } catch (e) {
       debugPrint('❌ Erreur récupération produits: $e');
-      return [];
-    }
-  }
-
-  /// Récupérer produits par catégorie
-  Future<List> getProductsByCategory(String category) async {
-    try {
-      final products = await _client
-          .from('products')
-          .select()
-          .order('created_at', ascending: false);
-      return products as List;
-    } catch (e) {
-      debugPrint('❌ Erreur récupération produits par catégorie: $e');
       return [];
     }
   }

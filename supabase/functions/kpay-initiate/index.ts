@@ -22,6 +22,8 @@
 // Déploiement :
 //   supabase functions deploy kpay-initiate
 //   supabase secrets set KPAY_API_KEY=kpay_live_xxx KPAY_SECRET_KEY=sk_live_xxx
+//   supabase secrets set ALLOWED_ORIGINS=https://app.mygabon.ga  (optionnel,
+//   uniquement si cette fonction est aussi appelée depuis un navigateur)
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 

@@ -2,8 +2,14 @@ import 'dart:async';
 import 'package:hive/hive.dart';
 import '../models/security_models.dart';
 import '../utils/security_utils.dart';
+import 'supabase_service.dart';
 
-/// Service for fraud detection and prevention
+/// Service for fraud detection and prevention.
+/// Les signalements (reportSuspiciousActivity/getUserReports) sont
+/// persistés dans Supabase (table `fraud_reports`) pour être visibles par
+/// les admins, pas seulement par l'auteur du signalement. Le reste
+/// (heuristique de risque, blocage local, stats) reste sur Hive : ce sont
+/// des données dérivées/locales, pas des informations à partager.
 class FraudDetectionService {
   static const String _reportsBoxName = 'fraud_reports';
   static const String _suspiciousBoxName = 'suspicious_activity';
@@ -73,8 +79,8 @@ class FraudDetectionService {
     }
     
     // Check if user has multiple reports
-    final userReports = await getUserReports(userId);
-    if (userReports.length > 2) {
+    final reportCount = await getUserReportCount(userId);
+    if (reportCount > 2) {
       riskScore += 0.15;
     }
     
@@ -86,7 +92,9 @@ class FraudDetectionService {
     return FraudRiskLevel.safe;
   }
   
-  /// Report suspicious user/listing
+  /// Report suspicious user/listing — persisté dans Supabase (table
+  /// `fraud_reports`) pour être visible par les admins, pas seulement
+  /// stocké localement chez le signaleur.
   Future<String> reportSuspiciousActivity({
     required String reporterId,
     required String suspiciousUserId,
@@ -99,50 +107,61 @@ class FraudDetectionService {
       throw Exception('Invalid report description');
     }
 
-    final report = FraudReport(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      reporterId: reporterId,
-      suspiciousUserId: suspiciousUserId,
-      listingId: listingId,
-      reportReason: reason,
-      description: description,
-      evidence: evidenceUrls ?? [],
-    );
-    
-    _reportsBox.put(report.id, report.toJson());
-    
+    final result = await SupabaseService().client
+        .from('fraud_reports')
+        .insert({
+          'reporter_id': reporterId,
+          'suspicious_user_id': suspiciousUserId,
+          'listing_id': listingId,
+          'reason': reason,
+          'description': description,
+          'evidence_urls': evidenceUrls ?? [],
+        })
+        .select('id')
+        .single();
+
     // Flag user if multiple reports
-    final userReports = await getUserReports(suspiciousUserId);
-    if (userReports.length >= 3) {
+    final reportCount = await getUserReportCount(suspiciousUserId);
+    if (reportCount >= 3) {
       await _flagUser(suspiciousUserId, 'Multiple fraud reports');
     }
-    
-    return report.id;
+
+    return result['id'] as String;
   }
-  
-  /// Get fraud reports for a user
+
+  /// Nombre de signalements contre un utilisateur — agrégat sûr (RPC
+  /// get_user_report_count), utilisable par n'importe qui sans exposer le
+  /// détail des signalements (réservé aux admins et au signaleur lui-même).
+  Future<int> getUserReportCount(String userId) async {
+    final count = await SupabaseService().client.rpc('get_user_report_count', params: {
+      'p_target_user_id': userId,
+    });
+    return count as int;
+  }
+
+  /// Get fraud reports for a user — ne renvoie un résultat non vide que
+  /// pour un admin ou pour les signalements faits par l'appelant lui-même
+  /// (RLS sur fraud_reports), conformément à la confidentialité des
+  /// signalements.
   Future<List<FraudReport>> getUserReports(String userId) async {
-    final reports = <FraudReport>[];
-    
-    for (final data in _reportsBox.values) {
-      if (data is Map) {
-        final report = data as Map<String, dynamic>;
-        if (report['suspiciousUserId'] == userId) {
-          reports.add(FraudReport(
-            id: report['id'],
-            reporterId: report['reporterId'],
-            suspiciousUserId: report['suspiciousUserId'],
-            listingId: report['listingId'],
-            reportReason: report['reportReason'],
-            description: report['description'],
-            evidence: List<String>.from(report['evidence'] ?? []),
-            verified: report['verified'] ?? false,
-          ));
-        }
-      }
-    }
-    
-    return reports;
+    final rows = await SupabaseService().client
+        .from('fraud_reports')
+        .select()
+        .eq('suspicious_user_id', userId);
+
+    return List<Map<String, dynamic>>.from(rows)
+        .map((report) => FraudReport(
+              id: report['id'] as String,
+              reporterId: report['reporter_id'] as String,
+              suspiciousUserId: report['suspicious_user_id'] as String,
+              listingId: report['listing_id'] as String?,
+              reportReason: report['reason'] as String,
+              description: report['description'] as String,
+              evidence: List<String>.from(report['evidence_urls'] as List? ?? []),
+              verified: report['verified'] as bool? ?? false,
+              createdAt: DateTime.parse(report['created_at'] as String),
+            ))
+        .toList();
   }
   
   /// Flag user as suspicious
@@ -234,9 +253,9 @@ class FraudDetectionService {
     final flags = <String>[];
     
     // Check if user has many reports
-    final reports = await getUserReports(userId);
-    if (reports.length > 2) {
-      flags.add('Multiple fraud reports (${reports.length})');
+    final reportCount = await getUserReportCount(userId);
+    if (reportCount > 2) {
+      flags.add('Multiple fraud reports ($reportCount)');
     }
     
     // Check if flagged

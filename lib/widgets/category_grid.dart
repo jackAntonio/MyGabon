@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
-import '../services/dummy_data.dart';
 
 /// Grid of category tiles displayed on the home screen.
+/// Catégories alignées sur celles proposées à la publication
+/// (lib/screens/post_announcement_screen.dart) pour rester cohérentes
+/// avec les valeurs réellement stockées dans `products.category`.
 class CategoryGrid extends StatelessWidget {
   const CategoryGrid({Key? key}) : super(key: key);
 
+  static const List<String> categories = [
+    'Électronique',
+    'Mode',
+    'Maison & Jardin',
+    'Véhicules',
+    'Immobilier',
+    'Meubles',
+    'Autres',
+  ];
+
   @override
   Widget build(BuildContext context) {
-    const categories = DummyData.categories;
 
     return GridView.builder(
       itemCount: categories.length,
