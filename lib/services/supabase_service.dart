@@ -340,17 +340,14 @@ class SupabaseService {
   }
 
   /// Récupérer services publiés, page par page, avec le profil du
-  /// prestataire (nom, note, vérifié) joint depuis `users`.
+  /// prestataire (nom, note, vérifié) attaché depuis `profiles_public`.
   Future<List<Map<String, dynamic>>> getServices({
     String? category,
     int page = 0,
     int pageSize = 20,
   }) async {
     try {
-      var query = _client
-          .from('services')
-          .select('*, provider:users!provider_id(full_name, rating, verified)')
-          .eq('published', true);
+      var query = _client.from('services').select().eq('published', true);
 
       if (category != null && category.isNotEmpty) {
         query = query.eq('category', category);
@@ -359,11 +356,41 @@ class SupabaseService {
       final services = await query
           .order('created_at', ascending: false)
           .range(page * pageSize, page * pageSize + pageSize - 1);
-      return List<Map<String, dynamic>>.from(services);
+      return _attachPublicProfiles(
+        List<Map<String, dynamic>>.from(services),
+        idField: 'provider_id',
+        attachAs: 'provider',
+      );
     } catch (e) {
       debugPrint('❌ Erreur récupération services: $e');
       return [];
     }
+  }
+
+  /// Attache le profil public (`profiles_public` : nom, avatar, note,
+  /// vérifié — jamais email/téléphone) de [idField] sous la clé [attachAs].
+  /// Nécessaire car `users` est verrouillée par RLS à `auth.uid() = id` : un
+  /// embed PostgREST direct (`select('*, users!fk(...)')`) ne renverrait
+  /// le profil que pour ses propres lignes, jamais celles des autres
+  /// vendeurs/prestataires (cf. CREATE POLICY "Users can read own row").
+  /// `profiles_public` existe précisément pour contourner cette
+  /// restriction de façon contrôlée (vue créée par
+  /// 20260623_wallet_rpc_and_public_profiles.sql, colonnes limitées).
+  Future<List<Map<String, dynamic>>> _attachPublicProfiles(
+    List<Map<String, dynamic>> rows, {
+    required String idField,
+    required String attachAs,
+  }) async {
+    final ids = rows.map((r) => r[idField] as String).toSet().toList();
+    if (ids.isEmpty) return rows;
+
+    final profiles = await _client.from('profiles_public').select().filter('id', 'in', '(${ids.join(',')})');
+    final byId = {for (final p in List<Map<String, dynamic>>.from(profiles)) p['id'] as String: p};
+
+    for (final row in rows) {
+      row[attachAs] = byId[row[idField]];
+    }
+    return rows;
   }
 
   // ========== MESSAGES / CHAT ==========

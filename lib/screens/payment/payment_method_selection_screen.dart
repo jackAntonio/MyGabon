@@ -658,6 +658,17 @@ class _PaymentMethodSelectionScreenState
     );
 
     if (!context.mounted) return;
+
+    if (transactionId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible d\'enregistrer la transaction'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     _showCashModal(context, fees);
   }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../services/payment_service.dart';
-import '../services/image_upload_service.dart';
 import '../widgets/image_picker_widget.dart';
 import 'package:uuid/uuid.dart';
 
@@ -288,6 +287,7 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
         condition: _selectedCondition,
         location: _selectedLocation,
         quantity: _quantity,
+        imageUrl: _imageUrls.isNotEmpty ? _imageUrls.first : null,
       );
 
       if (productId == null) {
