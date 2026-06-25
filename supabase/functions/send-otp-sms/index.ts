@@ -121,8 +121,14 @@ Deno.serve(async (req) => {
   }
 
   const { phoneNumber } = body;
-  if (!phoneNumber) {
-    return new Response(JSON.stringify({ success: false, message: "phoneNumber requis" }), {
+  // Format Gabon (+241xxxxxxxx ou 0xxxxxxxx) — même règle que
+  // PaymentService._isValidGabonPhoneNumber côté Flutter. Sans ce
+  // contrôle, n'importe quel utilisateur authentifié pourrait faire
+  // envoyer des SMS (coût Twilio) vers un numéro arbitraire de son choix ;
+  // la rate-limit ci-dessous (3/15min/compte) borne déjà l'abus, ce
+  // contrôle le réduit encore en rejetant les formats non gabonais.
+  if (!phoneNumber || !/^(\+241|0)\d{7,8}$/.test(phoneNumber)) {
+    return new Response(JSON.stringify({ success: false, message: "Numéro de téléphone invalide" }), {
       status: 400,
       headers: corsHeaders,
     });

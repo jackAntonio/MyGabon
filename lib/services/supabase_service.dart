@@ -384,7 +384,7 @@ class SupabaseService {
     final ids = rows.map((r) => r[idField] as String).toSet().toList();
     if (ids.isEmpty) return rows;
 
-    final profiles = await _client.from('profiles_public').select().filter('id', 'in', '(${ids.join(',')})');
+    final profiles = await _client.from('profiles_public').select().inFilter('id', ids);
     final byId = {for (final p in List<Map<String, dynamic>>.from(profiles)) p['id'] as String: p};
 
     for (final row in rows) {
@@ -512,19 +512,16 @@ class SupabaseService {
 
   // ========== PRODUCTS / MARKETPLACE ==========
 
-  /// Récupérer tous les produits
   /// Récupérer produits publiés, page par page, avec le profil du vendeur
-  /// (nom, note, vérifié) joint depuis `users`. [category] filtre si fourni.
+  /// (nom, note, vérifié) attaché depuis `profiles_public`. [category]
+  /// filtre si fourni.
   Future<List<Map<String, dynamic>>> getAllProducts({
     String? category,
     int page = 0,
     int pageSize = 20,
   }) async {
     try {
-      var query = _client
-          .from('products')
-          .select('*, seller:users!seller_id(full_name, rating, verified)')
-          .eq('published', true);
+      var query = _client.from('products').select().eq('published', true);
 
       if (category != null && category.isNotEmpty) {
         query = query.eq('category', category);
@@ -533,7 +530,11 @@ class SupabaseService {
       final products = await query
           .order('created_at', ascending: false)
           .range(page * pageSize, page * pageSize + pageSize - 1);
-      return List<Map<String, dynamic>>.from(products);
+      return _attachPublicProfiles(
+        List<Map<String, dynamic>>.from(products),
+        idField: 'seller_id',
+        attachAs: 'seller',
+      );
     } catch (e) {
       debugPrint('❌ Erreur récupération produits: $e');
       return [];
