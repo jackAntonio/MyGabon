@@ -54,8 +54,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
             final analytics = provider.userAnalytics;
             if (analytics == null) {
-              return const Center(
-                child: Text('Aucune donnée disponible'),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 60),
+                child: Center(
+                  child: Column(
+                    children: [
+                      const Icon(Icons.bar_chart,
+                          size: 48, color: AppColors.grey400),
+                      const SizedBox(height: 12),
+                      const Text('Aucune donnée disponible',
+                          style: TextStyle(color: AppColors.grey600)),
+                    ],
+                  ),
+                ),
               );
             }
 

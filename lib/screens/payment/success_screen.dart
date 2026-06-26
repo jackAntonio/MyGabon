@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
@@ -200,8 +201,8 @@ class PaymentSuccessScreen extends StatelessWidget {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Reçu téléchargé'),
-                                backgroundColor: AppColors.success,
+                                content: Text(
+                                    'Téléchargement du reçu — bientôt disponible'),
                               ),
                             );
                           },
@@ -252,6 +253,7 @@ class PaymentSuccessScreen extends StatelessWidget {
         GestureDetector(
           onTap: isCopyable
               ? () {
+                  Clipboard.setData(ClipboardData(text: value));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Copié!')),
                   );

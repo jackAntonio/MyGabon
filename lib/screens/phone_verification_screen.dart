@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/verification_provider.dart';
@@ -12,29 +13,24 @@ class PhoneVerificationScreen extends StatefulWidget {
       _PhoneVerificationScreenState();
 }
 
-class _PhoneVerificationScreenState extends State<PhoneVerificationScreen>
-    with TickerProviderStateMixin {
+class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _otpController;
   bool _showOtpInput = false;
-  late AnimationController _countdownController;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
     _phoneController = TextEditingController();
     _otpController = TextEditingController();
-    _countdownController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 60),
-    );
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _otpController.dispose();
-    _countdownController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -292,9 +288,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen>
     final success = await provider.sendPhoneOTP(_phoneController.text);
     if (success) {
       setState(() => _showOtpInput = true);
-      _countdownController.forward(from: 0.0);
-      // Simulate countdown
-      _simulateCountdown(provider);
+      _startCountdown(provider);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Code OTP envoyé')),
       );
@@ -328,13 +322,17 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen>
     }
   }
 
-  void _simulateCountdown(VerificationProvider provider) {
-    for (var i = 60; i > 0; i--) {
-      Future.delayed(Duration(seconds: 60 - i), () {
-        if (mounted) {
-          provider.decrementResendCountdown();
-        }
-      });
-    }
+  void _startCountdown(VerificationProvider provider) {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      provider.decrementResendCountdown();
+      if (provider.otpResendCountdown <= 0) {
+        timer.cancel();
+      }
+    });
   }
 }
