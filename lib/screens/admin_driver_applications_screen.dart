@@ -16,6 +16,7 @@ class _AdminDriverApplicationsScreenState
     extends State<AdminDriverApplicationsScreen> {
   List<Map<String, dynamic>> _applications = [];
   bool _loading = true;
+  final Set<String> _processing = {};
 
   static const _vehicleLabels = {
     'moto': 'Moto',
@@ -41,12 +42,15 @@ class _AdminDriverApplicationsScreenState
   }
 
   Future<void> _decide(String applicationId, bool approve) async {
+    if (_processing.contains(applicationId)) return;
+
     String? reason;
     if (!approve) {
       reason = await _askRejectionReason();
       if (reason == null) return; // annulé
     }
 
+    setState(() => _processing.add(applicationId));
     final success = await SupabaseService().reviewDriverApplication(
       applicationId: applicationId,
       approve: approve,
@@ -54,6 +58,7 @@ class _AdminDriverApplicationsScreenState
     );
 
     if (!mounted) return;
+    setState(() => _processing.remove(applicationId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(success
@@ -149,27 +154,43 @@ class _AdminDriverApplicationsScreenState
             Text('Zone : ${app['zone']}',
                 style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _decide(app['id'] as String, false),
-                  icon: const Icon(Icons.close, color: AppColors.error),
-                  label: const Text('Refuser', style: TextStyle(color: AppColors.error)),
-                  style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.error)),
+          Builder(builder: (context) {
+            final id = app['id'] as String;
+            final busy = _processing.contains(id);
+            return Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: busy ? null : () => _decide(id, false),
+                    icon: const Icon(Icons.close, color: AppColors.error),
+                    label: const Text('Refuser',
+                        style: TextStyle(color: AppColors.error)),
+                    style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.error)),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _decide(app['id'] as String, true),
-                  icon: const Icon(Icons.check, color: AppColors.white),
-                  label: const Text('Approuver'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: busy ? null : () => _decide(id, true),
+                    icon: busy
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : const Icon(Icons.check, color: AppColors.white),
+                    label: const Text('Approuver'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          }),
         ],
       ),
     );

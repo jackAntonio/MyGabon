@@ -14,10 +14,12 @@ class DriverDashboardScreen extends StatefulWidget {
 
 class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 2, vsync: this);
+  late final TabController _tabController =
+      TabController(length: 2, vsync: this);
   List<Map<String, dynamic>> _available = [];
   List<Map<String, dynamic>> _mine = [];
   bool _loading = true;
+  final Set<String> _processing = {};
 
   @override
   void initState() {
@@ -38,11 +40,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Future<void> _claim(String transactionId) async {
+    if (_processing.contains(transactionId)) return;
+    setState(() => _processing.add(transactionId));
     final success = await SupabaseService().claimDelivery(transactionId);
     if (!mounted) return;
+    setState(() => _processing.remove(transactionId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? 'Livraison réclamée' : 'Cette livraison n\'est plus disponible'),
+        content: Text(success
+            ? 'Livraison réclamée'
+            : 'Cette livraison n\'est plus disponible'),
         backgroundColor: success ? AppColors.success : AppColors.error,
       ),
     );
@@ -50,8 +57,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Future<void> _complete(String transactionId) async {
+    if (_processing.contains(transactionId)) return;
+    setState(() => _processing.add(transactionId));
     final success = await SupabaseService().completeDelivery(transactionId);
     if (!mounted) return;
+    setState(() => _processing.remove(transactionId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(success ? 'Livraison marquée comme effectuée' : 'Erreur'),
@@ -82,19 +92,46 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 _buildList(
                   _available,
                   emptyText: 'Aucune livraison disponible pour le moment',
-                  buildAction: (t) => ElevatedButton(
-                    onPressed: () => _claim(t['id'] as String),
-                    child: const Text('Réclamer'),
-                  ),
+                  buildAction: (t) {
+                    final id = t['id'] as String;
+                    final busy = _processing.contains(id);
+                    return ElevatedButton(
+                      onPressed: busy ? null : () => _claim(id),
+                      child: busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            )
+                          : const Text('Réclamer'),
+                    );
+                  },
                 ),
                 _buildList(
                   _mine,
                   emptyText: 'Aucune livraison en cours',
-                  buildAction: (t) => ElevatedButton(
-                    onPressed: () => _complete(t['id'] as String),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-                    child: const Text('Marquer livrée'),
-                  ),
+                  buildAction: (t) {
+                    final id = t['id'] as String;
+                    final busy = _processing.contains(id);
+                    return ElevatedButton(
+                      onPressed: busy ? null : () => _complete(id),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.success),
+                      child: busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            )
+                          : const Text('Marquer livrée'),
+                    );
+                  },
                 ),
               ],
             ),
@@ -113,7 +150,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           children: [
             const SizedBox(height: 120),
             Center(
-              child: Text(emptyText, style: const TextStyle(color: AppColors.grey600)),
+              child: Text(emptyText,
+                  style: const TextStyle(color: AppColors.grey600)),
             ),
           ],
         ),
@@ -141,7 +179,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Frais de livraison : ${deliveryFee.toStringAsFixed(0)} FCFA',
+                Text(
+                    'Frais de livraison : ${deliveryFee.toStringAsFixed(0)} FCFA',
                     style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 4),
                 Text(

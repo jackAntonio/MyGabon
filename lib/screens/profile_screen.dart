@@ -156,14 +156,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        border:
-                            Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Solde disponible',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
                                     color: AppColors.grey600,
                                   )),
                           const SizedBox(height: 8),
@@ -171,7 +174,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _loadingWallet
                                 ? '...'
                                 : '${_walletBalance?.toStringAsFixed(0) ?? 0} FCFA',
-                            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .displaySmall
+                                ?.copyWith(
                                   color: AppColors.success,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -233,7 +239,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Administration (réservé aux admins)
               if (_isAdmin)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -249,7 +256,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const AdminDriverApplicationsScreen()),
+                                builder: (_) =>
+                                    const AdminDriverApplicationsScreen()),
                           );
                         },
                       ),
@@ -259,7 +267,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Espace livreur
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -277,21 +286,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Paramètres', style: Theme.of(context).textTheme.titleLarge),
+                    Text('Paramètres',
+                        style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
                     _buildSettingsTile(
                       context,
                       icon: Icons.notifications_outlined,
                       title: 'Notifications',
                       subtitle: 'Gérer vos préférences',
-                      onTap: () {},
+                      onTap: () => _showComingSoon(context, 'Notifications'),
                     ),
                     _buildSettingsTile(
                       context,
                       icon: Icons.help_outline,
                       title: 'Aide & Support',
                       subtitle: 'Contactez-nous',
-                      onTap: () {},
+                      onTap: () => _showComingSoon(context, 'Aide & Support'),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -496,12 +506,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature — bientôt disponible')),
+    );
+  }
+
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Se déconnecter ?'),
-        content: const Text('Vous devrez vous reconnecter pour accéder à votre compte.'),
+        content: const Text(
+            'Vous devrez vous reconnecter pour accéder à votre compte.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

@@ -25,6 +25,7 @@ class ChatDetailScreen extends StatefulWidget {
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final _service = SupabaseService();
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _loading = true;
 
@@ -43,6 +44,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         }
         _messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       });
+      _scrollToBottom();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -55,6 +75,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ..addAll(rows.map(ChatMessage.fromJson));
       _loading = false;
     });
+    _scrollToBottom();
   }
 
   Future<void> _send() async {
@@ -74,6 +95,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         createdAt: DateTime.now(),
       ));
     });
+    _scrollToBottom();
 
     final success = await _service.sendMessage(
       receiverId: widget.otherUserId,
@@ -108,7 +130,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       widget.otherUserName.isNotEmpty
                           ? widget.otherUserName[0].toUpperCase()
                           : '?',
-                      style: const TextStyle(color: AppColors.white, fontSize: 12),
+                      style:
+                          const TextStyle(color: AppColors.white, fontSize: 12),
                     )
                   : null,
             ),
@@ -130,6 +153,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         ),
                       )
                     : ListView.builder(
+                        controller: _scrollController,
                         padding: const EdgeInsets.all(8),
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
@@ -156,8 +180,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                     ),
                     onSubmitted: (_) => _send(),
                   ),
@@ -166,7 +190,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 CircleAvatar(
                   backgroundColor: AppColors.primary,
                   child: IconButton(
-                    icon: const Icon(Icons.send, color: AppColors.white, size: 18),
+                    icon: const Icon(Icons.send,
+                        color: AppColors.white, size: 18),
                     onPressed: _send,
                   ),
                 ),

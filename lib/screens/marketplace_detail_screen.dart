@@ -251,9 +251,10 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Navigate to seller profile
-            },
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Profil vendeur — bientôt disponible')),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.white,
               foregroundColor: AppColors.primary,
@@ -575,8 +576,8 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.phone),
-              label: const Text('Appeler le vendeur'),
+              icon: const Icon(Icons.close),
+              label: const Text('Fermer'),
             ),
           ],
         ),

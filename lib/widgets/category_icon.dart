@@ -27,10 +27,11 @@ class _CategoryIconState extends State<CategoryIcon>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
-      lowerBound: 0.95,
-      upperBound: 1.05,
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.9,
+      upperBound: 1.0,
+      value: 1.0,
+    );
   }
 
   @override
@@ -43,6 +44,9 @@ class _CategoryIconState extends State<CategoryIcon>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onTap,
+      onTapDown: (_) => _controller.reverse(),
+      onTapUp: (_) => _controller.forward(),
+      onTapCancel: () => _controller.forward(),
       child: ScaleTransition(
         scale: _controller,
         child: Column(

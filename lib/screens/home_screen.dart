@@ -53,6 +53,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Salutation adaptée à l'heure de la journée.
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  }
+
+  Future<void> _refresh(MarketplaceProvider marketplace) async {
+    await Future.wait([
+      _loadWalletBalance(),
+      marketplace.refreshProducts(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
@@ -63,165 +78,182 @@ class _HomeScreenState extends State<HomeScreen> {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 600),
         opacity: _opacity,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Text(
-              'Bonjour, $firstName 👋',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Que recherchez-vous aujourd\'hui ?',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.grey600,
-                  ),
-            ),
-            const SizedBox(height: 16),
+        child: RefreshIndicator(
+          onRefresh: () => _refresh(marketplace),
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              Text(
+                '${_greeting()}, $firstName 👋',
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Que recherchez-vous aujourd\'hui ?',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.grey600,
+                    ),
+              ),
+              const SizedBox(height: 16),
 
-            // Barre de recherche -> ouvre les services
-            GestureDetector(
-              onTap: () => _openServices(),
-              child: Container(
+              // Barre de recherche -> ouvre les services
+              GestureDetector(
+                onTap: () => _openServices(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, color: AppColors.grey500),
+                        SizedBox(width: 12),
+                        Text(
+                          'Rechercher un service ou un produit',
+                          style: TextStyle(color: AppColors.grey500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Solde du portefeuille
+              Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.darkBg],
+                  ),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 8,
-                        offset: Offset(0, 2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Solde MyGabon Wallet',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text(
+                          _walletBalance == null
+                              ? '...'
+                              : '${_walletBalance!.toStringAsFixed(0)} FCFA',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Icon(Icons.account_balance_wallet,
+                        color: Colors.white70, size: 32),
                   ],
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.search, color: AppColors.grey500),
-                      SizedBox(width: 12),
-                      Text(
-                        'Rechercher un service ou un produit',
-                        style: TextStyle(color: AppColors.grey500),
-                      ),
-                    ],
-                  ),
-                ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Solde du portefeuille
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.darkBg],
-                ),
-                borderRadius: BorderRadius.circular(16),
+              Text(
+                'Catégories',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              child: Row(
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    CategoryIcon(
+                      icon: Icons.bolt,
+                      label: 'Électricité',
+                      onTap: () => _openServices(category: 'Électricité'),
+                    ),
+                    const SizedBox(width: 16),
+                    CategoryIcon(
+                      icon: Icons.computer,
+                      label: 'Informatique',
+                      onTap: () => _openServices(category: 'Informatique'),
+                    ),
+                    const SizedBox(width: 16),
+                    CategoryIcon(
+                      icon: Icons.cleaning_services,
+                      label: 'Nettoyage',
+                      onTap: () => _openServices(category: 'Nettoyage'),
+                    ),
+                    const SizedBox(width: 16),
+                    CategoryIcon(
+                      icon: Icons.handyman,
+                      label: 'Menuiserie',
+                      onTap: () => _openServices(category: 'Menuiserie'),
+                    ),
+                    const SizedBox(width: 16),
+                    CategoryIcon(
+                      icon: Icons.store,
+                      label: 'Marché',
+                      onTap: _openMarketplace,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Solde MyGabon Wallet',
-                          style: TextStyle(color: Colors.white70, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text(
-                        _walletBalance == null
-                            ? '...'
-                            : '${_walletBalance!.toStringAsFixed(0)} FCFA',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Offres à la une',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const Icon(Icons.account_balance_wallet,
-                      color: Colors.white70, size: 32),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            Text(
-              'Catégories',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  CategoryIcon(
-                    icon: Icons.bolt,
-                    label: 'Électricité',
-                    onTap: () => _openServices(category: 'Électricité'),
-                  ),
-                  const SizedBox(width: 16),
-                  CategoryIcon(
-                    icon: Icons.computer,
-                    label: 'Informatique',
-                    onTap: () => _openServices(category: 'Informatique'),
-                  ),
-                  const SizedBox(width: 16),
-                  CategoryIcon(
-                    icon: Icons.cleaning_services,
-                    label: 'Nettoyage',
-                    onTap: () => _openServices(category: 'Nettoyage'),
-                  ),
-                  const SizedBox(width: 16),
-                  CategoryIcon(
-                    icon: Icons.handyman,
-                    label: 'Menuiserie',
-                    onTap: () => _openServices(category: 'Menuiserie'),
-                  ),
-                  const SizedBox(width: 16),
-                  CategoryIcon(
-                    icon: Icons.store,
-                    label: 'Marché',
-                    onTap: _openMarketplace,
+                  TextButton(
+                    onPressed: _openMarketplace,
+                    child: const Text('Voir tout'),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Offres à la une',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                TextButton(
-                  onPressed: _openMarketplace,
-                  child: const Text('Voir tout'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 240,
-              child: marketplace.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: marketplace.products.length.clamp(0, 5),
-                      itemBuilder: (context, index) {
-                        return SizedBox(
-                          width: 160,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 16),
-                            child: ProductCard(product: marketplace.products[index]),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 240,
+                child: marketplace.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : marketplace.products.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Aucune offre pour le moment',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.grey500,
+                                  ),
+                            ),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: marketplace.products.length.clamp(0, 5),
+                            itemBuilder: (context, index) {
+                              return SizedBox(
+                                width: 160,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 16),
+                                  child: ProductCard(
+                                      product: marketplace.products[index]),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
