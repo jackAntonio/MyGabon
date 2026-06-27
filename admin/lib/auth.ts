@@ -11,6 +11,12 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
 }
 
+// Hash factice utilisé pour égaliser le temps de réponse quand l'email n'existe
+// pas (cf. validateAdminLogin) : sans lui, l'absence d'appel bcrypt.compare sur
+// ce chemin crée un écart de latence mesurable qui permet d'énumérer les
+// emails admin valides.
+const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8L8.dwbpZ6Wer4kxOSHGu1.AAd5wHC'
+
 export async function verifyPassword(
   password: string,
   hash: string
@@ -38,6 +44,7 @@ export async function validateAdminLogin(
     const admin = await getAdminByEmail(email)
 
     if (!admin) {
+      await verifyPassword(password, DUMMY_HASH)
       return { error: 'Email ou mot de passe incorrect' }
     }
 
@@ -79,11 +86,21 @@ export async function validateAdminLogin(
     }
 
     // 2FA : le mot de passe seul ne suffit pas si l'admin a activé le TOTP.
+    // two_fa_secret est chiffré au repos (pgcrypto, cf. SQL_SETUP.sql) : on ne
+    // le déchiffre que pour cette vérification, via la RPC dédiée, jamais en
+    // lisant la colonne brute (admin.two_fa_secret est du BYTEA chiffré).
     if (admin.two_fa_enabled) {
       if (!totpCode) {
         return { error: 'totp_required' }
       }
-      const isTotpValid = authenticator.check(totpCode, admin.two_fa_secret)
+      const { data: secret, error: secretError } = await supabaseAdmin.rpc(
+        'get_decrypted_totp_secret',
+        { p_admin_id: admin.id }
+      )
+      if (secretError || !secret) {
+        return { error: 'Erreur lors de la vérification du code' }
+      }
+      const isTotpValid = authenticator.check(totpCode, secret)
       if (!isTotpValid) {
         return { error: 'Code de vérification invalide' }
       }

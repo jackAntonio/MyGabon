@@ -23,6 +23,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _password;
   bool _loading = false;
   String? _error;
+  DateTime? _lastAttempt;
+
+  // Anti-spam minimal côté client : un script appelant directement l'API
+  // Supabase contournerait cet écran de toute façon, le vrai rate-limit doit
+  // être configuré côté plateforme Supabase Auth (ou un CAPTCHA) ; ceci
+  // évite seulement le ré-essai compulsif depuis cette UI.
+  static const _cooldown = Duration(seconds: 3);
 
   @override
   Widget build(BuildContext context) {
@@ -91,8 +98,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    final now = DateTime.now();
+    if (_lastAttempt != null && now.difference(_lastAttempt!) < _cooldown) {
+      return;
+    }
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
+      _lastAttempt = now;
       setState(() {
         _loading = true;
         _error = null;

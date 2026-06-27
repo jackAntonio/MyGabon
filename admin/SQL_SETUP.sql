@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS dashboard_admins (
   role TEXT DEFAULT 'moderator' CHECK (role IN ('super_admin', 'moderator', 'analyst', 'support')),
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
   two_fa_enabled BOOLEAN DEFAULT FALSE,
-  two_fa_secret TEXT,
+  two_fa_secret BYTEA, -- chiffré via pgcrypto, cf. section CHIFFREMENT plus bas
   last_login TIMESTAMP,
   last_login_ip TEXT,
   failed_login_attempts INT DEFAULT 0,
@@ -213,6 +213,10 @@ ON CONFLICT (role) DO NOTHING;
 --   INSERT INTO dashboard_admins (email, password_hash, full_name, role, status)
 --   VALUES ('toi@example.com', '<hash généré ci-dessus>', 'Ton Nom', 'super_admin', 'active');
 -- Ne committe jamais ce hash ni le mot de passe en clair dans le repo.
+--
+-- Pour activer la 2FA sur ce compte (après avoir créé la clé Vault ci-dessous) :
+--   UPDATE dashboard_admins SET two_fa_secret = encrypt_totp_secret('<secret TOTP>'),
+--     two_fa_enabled = true WHERE email = 'toi@example.com';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -234,6 +238,64 @@ ALTER TABLE webhook_logs ENABLE ROW LEVEL SECURITY;
 -- doit toucher dashboard_admins, admin_audit_logs, image_moderation, etc.
 -- (l'ancienne policy "USING (TRUE)" exposait password_hash et two_fa_secret de
 -- tous les admins à quiconque possède la clé anon publique : ne pas la rétablir.)
+
+-- ============================================
+-- CHIFFREMENT AU REPOS : two_fa_secret
+-- ============================================
+-- ⚠️ dashboard_admins n'a aucune policy RLS (cf. plus haut) : seul service_role
+-- (donc l'API Next.js) peut le lire normalement. Mais un accès direct à la
+-- base hors API (dump/backup compromis) exposerait two_fa_secret en clair et
+-- permettrait de générer des codes TOTP valides. Chiffré ici via pgcrypto +
+-- une clé Supabase Vault, jamais visible dans un dump SQL brut.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- ✅ Déjà créée sur le projet Supabase ssmveuinnmoywlhefqka (2026-06-27) :
+-- vault.secrets contient 'totp_encryption_key' (clé random 32 bytes, jamais
+-- exposée en clair ailleurs que dans Vault). Si ce setup est un jour répliqué
+-- sur un AUTRE projet Supabase, recréer la clé là-bas avec :
+--   SELECT vault.create_secret('<openssl rand -base64 32>', 'totp_encryption_key');
+
+CREATE OR REPLACE FUNCTION encrypt_totp_secret(p_secret TEXT)
+RETURNS BYTEA
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_key TEXT;
+BEGIN
+  SELECT decrypted_secret INTO v_key FROM vault.decrypted_secrets WHERE name = 'totp_encryption_key';
+  IF v_key IS NULL THEN
+    RAISE EXCEPTION 'totp_encryption_key non configurée dans Vault';
+  END IF;
+  RETURN pgp_sym_encrypt(p_secret, v_key);
+END;
+$$;
+REVOKE ALL ON FUNCTION encrypt_totp_secret(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION encrypt_totp_secret(TEXT) TO service_role;
+
+-- Appelée depuis admin/lib/auth.ts (service_role) au moment de la vérification
+-- TOTP : le secret en clair ne transite que pour cet appel, jamais stocké.
+CREATE OR REPLACE FUNCTION get_decrypted_totp_secret(p_admin_id UUID)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_key TEXT;
+  v_encrypted BYTEA;
+BEGIN
+  SELECT decrypted_secret INTO v_key FROM vault.decrypted_secrets WHERE name = 'totp_encryption_key';
+  SELECT two_fa_secret INTO v_encrypted FROM dashboard_admins WHERE id = p_admin_id;
+  IF v_key IS NULL OR v_encrypted IS NULL THEN
+    RETURN NULL;
+  END IF;
+  RETURN pgp_sym_decrypt(v_encrypted, v_key);
+END;
+$$;
+REVOKE ALL ON FUNCTION get_decrypted_totp_secret(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION get_decrypted_totp_secret(UUID) TO service_role;
 
 -- ============================================
 -- FUNCTIONS & TRIGGERS

@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
 
     // Get pagination and filters
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
     const limit = 20

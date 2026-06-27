@@ -177,7 +177,13 @@ class AuthProvider extends ChangeNotifier {
     if (message.contains('email not confirmed')) {
       return 'Email non confirmé, vérifiez votre boîte mail';
     }
-    return e.message;
+    if (message.contains('email address') && message.contains('invalid')) {
+      return 'Adresse email invalide';
+    }
+    // Fallback générique : ne jamais exposer le message technique brut de
+    // Supabase (révèle la stack backend) pour un code d'erreur non reconnu.
+    debugPrint('⚠️ AuthException non traduite: ${e.message}');
+    return 'Une erreur est survenue, réessayez';
   }
 
   void _setLoading(bool value) {

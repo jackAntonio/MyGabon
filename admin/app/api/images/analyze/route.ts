@@ -3,6 +3,20 @@ import { requirePermission } from '@/lib/apiAuth'
 
 const GOOGLE_VISION_API_KEY = process.env.GOOGLE_VISION_API_KEY ?? ''
 
+// Empêche un compte avec la permission images:read (analyst/moderator/support,
+// pas seulement super_admin) de faire analyser une URL arbitraire par Google
+// Vision : seul le Storage du projet Supabase est autorisé, pour ne pas
+// épuiser le quota/budget sur des URLs externes choisies par l'appelant.
+function isAllowedImageHost(rawUrl: string): boolean {
+  try {
+    const url = new URL(rawUrl)
+    const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').host
+    return url.protocol === 'https:' && url.host === supabaseHost
+  } catch {
+    return false
+  }
+}
+
 const LIKELIHOOD_SCORES: Record<string, number> = {
   UNKNOWN: 0.5,
   VERY_UNLIKELY: 0.1,
@@ -89,6 +103,9 @@ export async function POST(request: NextRequest) {
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
+    }
+    if (!isAllowedImageHost(imageUrl)) {
+      return NextResponse.json({ error: 'Image URL not allowed' }, { status: 400 })
     }
 
     if (!GOOGLE_VISION_API_KEY) {
