@@ -84,6 +84,14 @@ $$;
 
 GRANT EXECUTE ON FUNCTION adjust_wallet_balance(UUID, NUMERIC) TO authenticated;
 
+-- ✅ Colonne consommée par la vue ci-dessous. Ajoutée ici (et non dans
+-- security_hardening.sql comme à l'origine) : cette migration tourne avant
+-- security_hardening dans l'ordre chronologique des fichiers, et la vue ne
+-- peut pas référencer une colonne qui n'existe pas encore sur une base
+-- rejouée depuis zéro (cf. incident du 2026-06-27, migrations rejouées sur
+-- un nouveau projet Supabase).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 0;
+
 -- ✅ Vue de profil public : nom/avatar/note visibles par tous les utilisateurs
 -- authentifiés (messagerie, fiches produit/service), sans exposer email/téléphone
 -- (la table users, elle, reste verrouillée à auth.uid() = id).

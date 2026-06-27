@@ -7,17 +7,16 @@
 -- 2) Ajoute la policy INSERT manquante sur users (le INSERT du
 --    client à l'inscription échouait silencieusement faute de
 --    policy, RLS étant "deny by default").
--- 3) Ajoute la colonne rating consommée par la vue
---    profiles_public (migration précédente la sélectionnait
---    sans jamais la créer).
+-- 3) (colonne rating déplacée vers wallet_rpc_and_public_profiles.sql,
+--    seul fichier qui la consomme désormais — cf. son commentaire.)
 -- 4) Remplace l'OTP téléphone (jusqu'ici généré/vérifié côté
 --    client, RNG prévisible) par un flux serveur : phone_otp_codes
 --    + RPC request_phone_otp/confirm_phone_otp, seul point
 --    d'entrée autorisé pour positionner users.verified = true.
 -- ============================================================
 
--- ✅ Colonne consommée par profiles_public (cf. migration wallet_rpc_and_public_profiles)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 0;
+-- (colonne rating déplacée vers wallet_rpc_and_public_profiles.sql, qui la
+-- consomme et tourne avant cette migration — cf. son commentaire)
 
 -- ✅ Policy INSERT manquante : sans elle, _createUserProfile() échouait pour
 -- tout nouvel inscrit (RLS activée, aucune policy INSERT = refus systématique).

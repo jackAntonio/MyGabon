@@ -26,6 +26,7 @@
         "image_picker",
         "intl",
         "json_annotation",
+        "onesignal_flutter",
         "pay",
         "provider",
         "riverpod_annotation",
@@ -134,6 +135,13 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "onesignal_flutter",
+      "version": "5.6.3",
+      "dependencies": [
+        "flutter"
       ]
     },
     {

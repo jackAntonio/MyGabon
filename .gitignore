@@ -74,4 +74,3 @@ env.json
 temp/
 
 # IDE Generated code
-lib/generated_plugin_registrant.dart

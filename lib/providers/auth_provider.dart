@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/notification_service.dart';
 import '../services/supabase_service.dart';
 
 /// ✅ Authentification basée sur Supabase Auth.
@@ -29,7 +30,9 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   String get displayName =>
-      (_profile?['full_name'] as String?) ?? currentUser?.email ?? 'Utilisateur';
+      (_profile?['full_name'] as String?) ??
+      currentUser?.email ??
+      'Utilisateur';
 
   /// ✅ Login avec email et mot de passe
   Future<void> login({
@@ -45,7 +48,8 @@ class AuthProvider extends ChangeNotifier {
       }
 
       if (_isPhoneNumber(emailOrPhone)) {
-        throw Exception('Connexion par téléphone non encore disponible, utilisez votre email');
+        throw Exception(
+            'Connexion par téléphone non encore disponible, utilisez votre email');
       }
 
       await _service.signIn(email: emailOrPhone, password: password);
@@ -56,7 +60,8 @@ class AuthProvider extends ChangeNotifier {
       _setError(_translateAuthError(e));
       rethrow;
     } catch (e) {
-      _setError('Erreur authentification: ${e.toString().replaceFirst('Exception: ', '')}');
+      _setError(
+          'Erreur authentification: ${e.toString().replaceFirst('Exception: ', '')}');
       rethrow;
     } finally {
       _setLoading(false);
@@ -94,7 +99,8 @@ class AuthProvider extends ChangeNotifier {
       _setError(_translateAuthError(e));
       rethrow;
     } catch (e) {
-      _setError('Erreur inscription: ${e.toString().replaceFirst('Exception: ', '')}');
+      _setError(
+          'Erreur inscription: ${e.toString().replaceFirst('Exception: ', '')}');
       rethrow;
     } finally {
       _setLoading(false);
@@ -143,10 +149,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _loadProfile() async {
     if (!_service.isAuthenticated) {
       _profile = null;
+      await NotificationService().logout();
       notifyListeners();
       return;
     }
     _profile = await _service.getUserProfile(currentUser!.id);
+    await NotificationService().login(currentUser!.id);
     notifyListeners();
   }
 

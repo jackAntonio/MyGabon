@@ -115,7 +115,8 @@ class SupabaseService {
   /// Demander un email de réinitialisation de mot de passe
   Future<void> resetPassword({required String email}) async {
     await _client.auth.resetPasswordForEmail(email);
-    await logAuditEvent(action: 'password_reset_requested', details: {'email': email});
+    await logAuditEvent(
+        action: 'password_reset_requested', details: {'email': email});
   }
 
   /// Sign out
@@ -164,11 +165,8 @@ class SupabaseService {
   /// Get user profile
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
-      final data = await _client
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .single();
+      final data =
+          await _client.from('users').select().eq('id', userId).single();
 
       return data;
     } catch (e) {
@@ -384,8 +382,12 @@ class SupabaseService {
     final ids = rows.map((r) => r[idField] as String).toSet().toList();
     if (ids.isEmpty) return rows;
 
-    final profiles = await _client.from('profiles_public').select().inFilter('id', ids);
-    final byId = {for (final p in List<Map<String, dynamic>>.from(profiles)) p['id'] as String: p};
+    final profiles =
+        await _client.from('profiles_public').select().inFilter('id', ids);
+    final byId = {
+      for (final p in List<Map<String, dynamic>>.from(profiles))
+        p['id'] as String: p
+    };
 
     for (final row in rows) {
       row[attachAs] = byId[row[idField]];
@@ -401,22 +403,43 @@ class SupabaseService {
     required String content,
   }) async {
     try {
-      await _client.from('messages').insert({
-        'sender_id': currentUser!.id,
-        'receiver_id': receiverId,
-        'content': content,
-      });
+      final inserted = await _client
+          .from('messages')
+          .insert({
+            'sender_id': currentUser!.id,
+            'receiver_id': receiverId,
+            'content': content,
+          })
+          .select('id')
+          .single();
 
       await logAuditEvent(
         action: 'message_sent',
         details: {'receiver': receiverId},
       );
 
+      _notifyNewMessage(inserted['id'] as String);
+
       return true;
     } catch (e) {
       debugPrint('❌ Erreur envoi message: $e');
       return false;
     }
+  }
+
+  /// Déclenche une notification push (OneSignal) pour le destinataire, en
+  /// best-effort : un échec d'envoi push ne doit jamais faire échouer
+  /// l'envoi du message lui-même (cf. send-push-notification/index.ts).
+  void _notifyNewMessage(String messageId) {
+    () async {
+      try {
+        await _client.functions.invoke('send-push-notification', body: {
+          'message_id': messageId,
+        });
+      } catch (e) {
+        debugPrint('⚠️ Notification push non envoyée: $e');
+      }
+    }();
   }
 
   /// Récupérer le fil de messages avec un interlocuteur donné (les deux sens)
@@ -441,7 +464,8 @@ class SupabaseService {
   /// Flux temps réel des messages envoyés par [otherUserId] à l'utilisateur
   /// courant (les messages envoyés par moi sont ajoutés en local de façon
   /// optimiste après sendMessage, pas besoin de les re-streamer).
-  Stream<List<Map<String, dynamic>>> streamIncomingMessages(String otherUserId) {
+  Stream<List<Map<String, dynamic>>> streamIncomingMessages(
+      String otherUserId) {
     final userId = currentUser?.id;
     if (userId == null) return const Stream.empty();
     return _client
@@ -588,7 +612,8 @@ class SupabaseService {
   /// Récupérer solde du portefeuille
   Future<double> getWalletBalance(String userId) async {
     if (currentUser?.id != userId) {
-      throw Exception('Accès refusé : vous ne pouvez consulter que votre propre portefeuille');
+      throw Exception(
+          'Accès refusé : vous ne pouvez consulter que votre propre portefeuille');
     }
     try {
       final result = await _client
@@ -599,16 +624,18 @@ class SupabaseService {
       return (result['balance'] as num).toDouble();
     } catch (e) {
       debugPrint('⚠️ Erreur récupération solde: $e');
-      // Créer le portefeuille s'il n'existe pas
+      // Créer le portefeuille s'il n'existe pas encore (solde 0, jamais de
+      // crédit gratuit — tout crédit réel passe par adjust_wallet_balance/
+      // confirm_external_payment/confirm_wallet_topup).
       try {
         await _client.from('user_wallets').insert({
           'user_id': userId,
-          'balance': 500000.0,
+          'balance': 0.0,
         });
-        return 500000.0;
       } catch (_) {
-        return 0.0;
+        // Already exists or insert failed for another reason.
       }
+      return 0.0;
     }
   }
 
@@ -619,7 +646,8 @@ class SupabaseService {
     required double amount,
   }) async {
     if (currentUser?.id != userId) {
-      throw Exception('Accès refusé : vous ne pouvez créditer que votre propre portefeuille');
+      throw Exception(
+          'Accès refusé : vous ne pouvez créditer que votre propre portefeuille');
     }
     try {
       final newBalance = await _client.rpc('adjust_wallet_balance', params: {
@@ -646,7 +674,8 @@ class SupabaseService {
     required double amount,
   }) async {
     if (currentUser?.id != userId) {
-      throw Exception('Accès refusé : vous ne pouvez débiter que votre propre portefeuille');
+      throw Exception(
+          'Accès refusé : vous ne pouvez débiter que votre propre portefeuille');
     }
     try {
       final newBalance = await _client.rpc('adjust_wallet_balance', params: {
@@ -669,7 +698,8 @@ class SupabaseService {
   /// Récupérer les transactions de l'utilisateur
   Future<List> getUserTransactions(String userId) async {
     if (currentUser?.id != userId) {
-      throw Exception('Accès refusé : vous ne pouvez consulter que vos propres transactions');
+      throw Exception(
+          'Accès refusé : vous ne pouvez consulter que vos propres transactions');
     }
     if (!_isValidUuid(userId)) return [];
     try {
@@ -765,6 +795,44 @@ class SupabaseService {
         .from('transactions')
         .stream(primaryKey: ['id'])
         .eq('id', transactionId)
+        .map((rows) => rows.isEmpty ? null : rows.first);
+  }
+
+  /// Créer une demande de recharge du MyGabon Wallet (status='pending'),
+  /// avant d'appeler kpay-initiate-topup avec son id. Le montant n'est
+  /// jamais modifiable une fois créé (pas de policy UPDATE pour
+  /// authenticated, cf. migration 20260629_wallet_topup.sql).
+  Future<String?> createWalletTopup({
+    required double amount,
+    required String paymentMethod,
+  }) async {
+    try {
+      final result = await _client
+          .from('wallet_topups')
+          .insert({
+            'user_id': currentUser!.id,
+            'amount': amount,
+            'payment_method': paymentMethod,
+            'status': 'pending',
+          })
+          .select('id')
+          .single();
+      return result['id'] as String;
+    } catch (e) {
+      debugPrint('❌ Erreur création recharge wallet: $e');
+      return null;
+    }
+  }
+
+  /// Observe le statut d'une recharge wallet. Comme pour les transactions,
+  /// le statut ne passe à 'success'/'failed' que via le webhook serveur
+  /// (confirm_wallet_topup/fail_wallet_topup), jamais déclaré par ce client.
+  Stream<Map<String, dynamic>?> watchWalletTopupStatus(String topupId) {
+    if (!_isValidUuid(topupId)) return const Stream.empty();
+    return _client
+        .from('wallet_topups')
+        .stream(primaryKey: ['id'])
+        .eq('id', topupId)
         .map((rows) => rows.isEmpty ? null : rows.first);
   }
 
@@ -906,7 +974,8 @@ class SupabaseService {
   /// Réclamer une livraison disponible
   Future<bool> claimDelivery(String transactionId) async {
     try {
-      await _client.rpc('claim_delivery', params: {'p_transaction_id': transactionId});
+      await _client
+          .rpc('claim_delivery', params: {'p_transaction_id': transactionId});
       return true;
     } catch (e) {
       debugPrint('❌ Erreur réclamation livraison: $e');
@@ -918,7 +987,8 @@ class SupabaseService {
   /// au livreur de façon atomique côté serveur (RPC complete_delivery).
   Future<bool> completeDelivery(String transactionId) async {
     try {
-      await _client.rpc('complete_delivery', params: {'p_transaction_id': transactionId});
+      await _client.rpc('complete_delivery',
+          params: {'p_transaction_id': transactionId});
       return true;
     } catch (e) {
       debugPrint('❌ Erreur finalisation livraison: $e');

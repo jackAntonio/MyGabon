@@ -8,6 +8,7 @@ import 'admin_driver_applications_screen.dart';
 import 'become_driver_screen.dart';
 import 'driver_dashboard_screen.dart';
 import 'edit_profile_screen.dart';
+import 'wallet_topup_screen.dart';
 
 /// Profil utilisateur : informations, portefeuille MyGabon, transactions,
 /// paramètres.
@@ -45,6 +46,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _transactions = List<Map<String, dynamic>>.from(transactions);
       _loadingWallet = false;
     });
+  }
+
+  Future<void> _openWalletTopUp() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const WalletTopUpScreen()),
+    );
+    _loadWalletData();
   }
 
   Future<void> _loadRoles() async {
@@ -181,6 +190,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: AppColors.success,
                                   fontWeight: FontWeight.bold,
                                 ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _openWalletTopUp,
+                              icon: const Icon(Icons.add, size: 16),
+                              label: const Text('Recharger via Airtel Money'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                              ),
+                            ),
                           ),
                         ],
                       ),

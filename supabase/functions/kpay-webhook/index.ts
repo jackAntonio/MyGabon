@@ -107,19 +107,39 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+  // externalId peut référencer soit un achat marketplace (transactions),
+  // soit une recharge wallet (wallet_topups, cf. migration
+  // 20260629_wallet_topup.sql) — ces deux flux partagent le même webhook
+  // Kpay (un seul configurable côté dashboard marchand). On essaie d'abord
+  // confirm_external_payment/fail_external_payment ; si l'id ne correspond
+  // à aucune transaction, on retente sur wallet_topups.
   try {
     if (status === "COMPLETED") {
-      const { error } = await supabase.rpc("confirm_external_payment", {
+      const providerRef = String(payload.paymentId ?? payload.reference ?? transactionId);
+      const { error: txnError } = await supabase.rpc("confirm_external_payment", {
         p_transaction_id: transactionId,
-        p_provider_reference: String(payload.paymentId ?? payload.reference ?? transactionId),
+        p_provider_reference: providerRef,
       });
-      if (error) throw error;
+      if (txnError) {
+        const { error: topupError } = await supabase.rpc("confirm_wallet_topup", {
+          p_topup_id: transactionId,
+          p_provider_reference: providerRef,
+        });
+        if (topupError) throw topupError;
+      }
     } else if (status === "FAILED" || status === "CANCELLED") {
-      const { error } = await supabase.rpc("fail_external_payment", {
+      const reason = String(payload.failureReason ?? `Kpay status: ${status}`);
+      const { error: txnError } = await supabase.rpc("fail_external_payment", {
         p_transaction_id: transactionId,
-        p_reason: String(payload.failureReason ?? `Kpay status: ${status}`),
+        p_reason: reason,
       });
-      if (error) throw error;
+      if (txnError) {
+        const { error: topupError } = await supabase.rpc("fail_wallet_topup", {
+          p_topup_id: transactionId,
+          p_reason: reason,
+        });
+        if (topupError) throw topupError;
+      }
     } else {
       // PENDING / PROCESSING / inconnu : rien à faire, on attend la
       // prochaine notification.
@@ -127,8 +147,8 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("kpay-webhook: erreur RPC", e);
     // 200 quand même : éviter que Kpay retente indéfiniment sur une
-    // transaction déjà traitée ou introuvable (cas attendu, pas une
-    // erreur de notre côté).
+    // transaction/recharge déjà traitée ou introuvable (cas attendu, pas
+    // une erreur de notre côté).
   }
 
   return new Response("OK", { status: 200 });

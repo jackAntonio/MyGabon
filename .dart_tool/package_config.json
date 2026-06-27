@@ -662,6 +662,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "onesignal_flutter",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/onesignal_flutter-5.6.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "package_config",
       "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/package_config-2.2.0",
       "packageUri": "lib/",

@@ -8,6 +8,7 @@ import '../widgets/category_icon.dart';
 import '../widgets/product_card.dart';
 import 'services_screen.dart';
 import 'marketplace_screen.dart';
+import 'wallet_topup_screen.dart';
 
 /// Accueil : salutation, recherche, catégories et offres à la une.
 class HomeScreen extends StatefulWidget {
@@ -51,6 +52,14 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
     );
+  }
+
+  Future<void> _openWalletTopUp() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const WalletTopUpScreen()),
+    );
+    _loadWalletBalance();
   }
 
   /// Salutation adaptée à l'heure de la journée.
@@ -158,8 +167,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const Icon(Icons.account_balance_wallet,
-                        color: Colors.white70, size: 32),
+                    OutlinedButton.icon(
+                      onPressed: _openWalletTopUp,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white54),
+                      ),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Recharger'),
+                    ),
                   ],
                 ),
               ),

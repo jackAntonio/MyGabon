@@ -60,6 +60,43 @@ class KpayService {
     }
   }
 
+  /// Initier une recharge du MyGabon Wallet via Airtel Money, pour une
+  /// recharge déjà créée côté Supabase (status='pending', cf.
+  /// SupabaseService.createWalletTopup).
+  Future<KpayInitiateResponse> initiateWalletTopUp({
+    required String topupId,
+    required String phoneNumber,
+  }) async {
+    try {
+      final result = await Supabase.instance.client.functions.invoke(
+        'kpay-initiate-topup',
+        body: {
+          'topupId': topupId,
+          'phoneNumber': _normalizePhoneNumber(phoneNumber),
+        },
+      );
+
+      final data = result.data as Map<String, dynamic>;
+      if (result.status == 200 && data['success'] == true) {
+        return KpayInitiateResponse(
+          success: true,
+          paymentId: data['paymentId'] as String?,
+          status: data['status'] as String? ?? 'PENDING',
+        );
+      }
+
+      return KpayInitiateResponse(
+        success: false,
+        message: data['message'] as String? ?? 'Erreur initiation recharge',
+      );
+    } catch (e) {
+      return KpayInitiateResponse(
+        success: false,
+        message: 'Erreur connexion: $e',
+      );
+    }
+  }
+
   /// Normaliser le numéro de téléphone Gabon (Kpay attend le format
   /// international sans le '+', ex: 24106XXXXXXX).
   String _normalizePhoneNumber(String phone) {

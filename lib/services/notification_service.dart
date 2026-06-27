@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
-/// Service de notifications push.
-/// ⚠️ Pas de backend de push configuré pour l'instant (ni Firebase Cloud
-/// Messaging, ni alternative) : ce service est un stub honnête plutôt que
-/// d'appeler une dépendance Firebase non déclarée. À implémenter quand un
-/// fournisseur de push sera choisi (FCM, OneSignal, ou Supabase + APNs/FCM
-/// directs).
+/// Service de notifications push (OneSignal — cf.
+/// SUPABASE_VS_FIREBASE_DECISION.md : le projet a explicitement écarté
+/// Firebase, OneSignal évite de réintroduire son SDK juste pour le push).
+///
+/// OneSignal associe les appareils à un "external user id" (ici l'id
+/// Supabase de l'utilisateur connecté) : pas besoin de table de tokens
+/// côté Supabase, le backend cible directement cet id via l'API REST
+/// OneSignal (cf. supabase/functions/send-push-notification).
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
 
@@ -19,17 +22,51 @@ class NotificationService {
 
   Future<void> init() async {
     if (_initialized) return;
-    _initialized = true;
-    debugPrint('ℹ️ NotificationService: push non configuré (stub)');
+
+    // Le SDK OneSignal Flutter ne supporte que iOS/Android (MissingPluginException
+    // non rattrapable sur web, qui plante tout l'arbre de widgets avant le
+    // premier rendu) : on n'initialise jamais sur web.
+    if (kIsWeb) {
+      debugPrint(
+          'ℹ️ NotificationService: push non supporté sur web, désactivé');
+      return;
+    }
+
+    const appId = String.fromEnvironment('ONESIGNAL_APP_ID');
+    if (appId.isEmpty) {
+      debugPrint(
+          'ℹ️ NotificationService: ONESIGNAL_APP_ID manquant (push désactivé)');
+      return;
+    }
+
+    try {
+      OneSignal.initialize(appId);
+      await OneSignal.Notifications.requestPermission(true);
+      _initialized = true;
+    } catch (e) {
+      debugPrint('⚠️ NotificationService: échec initialisation OneSignal: $e');
+    }
   }
 
-  Future<void> subscribeToTopic(String topic) async {
-    debugPrint('ℹ️ subscribeToTopic($topic) ignoré : push non configuré');
+  /// Associe l'utilisateur connecté à son abonnement push (à appeler après
+  /// chaque connexion réussie).
+  Future<void> login(String userId) async {
+    if (!_initialized) return;
+    try {
+      await OneSignal.login(userId);
+    } catch (e) {
+      debugPrint('⚠️ NotificationService: échec login OneSignal: $e');
+    }
   }
 
-  Future<void> unsubscribeFromTopic(String topic) async {
-    debugPrint('ℹ️ unsubscribeFromTopic($topic) ignoré : push non configuré');
+  /// Dissocie l'appareil de l'utilisateur (à appeler à la déconnexion, pour
+  /// qu'il ne reçoive plus de push destinés à ce compte).
+  Future<void> logout() async {
+    if (!_initialized) return;
+    try {
+      await OneSignal.logout();
+    } catch (e) {
+      debugPrint('⚠️ NotificationService: échec logout OneSignal: $e');
+    }
   }
-
-  Future<String?> getFCMToken() async => null;
 }
