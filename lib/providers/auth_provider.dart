@@ -68,8 +68,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ Inscription avec validation
-  Future<void> register({
+  /// ✅ Inscription avec validation.
+  /// Renvoie `true` si l'utilisateur est immédiatement connecté, `false` si
+  /// une confirmation par email est requise avant de pouvoir se connecter
+  /// (le compte est créé mais sans session active).
+  Future<bool> register({
     required String email,
     required String password,
     required String fullName,
@@ -86,7 +89,7 @@ class AuthProvider extends ChangeNotifier {
         throw Exception('Mot de passe minimum 8 caractères');
       }
 
-      await _service.signUp(
+      final response = await _service.signUp(
         email: email,
         password: password,
         fullName: fullName,
@@ -95,6 +98,7 @@ class AuthProvider extends ChangeNotifier {
       await _loadProfile();
 
       debugPrint('✅ Inscription réussie: $email');
+      return response.session != null;
     } on AuthException catch (e) {
       _setError(_translateAuthError(e));
       rethrow;
@@ -153,6 +157,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    await _service.ensureUserProfile();
     _profile = await _service.getUserProfile(currentUser!.id);
     await NotificationService().login(currentUser!.id);
     notifyListeners();

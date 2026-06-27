@@ -58,8 +58,12 @@ class SupabaseService {
         data: {'full_name': fullName},
       );
 
-      // Créer profil utilisateur
-      if (response.user != null) {
+      // Créer profil utilisateur — seulement si une session est active : sans
+      // elle, auth.uid() est NULL et la policy RLS INSERT sur `users` rejette
+      // la ligne (cas où la confirmation email est activée sur le projet :
+      // signUp() crée bien le compte mais ne connecte personne). Le profil
+      // est alors créé au premier login confirmé, cf. ensureUserProfile.
+      if (response.user != null && response.session != null) {
         await _createUserProfile(
           userId: response.user!.id,
           email: email,
@@ -78,6 +82,30 @@ class SupabaseService {
     } catch (e) {
       debugPrint('❌ Erreur sign up: $e');
       rethrow;
+    }
+  }
+
+  /// Crée la ligne de profil si elle n'existe pas encore (rattrape le cas où
+  /// signUp() n'a pas pu le faire faute de session active — confirmation
+  /// email requise). Idempotent, à appeler à chaque connexion réussie.
+  Future<void> ensureUserProfile() async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      final existing = await _client
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (existing != null) return;
+
+      await _createUserProfile(
+        userId: user.id,
+        email: user.email ?? '',
+        fullName: user.userMetadata?['full_name'] as String? ?? '',
+      );
+    } catch (e) {
+      debugPrint('⚠️ Erreur vérification/création profile: $e');
     }
   }
 

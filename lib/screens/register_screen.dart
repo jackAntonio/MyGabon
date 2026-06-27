@@ -37,7 +37,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Rejoindre MyGabon', style: Theme.of(context).textTheme.titleLarge),
+                Text('Rejoindre MyGabon',
+                    style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 24),
                 if (_error != null) ...[
                   Text(_error!, style: const TextStyle(color: AppColors.error)),
@@ -96,15 +97,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _loading = true;
         _error = null;
       });
+      final auth = Provider.of<AuthProvider>(context, listen: false);
       try {
-        await Provider.of<AuthProvider>(context, listen: false).register(
+        final loggedIn = await auth.register(
           email: _email!,
           password: _password!,
           fullName: _fullName!,
           phoneNumber: _phoneNumber,
         );
+        // Pas de session après l'inscription : la confirmation email est
+        // requise côté Supabase. Sans ce message, l'utilisateur reste sur
+        // cet écran sans aucun retour (le compte est pourtant bien créé).
+        if (!loggedIn && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Compte créé ! Vérifiez votre email pour confirmer votre compte avant de vous connecter.',
+              ),
+              duration: Duration(seconds: 6),
+            ),
+          );
+          Navigator.pop(context);
+        }
       } catch (e) {
-        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+        setState(() => _error =
+            auth.errorMessage ?? e.toString().replaceFirst('Exception: ', ''));
       }
       if (mounted) setState(() => _loading = false);
     }

@@ -104,11 +104,12 @@ class _LoginScreenState extends State<LoginScreen> {
         _loading = true;
         _error = null;
       });
+      final auth = Provider.of<AuthProvider>(context, listen: false);
       try {
-        await Provider.of<AuthProvider>(context, listen: false)
-            .login(emailOrPhone: _emailOrPhone!, password: _password!);
+        await auth.login(emailOrPhone: _emailOrPhone!, password: _password!);
       } catch (e) {
-        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+        setState(() => _error =
+            auth.errorMessage ?? e.toString().replaceFirst('Exception: ', ''));
       }
       if (mounted) setState(() => _loading = false);
     }
@@ -137,12 +138,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     .resetPassword(email: controller.text.trim());
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Email de réinitialisation envoyé')),
+                  const SnackBar(
+                      content: Text('Email de réinitialisation envoyé')),
                 );
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                  SnackBar(
+                      content:
+                          Text(e.toString().replaceFirst('Exception: ', ''))),
                 );
               }
             },
