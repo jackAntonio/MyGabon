@@ -4,6 +4,15 @@ import 'secure_local_storage.dart';
 
 /// ✅ Service Supabase - Backend principal pour GabonConnect
 class SupabaseService {
+  // ⚠️ Sans ce paramètre explicite, Supabase utilise le "Site URL" du
+  // dashboard pour les liens de confirmation email / reset mot de passe —
+  // qui vaut http://localhost:3000 par défaut sur un nouveau projet (rien
+  // n'y répond pour une app mobile). Ce schéma doit être déclaré dans
+  // android/app/src/main/AndroidManifest.xml (et ios/Runner/Info.plist) ET
+  // ajouté aux Redirect URLs autorisées dans Supabase Dashboard >
+  // Authentication > URL Configuration (sinon Supabase rejette le lien).
+  static const _authRedirectUrl = 'mygabon://login-callback';
+
   static final SupabaseService _instance = SupabaseService._internal();
 
   late final SupabaseClient _client;
@@ -55,6 +64,7 @@ class SupabaseService {
       final response = await _client.auth.signUp(
         email: email,
         password: password,
+        emailRedirectTo: _authRedirectUrl,
         data: {'full_name': fullName},
       );
 
@@ -142,7 +152,8 @@ class SupabaseService {
 
   /// Demander un email de réinitialisation de mot de passe
   Future<void> resetPassword({required String email}) async {
-    await _client.auth.resetPasswordForEmail(email);
+    await _client.auth
+        .resetPasswordForEmail(email, redirectTo: _authRedirectUrl);
     await logAuditEvent(
         action: 'password_reset_requested', details: {'email': email});
   }

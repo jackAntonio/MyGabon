@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:provider/provider.dart';
 import '../services/connectivity_service.dart';
 
@@ -235,9 +236,11 @@ class OptimizedListLoader extends StatelessWidget {
     return Consumer<ConnectivityService>(
       builder: (context, connectivity, _) {
         return ListView.builder(
-          scrollCacheExtent: ScrollCacheExtent.pixels(connectivity.connectionQuality == ConnectionQuality.poor
-              ? 100 // Reduced cache extent for poor connections
-              : 500), controller: controller, // Normal cache extent
+          scrollCacheExtent: ScrollCacheExtent.pixels(
+              connectivity.connectionQuality == ConnectionQuality.poor
+                  ? 100.0 // Reduced cache extent for poor connections
+                  : 500.0), // Normal cache extent
+          controller: controller,
           itemCount: itemCount + (isLoading ? 1 : 0) + (!hasReachedEnd ? 1 : 0),
           itemBuilder: (context, index) {
             // Show loading indicator at end for pagination
