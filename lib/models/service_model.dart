@@ -10,6 +10,8 @@ class ServiceModel {
   final double price;
   final String category;
   final String location;
+  final double? latitude;
+  final double? longitude;
   final double rating;
   final int reviewsCount;
 
@@ -24,6 +26,8 @@ class ServiceModel {
     required this.price,
     required this.category,
     required this.location,
+    this.latitude,
+    this.longitude,
     required this.rating,
     this.reviewsCount = 0,
   });

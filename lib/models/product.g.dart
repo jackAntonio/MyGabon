@@ -19,6 +19,8 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
       sellerVerified: json['sellerVerified'] as bool? ?? false,
       condition: json['condition'] as String,
       location: json['location'] as String,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] == null
           ? null
@@ -40,6 +42,8 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
       'sellerVerified': instance.sellerVerified,
       'condition': instance.condition,
       'location': instance.location,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
       'quantity': instance.quantity,

@@ -19,7 +19,7 @@ class MarketplaceScreen extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
@@ -39,6 +39,45 @@ class MarketplaceScreen extends StatelessWidget {
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
                 onChanged: provider.search,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ActionChip(
+                avatar: Icon(
+                  provider.isSortedByDistance
+                      ? Icons.near_me_rounded
+                      : Icons.near_me_outlined,
+                  size: 18,
+                  color: provider.isSortedByDistance
+                      ? AppColors.white
+                      : AppColors.primary,
+                ),
+                label: Text(provider.isSortedByDistance
+                    ? 'Triés par proximité'
+                    : 'Trier par proximité'),
+                backgroundColor: provider.isSortedByDistance
+                    ? AppColors.primary
+                    : null,
+                labelStyle: TextStyle(
+                  color: provider.isSortedByDistance
+                      ? AppColors.white
+                      : null,
+                ),
+                onPressed: () async {
+                  final success = await provider.sortByDistance();
+                  if (!success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Activez la localisation pour trier par proximité'),
+                      ),
+                    );
+                  }
+                },
               ),
             ),
           ),

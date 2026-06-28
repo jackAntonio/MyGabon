@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/service_model.dart';
+import '../providers/service_provider.dart';
 import '../screens/chat_detail_screen.dart';
 import 'modern_card.dart';
 import 'verified_badge.dart';
@@ -11,9 +13,14 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final distanceKm =
+        context.watch<ServiceProvider>().distanceKmFor(service);
+
     return ModernCard(
       title: service.title,
       description: service.description,
+      distanceLabel:
+          distanceKm == null ? null : '${distanceKm.toStringAsFixed(1)} km',
       price: service.formattedPrice,
       rating: service.rating,
       sellerName: service.providerName,

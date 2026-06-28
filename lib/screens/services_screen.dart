@@ -95,6 +95,43 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         onChanged: provider.search,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ActionChip(
+                        avatar: Icon(
+                          provider.isSortedByDistance
+                              ? Icons.near_me_rounded
+                              : Icons.near_me_outlined,
+                          size: 18,
+                          color: provider.isSortedByDistance
+                              ? AppColors.white
+                              : AppColors.primary,
+                        ),
+                        label: Text(provider.isSortedByDistance
+                            ? 'Triés par proximité'
+                            : 'Trier par proximité'),
+                        backgroundColor: provider.isSortedByDistance
+                            ? AppColors.primary
+                            : AppColors.white,
+                        labelStyle: TextStyle(
+                          color: provider.isSortedByDistance
+                              ? AppColors.white
+                              : null,
+                        ),
+                        onPressed: () async {
+                          final success = await provider.sortByDistance();
+                          if (!success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Activez la localisation pour trier par proximité'),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),

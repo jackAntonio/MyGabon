@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../services/payment_service.dart';
+import '../services/geolocation_service.dart';
 import '../widgets/image_picker_widget.dart';
 import 'package:uuid/uuid.dart';
 
@@ -23,6 +24,9 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
   String _selectedLocation = 'Libreville';
   int _quantity = 1;
   bool _isSubmitting = false;
+  bool _isLocating = false;
+  double? _latitude;
+  double? _longitude;
   List<String> _imageUrls = [];
   final String _productId = const Uuid().v4(); // ID unique pour le produit
 
@@ -185,16 +189,43 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
               _buildFormSection(
                 context,
                 title: 'Localisation',
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedLocation,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.location_on_rounded),
-                  ),
-                  items: _gabonCities
-                      .map((city) => DropdownMenuItem(value: city, child: Text(city)))
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedLocation = value ?? 'Libreville'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedLocation,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.location_on_rounded),
+                      ),
+                      items: _gabonCities
+                          .map((city) =>
+                              DropdownMenuItem(value: city, child: Text(city)))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedLocation = value ?? 'Libreville'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _isLocating ? null : _useCurrentLocation,
+                      icon: _isLocating
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              _latitude != null
+                                  ? Icons.my_location_rounded
+                                  : Icons.location_searching_rounded,
+                              size: 18,
+                            ),
+                      label: Text(
+                        _latitude != null
+                            ? 'Position actuelle enregistrée'
+                            : 'Utiliser ma position actuelle (recommandé)',
+                      ),
+                    ),
+                  ],
                 ),
               ),
               ImagePickerWidget(
@@ -262,6 +293,27 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
     );
   }
 
+  Future<void> _useCurrentLocation() async {
+    setState(() => _isLocating = true);
+    final position = await GeolocationService().getCurrentLocation();
+    if (!mounted) return;
+
+    setState(() {
+      _isLocating = false;
+      _latitude = position?.latitude;
+      _longitude = position?.longitude;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(position == null
+            ? 'Position indisponible : vérifiez que la localisation est activée'
+            : 'Position actuelle enregistrée'),
+        backgroundColor: position == null ? AppColors.error : AppColors.success,
+      ),
+    );
+  }
+
   Future<void> _submitListing() async {
     final price = double.tryParse(_priceController.text);
     if (_titleController.text.isEmpty ||
@@ -288,6 +340,8 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
         location: _selectedLocation,
         quantity: _quantity,
         imageUrl: _imageUrls.isNotEmpty ? _imageUrls.first : null,
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       if (productId == null) {
@@ -310,6 +364,8 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
         _selectedCategory = _categories.first;
         _selectedCondition = _conditions.first;
         _selectedLocation = _gabonCities.first;
+        _latitude = null;
+        _longitude = null;
       });
     } catch (e) {
       if (!mounted) return;

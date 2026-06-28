@@ -22,7 +22,6 @@ import 'providers/analytics_provider.dart';
 import 'config/theme.dart';
 
 import 'services/notification_service.dart';
-import 'services/geolocation_service.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/offline_queue_service.dart';
@@ -117,7 +116,6 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
   Widget build(BuildContext context) {
     // initialize services once
     NotificationService().init();
-    GeolocationService();
 
     return MultiProvider(
       providers: [

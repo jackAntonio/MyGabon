@@ -15,6 +15,7 @@ class ModernCard extends StatelessWidget {
   final Widget? badge;
   final VoidCallback? onTap;
   final bool isLoading;
+  final String? distanceLabel;
 
   const ModernCard({
     super.key,
@@ -28,6 +29,7 @@ class ModernCard extends StatelessWidget {
     this.badge,
     this.onTap,
     this.isLoading = false,
+    this.distanceLabel,
   });
 
   @override
@@ -140,6 +142,24 @@ class ModernCard extends StatelessWidget {
                             color: AppColors.grey600,
                           ),
                     ),
+                    if (distanceLabel != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.near_me_rounded,
+                              size: 12, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            distanceLabel!,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const Spacer(),
 
                     // Rating and seller

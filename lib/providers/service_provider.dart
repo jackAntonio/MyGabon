@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/service_model.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/geolocation_service.dart';
 import '../services/supabase_service.dart';
 
 /// Provides list of services with caching, pagination, and offline support
@@ -15,12 +17,15 @@ class ServiceProvider extends ChangeNotifier {
   bool _hasReachedEnd = false;
 
   final ConnectivityService? _connectivityService;
+  final GeolocationService _geolocationService = GeolocationService();
+  Position? _userPosition;
 
   List<ServiceModel> get services =>
       _filteredServices.isEmpty ? _services : _filteredServices;
   bool get isLoading => _loading;
   bool get isLoadingMore => _loadingMore;
   bool get hasReachedEnd => _hasReachedEnd;
+  bool get isSortedByDistance => _userPosition != null;
 
   ServiceProvider(this._connectivityService) {
     _initializeServices();
@@ -160,6 +165,42 @@ class ServiceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Trie la liste actuellement affichée par proximité. Voir
+  /// MarketplaceProvider.sortByDistance pour la même logique côté produits.
+  Future<bool> sortByDistance() async {
+    _userPosition ??= await _geolocationService.getCurrentLocation();
+    if (_userPosition == null) return false;
+
+    final list = _filteredServices.isEmpty ? _services : _filteredServices;
+    list.sort((a, b) {
+      final distanceA = distanceKmFor(a);
+      final distanceB = distanceKmFor(b);
+      if (distanceA == null && distanceB == null) return 0;
+      if (distanceA == null) return 1;
+      if (distanceB == null) return -1;
+      return distanceA.compareTo(distanceB);
+    });
+    notifyListeners();
+    return true;
+  }
+
+  /// Distance en km entre l'utilisateur et [service], ou null si la
+  /// position ou les coordonnées du service sont indisponibles.
+  double? distanceKmFor(ServiceModel service) {
+    final position = _userPosition;
+    if (position == null ||
+        service.latitude == null ||
+        service.longitude == null) {
+      return null;
+    }
+    return GeolocationService.distanceInKm(
+      position.latitude,
+      position.longitude,
+      service.latitude!,
+      service.longitude!,
+    );
+  }
+
   /// Refresh services (pull-to-refresh)
   Future<void> refreshServices() async {
     _currentPage = 0;
@@ -184,6 +225,8 @@ class ServiceProvider extends ChangeNotifier {
       price: (row['price'] as num).toDouble(),
       category: _capitalize(row['category'] as String? ?? 'Autres'),
       location: row['location'] as String? ?? 'Libreville',
+      latitude: (row['latitude'] as num?)?.toDouble(),
+      longitude: (row['longitude'] as num?)?.toDouble(),
       rating: (row['rating'] as num?)?.toDouble() ?? 0,
       reviewsCount: (row['reviews_count'] as num?)?.toInt() ?? 0,
     );
@@ -204,6 +247,8 @@ class ServiceProvider extends ChangeNotifier {
       'price': service.price,
       'category': service.category,
       'location': service.location,
+      'latitude': service.latitude,
+      'longitude': service.longitude,
       'rating': service.rating,
       'reviews_count': service.reviewsCount,
     };
@@ -223,6 +268,8 @@ class ServiceProvider extends ChangeNotifier {
                 price: (item['price'] as num?)?.toDouble() ?? 0,
                 category: item['category'] as String? ?? 'Autres',
                 location: item['location'] as String? ?? 'Libreville',
+                latitude: (item['latitude'] as num?)?.toDouble(),
+                longitude: (item['longitude'] as num?)?.toDouble(),
                 rating: (item['rating'] as num?)?.toDouble() ?? 4.0,
                 reviewsCount: (item['reviews_count'] as num?)?.toInt() ?? 0,
               ))

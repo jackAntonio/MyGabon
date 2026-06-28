@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/product.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/geolocation_service.dart';
 import '../services/supabase_service.dart';
 
 /// Marketplace provider with caching, pagination, and offline support
@@ -15,12 +17,15 @@ class MarketplaceProvider extends ChangeNotifier {
   bool _hasReachedEnd = false;
 
   final ConnectivityService? _connectivityService;
+  final GeolocationService _geolocationService = GeolocationService();
+  Position? _userPosition;
 
   List<Product> get products =>
       _filteredProducts.isEmpty ? _products : _filteredProducts;
   bool get isLoading => _loading;
   bool get isLoadingMore => _loadingMore;
   bool get hasReachedEnd => _hasReachedEnd;
+  bool get isSortedByDistance => _userPosition != null;
 
   MarketplaceProvider(this._connectivityService) {
     _initializeProducts();
@@ -156,6 +161,45 @@ class MarketplaceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Trie la liste actuellement affichée par proximité. Demande la
+  /// position si elle n'a pas déjà été récupérée. Renvoie false si la
+  /// position est indisponible (permission refusée, GPS désactivé) —
+  /// l'appelant doit alors informer l'utilisateur, la liste reste inchangée.
+  Future<bool> sortByDistance() async {
+    _userPosition ??= await _geolocationService.getCurrentLocation();
+    if (_userPosition == null) return false;
+
+    final list = _filteredProducts.isEmpty ? _products : _filteredProducts;
+    list.sort((a, b) {
+      final distanceA = distanceKmFor(a);
+      final distanceB = distanceKmFor(b);
+      if (distanceA == null && distanceB == null) return 0;
+      if (distanceA == null) return 1;
+      if (distanceB == null) return -1;
+      return distanceA.compareTo(distanceB);
+    });
+    notifyListeners();
+    return true;
+  }
+
+  /// Distance en km entre l'utilisateur et [product], ou null si la
+  /// position n'a pas encore été récupérée ou que le produit n'a pas de
+  /// coordonnées (annonce publiée avant l'ajout de cette fonctionnalité).
+  double? distanceKmFor(Product product) {
+    final position = _userPosition;
+    if (position == null ||
+        product.latitude == null ||
+        product.longitude == null) {
+      return null;
+    }
+    return GeolocationService.distanceInKm(
+      position.latitude,
+      position.longitude,
+      product.latitude!,
+      product.longitude!,
+    );
+  }
+
   /// Refresh products (pull-to-refresh)
   Future<void> refreshProducts() async {
     _currentPage = 0;
@@ -183,6 +227,8 @@ class MarketplaceProvider extends ChangeNotifier {
       sellerVerified: seller?['verified'] as bool? ?? false,
       condition: row['condition'] as String? ?? 'Occasion',
       location: row['location'] as String? ?? 'Libreville',
+      latitude: (row['latitude'] as num?)?.toDouble(),
+      longitude: (row['longitude'] as num?)?.toDouble(),
       createdAt: DateTime.parse(row['created_at'] as String),
       quantity: row['quantity'] as int? ?? 1,
       published: row['published'] as bool? ?? true,

@@ -616,6 +616,8 @@ class SupabaseService {
     required String location,
     required int quantity,
     String? imageUrl,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       final result = await _client
@@ -628,6 +630,8 @@ class SupabaseService {
             'category': category,
             'condition': condition,
             'location': location,
+            'latitude': latitude,
+            'longitude': longitude,
             'quantity': quantity,
             'image_url': imageUrl,
             'published': true,
