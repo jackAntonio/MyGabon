@@ -26,6 +26,9 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Géolocalisation : tri "à proximité" du marketplace (lib/services/geolocation_service.dart) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MyGabon utilise votre position pour trier les produits et services à proximité.</string>
 	<!-- Deep link de retour Auth (confirmation email, reset mot de passe) :
 	     même schéma que android/app/src/main/AndroidManifest.xml, à ajouter
 	     aussi aux Redirect URLs autorisées dans Supabase Dashboard. -->

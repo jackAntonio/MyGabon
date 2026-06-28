@@ -77,12 +77,14 @@ dependencies:
   # de réintroduire le SDK Firebase juste pour le push)
   onesignal_flutter: ^5.2.0
 
+  # Géolocalisation (tri "à proximité" du marketplace)
+  geolocator: ^13.0.1
+
   # Firebase dependencies (commented for web build)
   # firebase_core: ^2.0.0
   # cloud_firestore: ^4.0.0
   # firebase_auth: ^4.0.0
   # firebase_messaging: ^14.0.0
-  # geolocator: ^9.0.2
 
 dev_dependencies:
   flutter_test:

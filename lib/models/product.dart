@@ -16,6 +16,8 @@ class Product {
   final bool sellerVerified;
   final String condition; // Neuf, Bon état, Occasion
   final String location; // City in Gabon
+  final double? latitude;
+  final double? longitude;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final int quantity;
@@ -34,6 +36,8 @@ class Product {
     this.sellerVerified = false,
     required this.condition,
     required this.location,
+    this.latitude,
+    this.longitude,
     required this.createdAt,
     this.updatedAt,
     required this.quantity,
