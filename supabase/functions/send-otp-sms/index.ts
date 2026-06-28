@@ -56,9 +56,16 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function sendViaTwilio(phoneNumber: string, code: string): Promise<{ sent: boolean; reason?: string }> {
+async function sendViaTwilio(
+  phoneNumber: string,
+  code: string,
+): Promise<{ sent: boolean; reason?: string }> {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-    console.log(`[send-otp-sms] Twilio non configuré (dev only) — code pour ${phoneNumber}: ${code}`);
+    // Twilio non configuré : le code ne doit jamais finir dans les logs
+    // Supabase (persistants, lisibles par quiconque a accès au projet), même
+    // en dev — cf. invariant "le client ne voit jamais le code" documenté
+    // sur SupabaseService.sendOTP.
+    console.log(`[send-otp-sms] Twilio non configuré — SMS non envoyé pour ${phoneNumber}`);
     return { sent: false, reason: "Twilio non configuré côté serveur" };
   }
 

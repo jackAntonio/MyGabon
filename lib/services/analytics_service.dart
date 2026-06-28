@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/analytics_models.dart';
+import '../utils/secure_hive.dart';
 
 /// Service for tracking analytics events
 class AnalyticsService {
@@ -23,9 +24,9 @@ class AnalyticsService {
 
   /// Initialize Hive boxes
   Future<void> init() async {
-    _engagementBox = await Hive.openBox(_engagementBoxName);
-    _conversionBox = await Hive.openBox(_conversionBoxName);
-    _revenueBox = await Hive.openBox(_revenueBoxName);
+    _engagementBox = await SecureHive.openEncryptedBox(_engagementBoxName);
+    _conversionBox = await SecureHive.openEncryptedBox(_conversionBoxName);
+    _revenueBox = await SecureHive.openEncryptedBox(_revenueBoxName);
   }
 
   /// Track engagement event

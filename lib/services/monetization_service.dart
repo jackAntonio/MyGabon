@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/monetization_models.dart';
+import '../utils/secure_hive.dart';
 
 /// Service for managing professional subscriptions
 class SubscriptionService {
@@ -19,7 +20,7 @@ class SubscriptionService {
 
   /// Initialize Hive box
   Future<void> init() async {
-    _subscriptionBox = await Hive.openBox(_subscriptionBoxName);
+    _subscriptionBox = await SecureHive.openEncryptedBox(_subscriptionBoxName);
   }
 
   /// Get user subscription
@@ -195,7 +196,7 @@ class FeaturedListingService {
 
   /// Initialize Hive box
   Future<void> init() async {
-    _featuredBox = await Hive.openBox(_featuredBoxName);
+    _featuredBox = await SecureHive.openEncryptedBox(_featuredBoxName);
   }
 
   /// Boost a listing
@@ -308,7 +309,7 @@ class RevenuePaymentService {
 
   /// Initialize Hive box
   Future<void> init() async {
-    _transactionBox = await Hive.openBox(_transactionBoxName);
+    _transactionBox = await SecureHive.openEncryptedBox(_transactionBoxName);
   }
 
   /// Record transaction

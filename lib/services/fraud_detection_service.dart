@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:hive/hive.dart';
 import '../models/security_models.dart';
 import '../utils/security_utils.dart';
+import '../utils/secure_hive.dart';
 import 'supabase_service.dart';
 
 /// Service for fraud detection and prevention.
@@ -27,8 +28,8 @@ class FraudDetectionService {
   
   /// Initialize Hive boxes
   Future<void> init() async {
-    _reportsBox = await Hive.openBox(_reportsBoxName);
-    _suspiciousBox = await Hive.openBox(_suspiciousBoxName);
+    _reportsBox = await SecureHive.openEncryptedBox(_reportsBoxName);
+    _suspiciousBox = await SecureHive.openEncryptedBox(_suspiciousBoxName);
   }
   
   /// Analyze transaction for fraud risk

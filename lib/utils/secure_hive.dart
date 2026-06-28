@@ -24,8 +24,17 @@ class SecureHive {
     return HiveAesCipher(key);
   }
 
-  static Future<Box<dynamic>> openEncryptedBox(String boxName) async {
+  static Future<Box<T>> openEncryptedBox<T>(String boxName) async {
     final cipher = await _cipherFor(boxName);
-    return Hive.openBox(boxName, encryptionCipher: cipher);
+    try {
+      return await Hive.openBox<T>(boxName, encryptionCipher: cipher);
+    } catch (_) {
+      // Box existante non chiffrée (créée avant ce correctif) : impossible à
+      // déchiffrer avec la nouvelle clé, on la recrée chiffrée. Ce sont des
+      // données locales dérivées (cache, queue, stats), jamais la source de
+      // vérité (qui reste dans Supabase).
+      await Hive.deleteBoxFromDisk(boxName);
+      return Hive.openBox<T>(boxName, encryptionCipher: cipher);
+    }
   }
 }

@@ -487,6 +487,8 @@ class SupabaseService {
     if (userId == null) return [];
     if (!_isValidUuid(otherUserId)) return [];
     try {
+      // userId vient de la session auth, otherUserId est validé ci-dessus :
+      // l'interpolation dans .or() ne reçoit jamais autre chose qu'un UUID.
       final messages = await _client
           .from('messages')
           .select()
@@ -742,6 +744,8 @@ class SupabaseService {
     }
     if (!_isValidUuid(userId)) return [];
     try {
+      // userId est validé ci-dessus : l'interpolation dans .or() ne reçoit
+      // jamais autre chose qu'un UUID.
       final transactions = await _client
           .from('transactions')
           .select()

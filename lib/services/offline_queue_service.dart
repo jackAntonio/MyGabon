@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../utils/secure_hive.dart';
 
 enum QueueAction {
   postService,
@@ -67,7 +68,8 @@ class OfflineQueueService extends ChangeNotifier {
     if (_initialized) return;
 
     try {
-      _queueBox = await Hive.openBox<Map<dynamic, dynamic>>(queueBoxName);
+      _queueBox =
+          await SecureHive.openEncryptedBox<Map<dynamic, dynamic>>(queueBoxName);
 
       // Load pending actions from storage
       await _loadPendingActions();

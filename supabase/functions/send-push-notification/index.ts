@@ -50,7 +50,10 @@ async function sendViaOneSignal(
   content: string,
 ): Promise<{ sent: boolean; reason?: string }> {
   if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
-    console.log(`[send-push-notification] OneSignal non configuré (dev only) — notif pour ${externalUserId}: ${heading} / ${content}`);
+    // Le contenu du message ne doit jamais finir dans les logs Supabase
+    // (persistants, lisibles par quiconque a accès au projet) : on logge
+    // seulement le fait que le push n'a pas été envoyé, pas son contenu.
+    console.log(`[send-push-notification] OneSignal non configuré (dev only) — push non envoyé pour ${externalUserId}`);
     return { sent: false, reason: "OneSignal non configuré côté serveur" };
   }
 
