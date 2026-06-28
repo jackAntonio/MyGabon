@@ -7,11 +7,11 @@ class SkeletonLoader extends StatefulWidget {
   final BorderRadius borderRadius;
 
   const SkeletonLoader({
-    Key? key,
+    super.key,
     this.width = double.infinity,
     required this.height,
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
-  }) : super(key: key);
+  });
 
   @override
   State<SkeletonLoader> createState() => _SkeletonLoaderState();

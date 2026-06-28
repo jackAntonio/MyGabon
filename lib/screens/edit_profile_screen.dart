@@ -9,10 +9,10 @@ class EditProfileScreen extends StatefulWidget {
   final String initialPhoneNumber;
 
   const EditProfileScreen({
-    Key? key,
+    super.key,
     this.initialFullName = '',
     this.initialPhoneNumber = '',
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();

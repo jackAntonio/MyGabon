@@ -7,7 +7,7 @@ import 'verified_badge.dart';
 /// Card widget displaying brief information about a service.
 class ServiceCard extends StatelessWidget {
   final ServiceModel service;
-  const ServiceCard({Key? key, required this.service}) : super(key: key);
+  const ServiceCard({super.key, required this.service});
 
   @override
   Widget build(BuildContext context) {

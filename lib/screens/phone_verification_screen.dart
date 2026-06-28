@@ -6,7 +6,7 @@ import '../config/theme.dart';
 
 /// Phone verification screen
 class PhoneVerificationScreen extends StatefulWidget {
-  const PhoneVerificationScreen({Key? key}) : super(key: key);
+  const PhoneVerificationScreen({super.key});
 
   @override
   State<PhoneVerificationScreen> createState() =>

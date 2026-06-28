@@ -6,7 +6,7 @@ import 'driver_dashboard_screen.dart';
 
 /// Candidature pour devenir livreur MyGabon (soumise à étude de dossier).
 class BecomeDriverScreen extends StatefulWidget {
-  const BecomeDriverScreen({Key? key}) : super(key: key);
+  const BecomeDriverScreen({super.key});
 
   @override
   State<BecomeDriverScreen> createState() => _BecomeDriverScreenState();

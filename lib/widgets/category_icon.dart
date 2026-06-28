@@ -8,11 +8,11 @@ class CategoryIcon extends StatefulWidget {
   final VoidCallback? onTap;
 
   const CategoryIcon({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<CategoryIcon> createState() => _CategoryIconState();

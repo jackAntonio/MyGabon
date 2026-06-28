@@ -17,7 +17,7 @@ class ModernCard extends StatelessWidget {
   final bool isLoading;
 
   const ModernCard({
-    Key? key,
+    super.key,
     this.imageUrl,
     required this.title,
     required this.description,
@@ -28,7 +28,7 @@ class ModernCard extends StatelessWidget {
     this.badge,
     this.onTap,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

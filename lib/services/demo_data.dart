@@ -1,5 +1,6 @@
 /// Demo data for GabonConnect preview
 /// Real Gabon marketplace data
+library;
 
 final Map<String, dynamic> gabonDemoData = {
   'users': [

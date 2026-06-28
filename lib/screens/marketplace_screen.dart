@@ -8,7 +8,7 @@ import '../providers/marketplace_provider.dart';
 import '../widgets/skeleton_loader.dart';
 
 class MarketplaceScreen extends StatelessWidget {
-  const MarketplaceScreen({Key? key}) : super(key: key);
+  const MarketplaceScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// (lib/screens/post_announcement_screen.dart) pour rester cohérentes
 /// avec les valeurs réellement stockées dans `products.category`.
 class CategoryGrid extends StatelessWidget {
-  const CategoryGrid({Key? key}) : super(key: key);
+  const CategoryGrid({super.key});
 
   static const List<String> categories = [
     'Électronique',

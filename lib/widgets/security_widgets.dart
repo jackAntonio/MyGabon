@@ -12,11 +12,11 @@ class VerificationBadge extends StatelessWidget {
   final double size;
 
   const VerificationBadge({
-    Key? key,
+    super.key,
     required this.verification,
     this.showLabel = true,
     this.size = 24,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +54,10 @@ class TrustScoreWidget extends StatelessWidget {
   final bool compact;
 
   const TrustScoreWidget({
-    Key? key,
+    super.key,
     required this.ratingSummary,
     this.compact = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -111,11 +111,11 @@ class SafetyWarningBanner extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   const SafetyWarningBanner({
-    Key? key,
+    super.key,
     required this.riskLevel,
     required this.riskFlags,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -236,10 +236,10 @@ class ReportUserDialog extends StatefulWidget {
   final VoidCallback? onSubmitted;
 
   const ReportUserDialog({
-    Key? key,
+    super.key,
     required this.suspiciousUserId,
     this.onSubmitted,
-  }) : super(key: key);
+  });
 
   @override
   State<ReportUserDialog> createState() => _ReportUserDialogState();
@@ -410,11 +410,11 @@ class ReviewCard extends StatelessWidget {
   final VoidCallback? onReport;
 
   const ReviewCard({
-    Key? key,
+    super.key,
     required this.review,
     this.onDelete,
     this.onReport,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -550,11 +550,11 @@ class EscrowPaymentCard extends StatelessWidget {
   final VoidCallback? onDispute;
 
   const EscrowPaymentCard({
-    Key? key,
+    super.key,
     required this.escrow,
     this.onRelease,
     this.onDispute,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

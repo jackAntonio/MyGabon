@@ -11,9 +11,9 @@ class MonetizationProfileSection extends StatelessWidget {
   final String userId;
 
   const MonetizationProfileSection({
-    Key? key,
+    super.key,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -402,7 +402,7 @@ class MonetizationProfileSection extends StatelessWidget {
 
 /// Home screen featured listings section
 class FeaturedListingsSection extends StatelessWidget {
-  const FeaturedListingsSection({Key? key}) : super(key: key);
+  const FeaturedListingsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -439,7 +439,7 @@ class FeaturedListingsSection extends StatelessWidget {
 
 /// Revenue banner for home screen
 class RevenueInfoBanner extends StatelessWidget {
-  const RevenueInfoBanner({Key? key}) : super(key: key);
+  const RevenueInfoBanner({super.key});
 
   @override
   Widget build(BuildContext context) {

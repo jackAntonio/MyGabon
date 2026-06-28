@@ -10,9 +10,9 @@ class MarketplaceDetailScreen extends StatefulWidget {
   final Product product;
 
   const MarketplaceDetailScreen({
-    Key? key,
+    super.key,
     required this.product,
-  }) : super(key: key);
+  });
 
   @override
   State<MarketplaceDetailScreen> createState() =>

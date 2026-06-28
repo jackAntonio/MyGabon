@@ -6,7 +6,7 @@ import '../services/supabase_service.dart';
 /// en cours à marquer comme effectuées (50% des frais de livraison crédités
 /// au moment de la livraison).
 class DriverDashboardScreen extends StatefulWidget {
-  const DriverDashboardScreen({Key? key}) : super(key: key);
+  const DriverDashboardScreen({super.key});
 
   @override
   State<DriverDashboardScreen> createState() => _DriverDashboardScreenState();

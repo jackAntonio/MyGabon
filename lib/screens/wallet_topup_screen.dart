@@ -12,7 +12,7 @@ import '../utils/validators.dart';
 /// Realtime — jamais déclarée par ce client (cf. SupabaseService.
 /// watchWalletTopupStatus).
 class WalletTopUpScreen extends StatefulWidget {
-  const WalletTopUpScreen({Key? key}) : super(key: key);
+  const WalletTopUpScreen({super.key});
 
   @override
   State<WalletTopUpScreen> createState() => _WalletTopUpScreenState();

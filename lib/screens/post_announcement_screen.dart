@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 
 /// Écran pour publier une annonce (produit) sur le marché MyGabon.
 class PostAnnouncementScreen extends StatefulWidget {
-  const PostAnnouncementScreen({Key? key}) : super(key: key);
+  const PostAnnouncementScreen({super.key});
 
   @override
   State<PostAnnouncementScreen> createState() => _PostAnnouncementScreenState();

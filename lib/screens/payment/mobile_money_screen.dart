@@ -21,12 +21,12 @@ class MobileMoneyScreen extends StatefulWidget {
   final String phoneNumber;
 
   const MobileMoneyScreen({
-    Key? key,
+    super.key,
     required this.product,
     required this.visibleFee,
     required this.totalAmount,
     required this.phoneNumber,
-  }) : super(key: key);
+  });
 
   @override
   State<MobileMoneyScreen> createState() => _MobileMoneyScreenState();

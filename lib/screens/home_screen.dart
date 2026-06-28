@@ -12,7 +12,7 @@ import 'wallet_topup_screen.dart';
 
 /// Accueil : salutation, recherche, catégories et offres à la une.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

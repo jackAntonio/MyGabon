@@ -83,7 +83,7 @@ void main() async {
 /// Root of the GabonConnect application.
 /// Sets up MaterialApp with bottom navigation and responsive theme.
 class GabonConnectApp extends StatefulWidget {
-  const GabonConnectApp({Key? key}) : super(key: key);
+  const GabonConnectApp({super.key});
 
   @override
   State<GabonConnectApp> createState() => _GabonConnectAppState();
@@ -177,7 +177,7 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
 
 /// Main scaffold with a [BottomNavigationBar] to switch between screens.
 class MainScaffold extends StatefulWidget {
-  const MainScaffold({Key? key}) : super(key: key);
+  const MainScaffold({super.key});
 
   @override
   State<MainScaffold> createState() => _MainScaffoldState();

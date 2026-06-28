@@ -10,11 +10,11 @@ class ImagePickerWidget extends StatefulWidget {
   final String productId;
 
   const ImagePickerWidget({
-    Key? key,
+    super.key,
     required this.onImagesSelected,
     required this.productId,
     this.maxImages = 5,
-  }) : super(key: key);
+  });
 
   @override
   State<ImagePickerWidget> createState() => _ImagePickerWidgetState();

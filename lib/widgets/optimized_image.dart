@@ -16,7 +16,7 @@ class OptimizedNetworkImage extends StatefulWidget {
   final bool showPlaceholder;
   
   const OptimizedNetworkImage({
-    Key? key,
+    super.key,
     required this.imageUrl,
     this.width,
     this.height,
@@ -24,7 +24,7 @@ class OptimizedNetworkImage extends StatefulWidget {
     this.borderRadius,
     this.connectivityService,
     this.showPlaceholder = true,
-  }) : super(key: key);
+  });
   
   @override
   State<OptimizedNetworkImage> createState() => _OptimizedNetworkImageState();
@@ -140,13 +140,13 @@ class BandwidthAwareImage extends StatelessWidget {
   final BoxFit fit;
   
   const BandwidthAwareImage({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.connectivityService,
     this.width,
     this.height,
     this.fit = BoxFit.cover,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {

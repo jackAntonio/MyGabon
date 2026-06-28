@@ -9,7 +9,7 @@ import '../widgets/skeleton_loader.dart';
 class ServicesScreen extends StatefulWidget {
   final String? initialCategory;
 
-  const ServicesScreen({Key? key, this.initialCategory}) : super(key: key);
+  const ServicesScreen({super.key, this.initialCategory});
 
   @override
   State<ServicesScreen> createState() => _ServicesScreenState();

@@ -6,7 +6,7 @@ import 'chat_detail_screen.dart';
 
 /// Liste des conversations de l'utilisateur.
 class ChatScreen extends StatelessWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

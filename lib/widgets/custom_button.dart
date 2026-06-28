@@ -7,11 +7,11 @@ class CustomButton extends StatelessWidget {
   final bool elevated;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.onPressed,
     this.elevated = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

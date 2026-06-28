@@ -6,7 +6,7 @@ import '../config/theme.dart';
 class VerifiedSellerBadge extends StatelessWidget {
   final double size;
 
-  const VerifiedSellerBadge({Key? key, this.size = 12}) : super(key: key);
+  const VerifiedSellerBadge({super.key, this.size = 12});
 
   @override
   Widget build(BuildContext context) {

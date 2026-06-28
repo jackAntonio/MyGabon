@@ -13,7 +13,7 @@ import 'wallet_topup_screen.dart';
 /// Profil utilisateur : informations, portefeuille MyGabon, transactions,
 /// paramètres.
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();

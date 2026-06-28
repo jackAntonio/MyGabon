@@ -10,11 +10,11 @@ class PaymentSuccessScreen extends StatelessWidget {
   final String transactionId;
 
   const PaymentSuccessScreen({
-    Key? key,
+    super.key,
     required this.product,
     required this.totalAmount,
     required this.transactionId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

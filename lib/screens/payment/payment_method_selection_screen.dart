@@ -16,10 +16,10 @@ class PaymentMethodSelectionScreen extends StatefulWidget {
   final double deliveryFee;
 
   const PaymentMethodSelectionScreen({
-    Key? key,
+    super.key,
     required this.product,
     this.deliveryFee = 0,
-  }) : super(key: key);
+  });
 
   @override
   State<PaymentMethodSelectionScreen> createState() =>

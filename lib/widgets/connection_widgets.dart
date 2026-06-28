@@ -10,11 +10,11 @@ class ConnectionStatusBanner extends StatelessWidget {
   final VoidCallback? onSyncPressed;
 
   const ConnectionStatusBanner({
-    Key? key,
+    super.key,
     this.backgroundColor,
     this.textColor,
     this.onSyncPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,9 +77,9 @@ class ConnectionQualityIndicator extends StatelessWidget {
   final bool showLabel;
 
   const ConnectionQualityIndicator({
-    Key? key,
+    super.key,
     this.showLabel = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +136,9 @@ class SyncStatusWidget extends StatelessWidget {
   final void Function()? onTap;
 
   const SyncStatusWidget({
-    Key? key,
+    super.key,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -221,24 +221,23 @@ class OptimizedListLoader extends StatelessWidget {
   final ScrollController? controller;
 
   const OptimizedListLoader({
-    Key? key,
+    super.key,
     required this.itemCount,
     required this.itemBuilder,
     this.onLoadMore,
     this.isLoading = false,
     this.hasReachedEnd = false,
     this.controller,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ConnectivityService>(
       builder: (context, connectivity, _) {
         return ListView.builder(
-          cacheExtent: connectivity.connectionQuality == ConnectionQuality.poor
+          scrollCacheExtent: ScrollCacheExtent.pixels(connectivity.connectionQuality == ConnectionQuality.poor
               ? 100 // Reduced cache extent for poor connections
-              : 500,
-          controller: controller, // Normal cache extent
+              : 500), controller: controller, // Normal cache extent
           itemCount: itemCount + (isLoading ? 1 : 0) + (!hasReachedEnd ? 1 : 0),
           itemBuilder: (context, index) {
             // Show loading indicator at end for pagination

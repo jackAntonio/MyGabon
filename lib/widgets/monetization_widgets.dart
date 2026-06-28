@@ -11,11 +11,11 @@ class SubscriptionPlanCard extends StatelessWidget {
   final VoidCallback? onUpgrade;
 
   const SubscriptionPlanCard({
-    Key? key,
+    super.key,
     required this.plan,
     this.isCurrentPlan = false,
     this.onUpgrade,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,10 +148,10 @@ class FeaturedBadge extends StatelessWidget {
   final bool compact;
 
   const FeaturedBadge({
-    Key? key,
+    super.key,
     required this.listing,
     this.compact = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -205,11 +205,11 @@ class BoostListingDialog extends StatefulWidget {
   final VoidCallback? onBoostSuccess;
 
   const BoostListingDialog({
-    Key? key,
+    super.key,
     required this.listingId,
     required this.userId,
     this.onBoostSuccess,
-  }) : super(key: key);
+  });
 
   @override
   State<BoostListingDialog> createState() => _BoostListingDialogState();
@@ -462,7 +462,7 @@ class _BoostListingDialogState extends State<BoostListingDialog> {
 class RevenueSummaryCard extends StatelessWidget {
   final RevenueSummary? summary;
 
-  const RevenueSummaryCard({Key? key, required this.summary}) : super(key: key);
+  const RevenueSummaryCard({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -564,13 +564,13 @@ class AnalyticsMetricCard extends StatelessWidget {
   final IconData icon;
 
   const AnalyticsMetricCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     this.subtitle,
     required this.color,
     required this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -619,10 +619,10 @@ class AdBanner extends StatelessWidget {
   final VoidCallback? onAdClicked;
 
   const AdBanner({
-    Key? key,
+    super.key,
     required this.ad,
     this.onAdClicked,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,7 @@ import '../services/supabase_service.dart';
 /// Étude des candidatures livreur (réservé aux administrateurs, RLS l'impose
 /// aussi côté serveur).
 class AdminDriverApplicationsScreen extends StatefulWidget {
-  const AdminDriverApplicationsScreen({Key? key}) : super(key: key);
+  const AdminDriverApplicationsScreen({super.key});
 
   @override
   State<AdminDriverApplicationsScreen> createState() =>
