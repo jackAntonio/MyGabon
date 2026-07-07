@@ -2,5 +2,6 @@
     "projectManager.git.baseFolders": [
         "K"
     ],
-    "cmake.sourceDirectory": "C:/Users/HP/Downloads/MyGabon/web/linux"
+    "cmake.sourceDirectory": "C:/Users/HP/Downloads/MyGabon/web/linux",
+    "java.compile.nullAnalysis.mode": "automatic"
 }

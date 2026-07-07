@@ -1,4 +1,5 @@
 {
+  "model": "claude-opus-4.6",
   "enabledPlugins": {
     "code-review@claude-plugins-official": true,
     "code-modernization@claude-plugins-official": true,
