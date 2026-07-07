@@ -5,11 +5,13 @@ import '../models/product.dart';
 import '../providers/cart_provider.dart';
 import '../services/payment_service.dart';
 import '../widgets/app_scaffold.dart';
+import 'payment/cart_checkout_screen.dart';
 import 'payment/payment_method_selection_screen.dart';
 
-/// Panier : chaque produit se paie individuellement (MyGabon Wallet ou
-/// Airtel Money) via l'écran de paiement déjà en place, le backend ne
-/// supportant qu'une transaction par produit.
+/// Panier : chaque produit peut se payer individuellement (Airtel Money,
+/// espèces, Apple/Google Pay) via "Payer cet article", ou tout le panier
+/// en une fois via "Payer le panier" (MyGabon Wallet uniquement, RPC
+/// complete_cart_checkout atomique côté serveur).
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
@@ -51,21 +53,44 @@ class CartScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Total (${cart.itemCount} article${cart.itemCount > 1 ? 's' : ''})',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.grey600,
-                        ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total (${cart.itemCount} article${cart.itemCount > 1 ? 's' : ''})',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.grey600,
+                            ),
+                      ),
+                      Text(
+                        '${cart.totalPrice.toStringAsFixed(0)} FCFA',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    '${cart.totalPrice.toStringAsFixed(0)} FCFA',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CartCheckoutScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text('Payer le panier'),
+                    ),
                   ),
                 ],
               ),

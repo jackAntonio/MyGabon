@@ -824,6 +824,22 @@ class SupabaseService {
     }
   }
 
+  /// Paye tout le panier en une seule fois via le MyGabon Wallet (RPC
+  /// complete_cart_checkout, SECURITY DEFINER) : soit toutes les lignes
+  /// sont débitées/créditées, soit aucune (une seule transaction Postgres
+  /// implicite) — jamais un panier payé à moitié. Lève une exception
+  /// (ex: "Solde insuffisant") si ça échoue.
+  Future<List<String>> completeCartCheckout(
+    List<({String productId, int quantity})> items,
+  ) async {
+    final result = await _client.rpc('complete_cart_checkout', params: {
+      'p_items': items
+          .map((i) => {'product_id': i.productId, 'quantity': i.quantity})
+          .toList(),
+    });
+    return List<String>.from(result as List);
+  }
+
   /// Finaliser un paiement MyGabon Wallet : débite l'acheteur, crédite le
   /// vendeur et marque la transaction "success", de façon atomique côté
   /// serveur (RPC complete_marketplace_transaction).
