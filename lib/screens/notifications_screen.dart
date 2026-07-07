@@ -3,6 +3,7 @@ import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_scaffold.dart';
 import 'chat_detail_screen.dart';
+import 'orders_screen.dart';
 
 /// Centre de notifications in-app : historique persisté côté serveur
 /// (table `notifications`, écrite par les Edge Functions), pas seulement
@@ -43,23 +44,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     if (!mounted) return;
-    if (notification['type'] == 'chat_message') {
-      final data = notification['data'] as Map<String, dynamic>?;
-      final senderId = data?['sender_id'] as String?;
-      final senderName = data?['sender_name'] as String?;
-      if (senderId != null) {
+    switch (notification['type']) {
+      case 'chat_message':
+        final data = notification['data'] as Map<String, dynamic>?;
+        final senderId = data?['sender_id'] as String?;
+        final senderName = data?['sender_name'] as String?;
+        if (senderId != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatDetailScreen(
+                otherUserId: senderId,
+                otherUserName: senderName ?? 'Conversation',
+              ),
+            ),
+          );
+        }
+        break;
+      case 'delivery_status':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ChatDetailScreen(
-              otherUserId: senderId,
-              otherUserName: senderName ?? 'Conversation',
-            ),
-          ),
+          MaterialPageRoute(builder: (_) => const OrdersScreen()),
         );
-      }
+        break;
+      // driver_application, report_verified : purement informatives, pas
+      // de navigation dédiée pour l'instant.
     }
   }
+
+  static const _typeIcons = {
+    'chat_message': Icons.chat_bubble_outline_rounded,
+    'delivery_status': Icons.local_shipping_outlined,
+    'driver_application': Icons.badge_outlined,
+    'report_verified': Icons.shield_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +112,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           backgroundColor:
                               read ? AppColors.grey200 : AppColors.primary,
                           child: Icon(
-                            Icons.chat_bubble_outline_rounded,
+                            _typeIcons[notification['type']] ??
+                                Icons.notifications_outlined,
                             size: 18,
                             color: read ? AppColors.grey600 : AppColors.white,
                           ),
