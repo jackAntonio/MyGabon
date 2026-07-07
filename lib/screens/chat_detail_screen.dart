@@ -4,6 +4,7 @@ import '../models/chat_model.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/chat_bubble.dart';
+import '../widgets/security_widgets.dart';
 
 /// Fil de conversation avec un interlocuteur donné, avec envoi de message
 /// et réception en temps réel (Supabase Realtime) des messages entrants.
@@ -54,6 +55,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _showReportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => ReportUserDialog(suspiciousUserId: widget.otherUserId),
+    );
   }
 
   void _scrollToBottom() {
@@ -140,6 +148,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Text(widget.otherUserName),
           ],
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'report') _showReportDialog(context);
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'report',
+                child: Text('Signaler cet utilisateur'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [

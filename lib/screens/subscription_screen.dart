@@ -267,11 +267,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
     if (confirmed == true && mounted) {
       final provider = context.read<SubscriptionProvider>();
-      await provider.createSubscription(_userId, plan.tier);
+      final success = await provider.createSubscription(
+        _userId,
+        plan.tier,
+        plan.monthlyPrice,
+      );
 
-      if (mounted && provider.currentSubscription != null) {
+      if (!mounted) return;
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Abonnement mis à jour avec succès!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.error ?? 'Échec du paiement de l\'abonnement'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }

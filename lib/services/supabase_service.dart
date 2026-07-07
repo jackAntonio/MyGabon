@@ -713,6 +713,64 @@ class SupabaseService {
     }
   }
 
+  /// Commandes de l'utilisateur (achats et ventes) enrichies du titre/de
+  /// l'image du produit et du nom de la contrepartie, pour l'écran "Mes
+  /// commandes" — getUserTransactions() ne renvoie que les lignes brutes.
+  Future<List<Map<String, dynamic>>> getUserOrders(String userId) async {
+    final rows = await getUserTransactions(userId);
+    var orders = List<Map<String, dynamic>>.from(rows);
+    if (orders.isEmpty) return orders;
+
+    final productIds = orders.map((o) => o['product_id'] as String).toSet().toList();
+    final products = await _client
+        .from('products')
+        .select('id, title, image_url')
+        .inFilter('id', productIds);
+    final productById = {
+      for (final p in List<Map<String, dynamic>>.from(products))
+        p['id'] as String: p
+    };
+    for (final order in orders) {
+      order['product'] = productById[order['product_id']];
+    }
+
+    orders = await _attachPublicProfiles(orders,
+        idField: 'buyer_id', attachAs: 'buyer');
+    orders = await _attachPublicProfiles(orders,
+        idField: 'seller_id', attachAs: 'seller');
+    return orders;
+  }
+
+  /// Notifications de l'utilisateur connecté (centre de notifications
+  /// in-app), les plus récentes d'abord.
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    final userId = currentUser?.id;
+    if (userId == null) return [];
+    try {
+      final result = await _client
+          .from('notifications')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(50);
+      return List<Map<String, dynamic>>.from(result);
+    } catch (e) {
+      debugPrint('❌ Erreur récupération notifications: $e');
+      return [];
+    }
+  }
+
+  /// Marquer une notification comme lue.
+  Future<void> markNotificationRead(String notificationId) async {
+    try {
+      await _client
+          .from('notifications')
+          .update({'read': true}).eq('id', notificationId);
+    } catch (e) {
+      debugPrint('❌ Erreur marquage notification lue: $e');
+    }
+  }
+
   /// Créer une transaction
   Future<String?> createTransaction({
     required String sellerId,
@@ -779,6 +837,41 @@ class SupabaseService {
       debugPrint('❌ Erreur finalisation transaction: $e');
       return false;
     }
+  }
+
+  /// Débite le MyGabon Wallet et active un abonnement Pro/Entreprise côté
+  /// serveur (RPC purchase_subscription, atomique via adjust_wallet_balance).
+  /// Lève une exception (ex: "Solde insuffisant") si le débit échoue —
+  /// l'appelant ne doit jamais activer le Pro localement avant que cet
+  /// appel ait réussi.
+  Future<Map<String, dynamic>> purchaseSubscription({
+    required String tier,
+    required double monthlyPrice,
+  }) async {
+    final result = await _client.rpc('purchase_subscription', params: {
+      'p_tier': tier,
+      'p_monthly_price': monthlyPrice,
+    });
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  /// Lit l'abonnement courant depuis Supabase (source de vérité serveur,
+  /// synchronisé entre appareils). Retourne null si l'utilisateur n'a
+  /// jamais souscrit (Free par défaut).
+  Future<Map<String, dynamic>?> getSubscription() async {
+    final userId = currentUser?.id;
+    if (userId == null) return null;
+    return _client
+        .from('user_subscriptions')
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+  }
+
+  /// Annule l'abonnement courant côté serveur (repasse en Free, coupe le
+  /// renouvellement). Pas de remboursement du mois en cours.
+  Future<void> cancelSubscriptionServer() async {
+    await _client.rpc('cancel_subscription');
   }
 
   /// Observe le statut d'une transaction (paiement mobile money externe,
@@ -931,6 +1024,59 @@ class SupabaseService {
       return true;
     } catch (e) {
       debugPrint('❌ Erreur traitement candidature: $e');
+      return false;
+    }
+  }
+
+  /// Récupérer tous les signalements avec les profils publics du
+  /// signaleur et de l'utilisateur signalé (admin uniquement, RLS
+  /// "Admins can read all reports" l'impose côté serveur).
+  Future<List<Map<String, dynamic>>> getFraudReports() async {
+    try {
+      final result = await _client
+          .from('fraud_reports')
+          .select()
+          .order('created_at', ascending: false);
+      var rows = List<Map<String, dynamic>>.from(result);
+      rows = await _attachPublicProfiles(rows,
+          idField: 'reporter_id', attachAs: 'reporter');
+      rows = await _attachPublicProfiles(rows,
+          idField: 'suspicious_user_id', attachAs: 'suspicious_user');
+      return rows;
+    } catch (e) {
+      debugPrint('❌ Erreur récupération signalements: $e');
+      return [];
+    }
+  }
+
+  /// Marquer un signalement comme vérifié (admin uniquement)
+  Future<bool> verifyFraudReport(String reportId) async {
+    try {
+      await _client.rpc('verify_fraud_report', params: {
+        'p_report_id': reportId,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur vérification signalement: $e');
+      return false;
+    }
+  }
+
+  /// Bloquer/débloquer un utilisateur signalé (admin uniquement)
+  Future<bool> setUserBlocked({
+    required String userId,
+    required bool blocked,
+    String? reason,
+  }) async {
+    try {
+      await _client.rpc('set_user_blocked', params: {
+        'p_user_id': userId,
+        'p_blocked': blocked,
+        'p_reason': reason,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur blocage utilisateur: $e');
       return false;
     }
   }

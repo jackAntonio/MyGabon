@@ -6,6 +6,7 @@ import '../providers/marketplace_provider.dart';
 import '../services/supabase_service.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/product_card.dart';
+import 'chat_screen.dart';
 import 'services_screen.dart';
 import 'marketplace_screen.dart';
 import 'wallet_topup_screen.dart';
@@ -92,16 +93,40 @@ class _HomeScreenState extends State<HomeScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              Text(
-                '${_greeting()}, $firstName 👋',
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Que recherchez-vous aujourd\'hui ?',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.grey600,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_greeting()}, $firstName 👋',
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Que recherchez-vous aujourd\'hui ?',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.grey600,
+                                  ),
+                        ),
+                      ],
                     ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChatScreen()),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    tooltip: 'Messages',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
 

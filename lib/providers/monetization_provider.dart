@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/monetization_models.dart';
 import '../services/monetization_service.dart';
+import '../services/supabase_service.dart';
 
 /// Provider for managing subscriptions
 class SubscriptionProvider extends ChangeNotifier {
@@ -21,75 +22,73 @@ class SubscriptionProvider extends ChangeNotifier {
   bool get isEnterprise => _currentSubscription?.currentTier == SubscriptionTier.enterprise;
   bool get hasActiveSubscription => _currentSubscription?.isActive ?? false;
   
-  /// Load user subscription
+  /// Charge l'abonnement : Supabase (source de vérité serveur) en priorité,
+  /// avec repli sur le cache Hive local si l'appel réseau échoue (offline).
   Future<void> loadSubscription(String userId) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
-      _currentSubscription = await _subscriptionService.getUserSubscription(userId);
-      
+
+      final serverRow = await SupabaseService().getSubscription();
+      if (serverRow != null) {
+        _currentSubscription = _subscriptionService.fromServerRow(serverRow);
+        await _subscriptionService.cacheFromServer(_currentSubscription!);
+      } else {
+        _currentSubscription = await _subscriptionService.getUserSubscription(userId);
+      }
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      _currentSubscription = await _subscriptionService.getUserSubscription(userId);
       _isLoading = false;
       _error = 'Failed to load subscription';
       notifyListeners();
     }
   }
-  
-  /// Create subscription
-  Future<bool> createSubscription(String userId, SubscriptionTier tier) async {
+
+  /// Souscrit/renouvelle un abonnement Pro ou Entreprise : débite le
+  /// MyGabon Wallet côté serveur (RPC purchase_subscription) avant toute
+  /// activation. `monthlyPrice` doit venir de ProfessionalPlan, jamais
+  /// d'une valeur saisie côté client.
+  Future<bool> createSubscription(
+    String userId,
+    SubscriptionTier tier,
+    double monthlyPrice,
+  ) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
-      await _subscriptionService.createSubscription(userId, tier);
-      await loadSubscription(userId);
-      
+
+      final row = await SupabaseService().purchaseSubscription(
+        tier: tier.name,
+        monthlyPrice: monthlyPrice,
+      );
+      _currentSubscription = _subscriptionService.fromServerRow(row);
+      await _subscriptionService.cacheFromServer(_currentSubscription!);
+
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _isLoading = false;
-      _error = 'Failed to create subscription';
+      _error = e.toString().replaceFirst('Exception: ', '');
       notifyListeners();
       return false;
     }
   }
   
-  /// Upgrade subscription
-  Future<bool> upgradeSubscription(String userId, SubscriptionTier newTier) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-      
-      final success = await _subscriptionService.upgradeSubscription(userId, newTier);
-      if (success) {
-        await loadSubscription(userId);
-      }
-      
-      _isLoading = false;
-      notifyListeners();
-      return success;
-    } catch (e) {
-      _isLoading = false;
-      _error = 'Failed to upgrade subscription';
-      notifyListeners();
-      return false;
-    }
-  }
-  
-  /// Cancel subscription
+  /// Annule l'abonnement côté serveur (repasse en Free, coupe le
+  /// renouvellement, pas de remboursement du mois en cours).
   Future<bool> cancelSubscription(String userId) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
+
+      await SupabaseService().cancelSubscriptionServer();
       await _subscriptionService.cancelSubscription(userId);
       await loadSubscription(userId);
       

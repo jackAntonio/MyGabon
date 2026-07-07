@@ -45,40 +45,61 @@ class MarketplaceScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ActionChip(
-                avatar: Icon(
-                  provider.isSortedByDistance
-                      ? Icons.near_me_rounded
-                      : Icons.near_me_outlined,
-                  size: 18,
-                  color: provider.isSortedByDistance
-                      ? AppColors.white
-                      : AppColors.primary,
-                ),
-                label: Text(provider.isSortedByDistance
-                    ? 'Triés par proximité'
-                    : 'Trier par proximité'),
-                backgroundColor: provider.isSortedByDistance
-                    ? AppColors.primary
-                    : null,
-                labelStyle: TextStyle(
-                  color: provider.isSortedByDistance
-                      ? AppColors.white
-                      : null,
-                ),
-                onPressed: () async {
-                  final success = await provider.sortByDistance();
-                  if (!success && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Activez la localisation pour trier par proximité'),
-                      ),
-                    );
-                  }
-                },
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ActionChip(
+                    avatar: Icon(
+                      provider.isSortedByDistance
+                          ? Icons.near_me_rounded
+                          : Icons.near_me_outlined,
+                      size: 18,
+                      color: provider.isSortedByDistance
+                          ? AppColors.white
+                          : AppColors.primary,
+                    ),
+                    label: Text(provider.isSortedByDistance
+                        ? 'Triés par proximité'
+                        : 'Trier par proximité'),
+                    backgroundColor: provider.isSortedByDistance
+                        ? AppColors.primary
+                        : null,
+                    labelStyle: TextStyle(
+                      color: provider.isSortedByDistance
+                          ? AppColors.white
+                          : null,
+                    ),
+                    onPressed: () async {
+                      final success = await provider.sortByDistance();
+                      if (!success && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Activez la localisation pour trier par proximité'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ActionChip(
+                    avatar: Icon(
+                      Icons.tune_rounded,
+                      size: 18,
+                      color: provider.hasActiveFilters
+                          ? AppColors.white
+                          : AppColors.primary,
+                    ),
+                    label: const Text('Filtres'),
+                    backgroundColor:
+                        provider.hasActiveFilters ? AppColors.primary : null,
+                    labelStyle: TextStyle(
+                      color: provider.hasActiveFilters ? AppColors.white : null,
+                    ),
+                    onPressed: () => _openFilterSheet(context, provider),
+                  ),
+                ],
               ),
             ),
           ),
@@ -132,6 +153,128 @@ class MarketplaceScreen extends StatelessWidget {
                       ),
           ),
         ],
+      ),
+    );
+  }
+
+  static const _categories = [
+    'Électronique',
+    'Mode',
+    'Maison & Jardin',
+    'Véhicules',
+    'Immobilier',
+    'Meubles',
+    'Autres',
+  ];
+
+  void _openFilterSheet(BuildContext context, MarketplaceProvider provider) {
+    String? selectedCategory = provider.selectedCategory;
+    final minController =
+        TextEditingController(text: provider.minPrice?.toStringAsFixed(0) ?? '');
+    final maxController =
+        TextEditingController(text: provider.maxPrice?.toStringAsFixed(0) ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: 24 + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Filtres', style: Theme.of(sheetContext).textTheme.headlineSmall),
+              const SizedBox(height: 16),
+              Text('Catégorie', style: Theme.of(sheetContext).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Toutes'),
+                    selected: selectedCategory == null,
+                    onSelected: (_) => setSheetState(() => selectedCategory = null),
+                  ),
+                  for (final category in _categories)
+                    ChoiceChip(
+                      label: Text(category),
+                      selected: selectedCategory == category,
+                      onSelected: (_) =>
+                          setSheetState(() => selectedCategory = category),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text('Prix (FCFA)', style: Theme.of(sheetContext).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: minController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Min',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: maxController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Max',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        provider.clearFilters();
+                        Navigator.pop(sheetContext);
+                      },
+                      child: const Text('Réinitialiser'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary),
+                      onPressed: () {
+                        provider.filterByCategory(selectedCategory);
+                        provider.filterByPrice(
+                          double.tryParse(minController.text),
+                          double.tryParse(maxController.text),
+                        );
+                        Navigator.pop(sheetContext);
+                      },
+                      child: const Text('Appliquer'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

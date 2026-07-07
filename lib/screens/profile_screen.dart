@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/verification_provider.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/monetization_profile_section.dart';
 import 'admin_driver_applications_screen.dart';
+import 'admin_reports_screen.dart';
 import 'become_driver_screen.dart';
 import 'driver_dashboard_screen.dart';
 import 'edit_profile_screen.dart';
+import 'notifications_screen.dart';
+import 'orders_screen.dart';
+import 'phone_verification_screen.dart';
 import 'wallet_topup_screen.dart';
 
 /// Profil utilisateur : informations, portefeuille MyGabon, transactions,
@@ -32,6 +37,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadWalletData();
     _loadRoles();
+    final userId = SupabaseService().currentUser?.id;
+    if (userId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<VerificationProvider>().loadUserVerification(userId);
+      });
+    }
   }
 
   Future<void> _loadWalletData() async {
@@ -218,8 +230,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Historique des transactions
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text('Historique des transactions',
-                    style: Theme.of(context).textTheme.titleLarge),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Historique des transactions',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OrdersScreen()),
+                      ),
+                      child: const Text('Voir tout'),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Padding(
@@ -287,6 +311,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           );
                         },
                       ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.report_gmailerrorred_outlined,
+                        title: 'Signalements',
+                        subtitle: 'Modérer les utilisateurs signalés',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const AdminReportsScreen()),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -315,12 +352,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text('Paramètres',
                         style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
+                    Consumer<VerificationProvider>(
+                      builder: (context, verifyProvider, _) {
+                        final verified = verifyProvider.isPhoneVerified;
+                        return _buildSettingsTile(
+                          context,
+                          icon: verified
+                              ? Icons.verified_outlined
+                              : Icons.phone_android_outlined,
+                          title: 'Vérifier mon numéro',
+                          subtitle: verified
+                              ? 'Numéro vérifié ✓'
+                              : 'Non vérifié — sécurisez votre compte',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PhoneVerificationScreen(),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
                     _buildSettingsTile(
                       context,
                       icon: Icons.notifications_outlined,
                       title: 'Notifications',
-                      subtitle: 'Gérer vos préférences',
-                      onTap: () => _showComingSoon(context, 'Notifications'),
+                      subtitle: 'Voir l\'historique',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen()),
+                      ),
                     ),
                     _buildSettingsTile(
                       context,

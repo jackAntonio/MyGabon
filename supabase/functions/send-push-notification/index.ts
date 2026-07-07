@@ -158,6 +158,21 @@ Deno.serve(async (req) => {
 
   const result = await sendViaOneSignal(message.receiver_id as string, senderName, message.content as string);
 
+  // Persiste la notification côté serveur (table `notifications`), que le
+  // push OneSignal ait ou non abouti (device éteint, permission refusée,
+  // OneSignal non configuré en dev) : le centre de notifications in-app
+  // reste fiable même quand le push ne l'est pas.
+  const { error: insertError } = await admin.from("notifications").insert({
+    user_id: message.receiver_id,
+    title: senderName,
+    body: message.content,
+    type: "chat_message",
+    data: { message_id, sender_id: callerId, sender_name: senderName },
+  });
+  if (insertError) {
+    console.error("[send-push-notification] Erreur écriture notification", insertError);
+  }
+
   return new Response(
     JSON.stringify({ success: true, pushSent: result.sent, message: result.sent ? undefined : result.reason }),
     { status: 200, headers: corsHeaders },

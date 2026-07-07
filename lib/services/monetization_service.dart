@@ -61,26 +61,6 @@ class SubscriptionService {
     _subscriptionBox.put(userId, subscription.toJson());
   }
 
-  /// Upgrade subscription
-  Future<bool> upgradeSubscription(
-      String userId, SubscriptionTier newTier) async {
-    final existing = await getUserSubscription(userId);
-    if (existing == null) return false;
-
-    final upgraded = UserSubscription(
-      userId: userId,
-      currentTier: newTier,
-      startDate: existing.startDate,
-      renewalDate: DateTime.now().add(const Duration(days: 30)),
-      isActive: true,
-      autoRenew: true,
-      featuredListingsUsed: 0,
-    );
-
-    _subscriptionBox.put(userId, upgraded.toJson());
-    return true;
-  }
-
   /// Cancel subscription
   Future<void> cancelSubscription(String userId) async {
     final existing = await getUserSubscription(userId);
@@ -174,6 +154,31 @@ class SubscriptionService {
     if (tier.contains('professional')) return SubscriptionTier.professional;
     if (tier.contains('enterprise')) return SubscriptionTier.enterprise;
     return SubscriptionTier.free;
+  }
+
+  /// Construit un [UserSubscription] à partir d'une ligne Supabase
+  /// (table user_subscriptions), source de vérité serveur depuis que
+  /// purchase_subscription() débite réellement le wallet.
+  UserSubscription fromServerRow(Map<String, dynamic> row) {
+    return UserSubscription(
+      userId: row['user_id'] as String,
+      currentTier: _parseTier(row['tier'] as String),
+      startDate: DateTime.parse(row['start_date'] as String),
+      renewalDate: DateTime.parse(row['renewal_date'] as String),
+      isActive: row['is_active'] as bool,
+      autoRenew: row['auto_renew'] as bool? ?? false,
+      featuredListingsUsed: row['featured_listings_used'] as int? ?? 0,
+      cancelledAt: row['cancelled_at'] != null
+          ? DateTime.parse(row['cancelled_at'] as String)
+          : null,
+    );
+  }
+
+  /// Met en cache local (Hive) un abonnement dont Supabase est la source
+  /// de vérité — ne jamais appeler pour activer un abonnement sans débit
+  /// serveur préalable (cf. SupabaseService.purchaseSubscription).
+  Future<void> cacheFromServer(UserSubscription subscription) async {
+    await _subscriptionBox.put(subscription.userId, subscription.toJson());
   }
 }
 

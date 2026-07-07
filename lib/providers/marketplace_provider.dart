@@ -10,6 +10,10 @@ import '../services/supabase_service.dart';
 class MarketplaceProvider extends ChangeNotifier {
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
+  String _searchQuery = '';
+  String? _selectedCategory;
+  double? _minPrice;
+  double? _maxPrice;
   bool _loading = true;
   bool _loadingMore = false;
   int _currentPage = 0;
@@ -26,6 +30,11 @@ class MarketplaceProvider extends ChangeNotifier {
   bool get isLoadingMore => _loadingMore;
   bool get hasReachedEnd => _hasReachedEnd;
   bool get isSortedByDistance => _userPosition != null;
+  String? get selectedCategory => _selectedCategory;
+  double? get minPrice => _minPrice;
+  double? get maxPrice => _maxPrice;
+  bool get hasActiveFilters =>
+      _selectedCategory != null || _minPrice != null || _maxPrice != null;
 
   MarketplaceProvider(this._connectivityService) {
     _initializeProducts();
@@ -131,33 +140,62 @@ class MarketplaceProvider extends ChangeNotifier {
     }
   }
 
-  /// Search products by query
+  /// Search products by query (texte libre : titre, lieu, catégorie).
   void search(String query) {
-    if (query.isEmpty) {
-      _filteredProducts = [];
-    } else {
-      final q = query.toLowerCase();
-      _filteredProducts = _products
-          .where((p) =>
-              p.title.toLowerCase().contains(q) ||
-              p.location.toLowerCase().contains(q) ||
-              (p.category?.toLowerCase().contains(q) ?? false))
-          .toList();
-    }
-    notifyListeners();
+    _searchQuery = query;
+    _applyFilters();
   }
 
-  /// Filter by price range
-  void filterByPrice(double minPrice, double maxPrice) {
-    _filteredProducts = _products
-        .where((p) => p.price >= minPrice && p.price <= maxPrice)
-        .toList();
-    notifyListeners();
+  /// Filtre par catégorie (null = toutes les catégories).
+  void filterByCategory(String? category) {
+    _selectedCategory = category;
+    _applyFilters();
   }
 
-  /// Clear filters
+  /// Filtre par fourchette de prix (null/null = pas de limite).
+  void filterByPrice(double? minPrice, double? maxPrice) {
+    _minPrice = minPrice;
+    _maxPrice = maxPrice;
+    _applyFilters();
+  }
+
+  /// Réinitialise recherche, catégorie et prix.
   void clearFilters() {
+    _searchQuery = '';
+    _selectedCategory = null;
+    _minPrice = null;
+    _maxPrice = null;
     _filteredProducts = [];
+    notifyListeners();
+  }
+
+  /// Recalcule `_filteredProducts` à partir de `_products` en combinant
+  /// recherche texte, catégorie et fourchette de prix (les trois filtres
+  /// précédents s'écrasaient l'un l'autre avant cette réécriture).
+  void _applyFilters() {
+    final q = _searchQuery.toLowerCase();
+    final hasQuery = q.isNotEmpty;
+
+    if (!hasQuery && _selectedCategory == null && _minPrice == null && _maxPrice == null) {
+      _filteredProducts = [];
+      notifyListeners();
+      return;
+    }
+
+    _filteredProducts = _products.where((p) {
+      if (hasQuery &&
+          !p.title.toLowerCase().contains(q) &&
+          !p.location.toLowerCase().contains(q) &&
+          !(p.category?.toLowerCase().contains(q) ?? false)) {
+        return false;
+      }
+      if (_selectedCategory != null && p.category != _selectedCategory) {
+        return false;
+      }
+      if (_minPrice != null && p.price < _minPrice!) return false;
+      if (_maxPrice != null && p.price > _maxPrice!) return false;
+      return true;
+    }).toList();
     notifyListeners();
   }
 

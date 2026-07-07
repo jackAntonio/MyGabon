@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 import '../providers/favorites_provider.dart';
 import '../services/payment_service.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/security_widgets.dart';
 import '../widgets/verified_badge.dart';
 import 'payment/payment_method_selection_screen.dart';
 
@@ -78,6 +79,41 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
                 ),
               );
             },
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: PopupMenuButton<String>(
+              icon: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                    )
+                  ],
+                ),
+                padding: const EdgeInsets.all(8),
+                child: const Icon(Icons.more_vert, color: AppColors.grey900),
+              ),
+              onSelected: (value) {
+                if (value == 'report') {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ReportUserDialog(
+                      suspiciousUserId: widget.product.sellerId,
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'report',
+                  child: Text('Signaler ce vendeur'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
