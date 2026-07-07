@@ -6,6 +6,7 @@ import '../providers/analytics_provider.dart';
 import '../widgets/monetization_widgets.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_scaffold.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -39,7 +40,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Analyse'),
         elevation: 0,

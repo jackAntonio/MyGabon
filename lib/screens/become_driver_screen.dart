@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../utils/validators.dart';
+import '../widgets/app_scaffold.dart';
 import 'driver_dashboard_screen.dart';
 
 /// Candidature pour devenir livreur MyGabon (soumise à étude de dossier).
@@ -89,7 +90,7 @@ class _BecomeDriverScreenState extends State<BecomeDriverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Devenir livreur')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

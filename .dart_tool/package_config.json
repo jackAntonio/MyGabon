@@ -177,9 +177,9 @@
     },
     {
       "name": "cross_file",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/cross_file-0.3.5+2",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/cross_file-0.3.5+4",
       "packageUri": "lib/",
-      "languageVersion": "3.8"
+      "languageVersion": "3.10"
     },
     {
       "name": "crypto",
@@ -210,18 +210,6 @@
       "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/dbus-0.7.14",
       "packageUri": "lib/",
       "languageVersion": "2.17"
-    },
-    {
-      "name": "device_info_plus",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-13.2.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.10"
-    },
-    {
-      "name": "device_info_plus_platform_interface",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus_platform_interface-8.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.10"
     },
     {
       "name": "fake_async",
@@ -296,8 +284,38 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "flutter_dotenv",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_dotenv-6.0.1",
+      "name": "flutter_image_compress",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_image_compress-2.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_image_compress_common",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_image_compress_common-1.0.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_image_compress_macos",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_image_compress_macos-1.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_image_compress_ohos",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_image_compress_ohos-0.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_image_compress_platform_interface",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_image_compress_platform_interface-1.0.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_image_compress_web",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_image_compress_web-0.1.5",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -318,12 +336,6 @@
       "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.35",
       "packageUri": "lib/",
       "languageVersion": "3.10"
-    },
-    {
-      "name": "flutter_riverpod",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_riverpod-2.6.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.17"
     },
     {
       "name": "flutter_secure_storage",
@@ -393,7 +405,7 @@
     },
     {
       "name": "functions_client",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/functions_client-2.6.1",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/functions_client-2.6.4",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -453,7 +465,7 @@
     },
     {
       "name": "gotrue",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/gotrue-2.22.0",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/gotrue-2.25.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -531,9 +543,9 @@
     },
     {
       "name": "image_picker",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker-1.2.2",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker-1.2.3",
       "packageUri": "lib/",
-      "languageVersion": "3.9"
+      "languageVersion": "3.10"
     },
     {
       "name": "image_picker_android",
@@ -716,58 +728,10 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "package_info_plus",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-10.2.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.10"
-    },
-    {
-      "name": "package_info_plus_platform_interface",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus_platform_interface-4.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.10"
-    },
-    {
-      "name": "passkeys",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys-2.20.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "passkeys_android",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_android-2.12.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "passkeys_darwin",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_darwin-0.4.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "passkeys_doctor",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_doctor-1.4.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "passkeys_platform_interface",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_platform_interface-2.6.0",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_platform_interface-2.8.0",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "passkeys_web",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_web-2.9.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "passkeys_windows",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/passkeys_windows-0.1.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.8"
     },
     {
       "name": "path",
@@ -873,7 +837,7 @@
     },
     {
       "name": "postgrest",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/postgrest-2.7.2",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/postgrest-2.8.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -897,7 +861,7 @@
     },
     {
       "name": "realtime_client",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/realtime_client-2.8.0",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/realtime_client-2.10.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -912,18 +876,6 @@
       "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/retry-3.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "riverpod",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/riverpod-2.6.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.17"
-    },
-    {
-      "name": "riverpod_annotation",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/riverpod_annotation-2.6.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.17"
     },
     {
       "name": "rxdart",
@@ -1052,14 +1004,8 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "state_notifier",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/state_notifier-1.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "storage_client",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/storage_client-2.5.7",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/storage_client-2.6.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -1083,13 +1029,13 @@
     },
     {
       "name": "supabase",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/supabase-2.13.0",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/supabase-2.13.4",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
     {
       "name": "supabase_flutter",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/supabase_flutter-2.15.0",
+      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/supabase_flutter-2.15.4",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -1122,12 +1068,6 @@
       "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
-    },
-    {
-      "name": "ua_client_hints",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/ua_client_hints-1.7.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
     },
     {
       "name": "url_launcher",
@@ -1240,12 +1180,6 @@
     {
       "name": "win32",
       "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/win32-6.3.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.10"
-    },
-    {
-      "name": "win32_registry",
-      "rootUri": "file:///C:/Users/pc/AppData/Local/Pub/Cache/hosted/pub.dev/win32_registry-3.0.3",
       "packageUri": "lib/",
       "languageVersion": "3.10"
     },

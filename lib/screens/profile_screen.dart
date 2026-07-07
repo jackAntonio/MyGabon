@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_scaffold.dart';
 import '../widgets/monetization_profile_section.dart';
 import 'admin_driver_applications_screen.dart';
 import 'become_driver_screen.dart';
@@ -72,8 +73,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final fullName = auth.displayName;
     final phoneNumber = auth.profile?['phone_number'] as String? ?? '';
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+    return AppScaffold(
+      appBar: AppBar(
+        title: const Text('Profil'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: RefreshIndicator(
         onRefresh: _loadWalletData,
         child: SingleChildScrollView(

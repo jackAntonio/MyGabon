@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import '../providers/favorites_provider.dart';
 import '../services/payment_service.dart';
+import '../widgets/app_scaffold.dart';
 import '../widgets/verified_badge.dart';
 import 'payment/payment_method_selection_screen.dart';
 
@@ -24,7 +28,7 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -44,6 +48,38 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          Consumer<FavoritesProvider>(
+            builder: (context, favorites, _) {
+              final isFavorite = favorites.isFavorite(widget.product.id);
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: IconButton(
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                        )
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: isFavorite ? AppColors.error : AppColors.grey900,
+                    ),
+                  ),
+                  onPressed: () => favorites.toggle(widget.product),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: SingleChildScrollView(
@@ -487,6 +523,27 @@ class _MarketplaceDetailScreenState extends State<MarketplaceDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Ajouter au panier
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                context.read<CartProvider>().addToCart(widget.product);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ajouté au panier')),
+                );
+              },
+              icon: const Icon(Icons.add_shopping_cart_rounded),
+              label: const Text('Ajouter au panier'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // Two payment options side by side
           Row(

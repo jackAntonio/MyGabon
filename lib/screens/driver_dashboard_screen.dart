@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_scaffold.dart';
 
 /// Tableau de bord livreur : livraisons disponibles à réclamer et livraisons
 /// en cours à marquer comme effectuées (50% des frais de livraison crédités
@@ -73,7 +74,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Mes livraisons'),
         bottom: TabBar(

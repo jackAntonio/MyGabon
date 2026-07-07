@@ -4,6 +4,7 @@ import '../config/theme.dart';
 import '../services/kpay_service.dart';
 import '../services/supabase_service.dart';
 import '../utils/validators.dart';
+import '../widgets/app_scaffold.dart';
 
 /// Recharge du MyGabon Wallet via Airtel Money (Kpay).
 ///
@@ -31,6 +32,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   Timer? _serverTimeoutTimer;
 
   static const double _minAmount = 1000;
+  static const double _maxAmount = 5000000;
 
   @override
   void dispose() {
@@ -135,7 +137,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Recharger mon wallet')),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -193,6 +195,9 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
               if (amount == null) return 'Montant invalide';
               if (amount < _minAmount) {
                 return 'Minimum ${_minAmount.toStringAsFixed(0)} FCFA';
+              }
+              if (amount > _maxAmount) {
+                return 'Maximum ${_maxAmount.toStringAsFixed(0)} FCFA';
               }
               return null;
             },

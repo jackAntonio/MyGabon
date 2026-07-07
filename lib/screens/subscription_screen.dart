@@ -5,6 +5,7 @@ import '../providers/monetization_provider.dart';
 import '../widgets/monetization_widgets.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_scaffold.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -31,7 +32,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Plans d\'abonnement'),
         elevation: 0,

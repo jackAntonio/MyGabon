@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/verification_provider.dart';
 import '../config/theme.dart';
+import '../widgets/app_scaffold.dart';
 
 /// Phone verification screen
 class PhoneVerificationScreen extends StatefulWidget {
@@ -36,7 +37,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Vérifier votre numéro'),
         elevation: 0,

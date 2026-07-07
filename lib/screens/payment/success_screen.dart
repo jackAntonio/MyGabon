@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
+import '../../widgets/app_scaffold.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   final Product product;
@@ -20,7 +21,7 @@ class PaymentSuccessScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      child: Scaffold(
+      child: AppScaffold(
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(

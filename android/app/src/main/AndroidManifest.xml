@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Indispensable en release : Supabase, Kpay, OneSignal, images réseau.
+         (En debug/profile, Flutter l'injecte automatiquement — son absence
+         ne se voit donc qu'une fois l'APK release installé.) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Géolocalisation : tri "à proximité" du marketplace (lib/services/geolocation_service.dart) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -30,7 +34,15 @@
             <!-- Deep link de retour Auth (confirmation email, reset mot de
                  passe) : remplace la redirection par défaut vers localhost:3000.
                  Le même schéma doit être ajouté aux Redirect URLs autorisées
-                 dans Supabase Dashboard > Authentication > URL Configuration. -->
+                 dans Supabase Dashboard > Authentication > URL Configuration.
+                 android:autoVerify ne s'applique qu'aux schémas http/https
+                 vérifiés par Digital Asset Links (App Links) ; il n'a aucun
+                 effet sur un schéma personnalisé comme "mygabon" — le passer
+                 à true ne changerait rien à l'isolation entre apps. La vraie
+                 protection contre l'interception de ce lien par une autre
+                 app est le flux PKCE de supabase_flutter (par défaut) : le
+                 lien ne contient qu'un "code" inutilisable sans le
+                 code_verifier resté côté client dans ce même appareil. -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

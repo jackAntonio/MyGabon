@@ -347,7 +347,10 @@ class SupabaseService {
     required String description,
     required double price,
     required String category,
+    required String location,
     String? imageUrl,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       final result = await _client
@@ -358,6 +361,9 @@ class SupabaseService {
             'description': description,
             'price': price,
             'category': category,
+            'location': location,
+            'latitude': latitude,
+            'longitude': longitude,
             'image_url': imageUrl,
           })
           .select()
@@ -681,62 +687,6 @@ class SupabaseService {
         // Already exists or insert failed for another reason.
       }
       return 0.0;
-    }
-  }
-
-  /// Créditer le portefeuille via la fonction RPC adjust_wallet_balance
-  /// (le client n'a aucun droit d'UPDATE direct sur user_wallets, cf. policies RLS).
-  Future<bool> creditWallet({
-    required String userId,
-    required double amount,
-  }) async {
-    if (currentUser?.id != userId) {
-      throw Exception(
-          'Accès refusé : vous ne pouvez créditer que votre propre portefeuille');
-    }
-    try {
-      final newBalance = await _client.rpc('adjust_wallet_balance', params: {
-        'p_user_id': userId,
-        'p_amount': amount,
-      });
-
-      await logAuditEvent(
-        action: 'wallet_credited',
-        details: {'amount': amount, 'new_balance': newBalance},
-      );
-
-      return true;
-    } catch (e) {
-      debugPrint('❌ Erreur crédit portefeuille: $e');
-      return false;
-    }
-  }
-
-  /// Débiter le portefeuille via la fonction RPC adjust_wallet_balance
-  /// (le client n'a aucun droit d'UPDATE direct sur user_wallets, cf. policies RLS).
-  Future<bool> debitWallet({
-    required String userId,
-    required double amount,
-  }) async {
-    if (currentUser?.id != userId) {
-      throw Exception(
-          'Accès refusé : vous ne pouvez débiter que votre propre portefeuille');
-    }
-    try {
-      final newBalance = await _client.rpc('adjust_wallet_balance', params: {
-        'p_user_id': userId,
-        'p_amount': -amount,
-      });
-
-      await logAuditEvent(
-        action: 'wallet_debited',
-        details: {'amount': amount, 'new_balance': newBalance},
-      );
-
-      return true;
-    } catch (e) {
-      debugPrint('❌ Erreur débit portefeuille: $e');
-      return false;
     }
   }
 

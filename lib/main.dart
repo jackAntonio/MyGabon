@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
-import 'screens/services_screen.dart';
 import 'screens/post_announcement_screen.dart';
 import 'screens/marketplace_screen.dart';
+import 'screens/cart_screen.dart';
+import 'screens/favorites_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -12,6 +13,8 @@ import 'screens/register_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
 import 'providers/marketplace_provider.dart';
+import 'providers/cart_provider.dart';
+import 'providers/favorites_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/verification_provider.dart';
 import 'providers/review_provider.dart';
@@ -20,6 +23,8 @@ import 'providers/monetization_provider.dart';
 import 'providers/analytics_provider.dart';
 
 import 'config/theme.dart';
+import 'widgets/app_scaffold.dart';
+import 'widgets/custom_bottom_nav_bar.dart';
 
 import 'services/notification_service.dart';
 import 'services/cache_service.dart';
@@ -76,19 +81,19 @@ void main() async {
   await RevenuePaymentService().init();
   await AnalyticsService().init();
 
-  runApp(const GabonConnectApp());
+  runApp(const MyGabonApp());
 }
 
-/// Root of the GabonConnect application.
+/// Root of the MyGabon application.
 /// Sets up MaterialApp with bottom navigation and responsive theme.
-class GabonConnectApp extends StatefulWidget {
-  const GabonConnectApp({super.key});
+class MyGabonApp extends StatefulWidget {
+  const MyGabonApp({super.key});
 
   @override
-  State<GabonConnectApp> createState() => _GabonConnectAppState();
+  State<MyGabonApp> createState() => _MyGabonAppState();
 }
 
-class _GabonConnectAppState extends State<GabonConnectApp> {
+class _MyGabonAppState extends State<MyGabonApp> {
   final _connectivityService = ConnectivityService();
   final _offlineQueueService = OfflineQueueService();
 
@@ -128,6 +133,8 @@ class _GabonConnectAppState extends State<GabonConnectApp> {
         ChangeNotifierProvider(
           create: (_) => MarketplaceProvider(_connectivityService),
         ),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         // Security & verification providers
         ChangeNotifierProvider(
@@ -186,9 +193,9 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   final List<Widget> _pages = const [
     HomeScreen(),
-    ServicesScreen(),
-    PostAnnouncementScreen(),
     MarketplaceScreen(),
+    CartScreen(),
+    FavoritesScreen(),
     ProfileScreen(),
   ];
 
@@ -200,41 +207,25 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final cartItemCount = context.watch<CartProvider>().itemCount;
+
+    return AppScaffold(
       body: Column(
         children: [
           // Connection status banner
           const ConnectionStatusBanner(),
           Expanded(
-            child: _pages[_currentIndex],
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _pages,
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: NavigationBar(
-            selectedIndex: _currentIndex,
-            onDestinationSelected: _onTap,
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
-              NavigationDestination(icon: Icon(Icons.build), label: 'Services'),
-              NavigationDestination(icon: Icon(Icons.add_box), label: 'Publier'),
-              NavigationDestination(
-                  icon: Icon(Icons.store), label: 'Marché'),
-              NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
-            ],
-          ),
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: _onTap,
+        cartItemCount: cartItemCount,
       ),
     );
   }

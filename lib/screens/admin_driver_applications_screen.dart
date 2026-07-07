@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_scaffold.dart';
 
 /// Étude des candidatures livreur (réservé aux administrateurs, RLS l'impose
 /// aussi côté serveur).
@@ -97,7 +98,7 @@ class _AdminDriverApplicationsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Candidatures livreur')),
       body: RefreshIndicator(
         onRefresh: _load,

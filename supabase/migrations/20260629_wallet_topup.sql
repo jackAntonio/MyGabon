@@ -29,8 +29,10 @@ CREATE INDEX IF NOT EXISTS idx_wallet_topups_user ON wallet_topups(user_id);
 
 ALTER TABLE wallet_topups ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can read own topups" ON wallet_topups;
 CREATE POLICY "Users can read own topups" ON wallet_topups
   FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can create own topups" ON wallet_topups;
 CREATE POLICY "Users can create own topups" ON wallet_topups
   FOR INSERT WITH CHECK (auth.uid() = user_id AND status = 'pending');
 -- ⚠️ Pas de policy UPDATE pour authenticated : la confirmation/échec passe
@@ -98,4 +100,12 @@ REVOKE ALL ON FUNCTION fail_wallet_topup(UUID, TEXT) FROM authenticated;
 GRANT EXECUTE ON FUNCTION fail_wallet_topup(UUID, TEXT) TO service_role;
 
 -- Realtime : le client attend la confirmation serveur, comme pour transactions.
-ALTER PUBLICATION supabase_realtime ADD TABLE wallet_topups;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'wallet_topups'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE wallet_topups;
+  END IF;
+END $$;

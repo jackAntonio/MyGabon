@@ -18,15 +18,6 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   # State Management
-  # ⚠️ Restés en v2 volontairement : flutter_riverpod/riverpod_annotation ne
-  # sont importés nulle part dans lib/ (l'app utilise exclusivement
-  # `provider` ci-dessous) et riverpod ^3.0.0 entre en conflit de résolution
-  # avec hive_generator ^2.0.0 (cf. erreur `flutter pub get` du 2026-06-25 :
-  # riverpod 3.x exige test ^1.0.0, incompatible avec analyzer fixé par
-  # hive_generator + flutter_test du SDK). À bumper seulement si ce package
-  # devient réellement utilisé, en migrant aussi hive_generator à ce moment.
-  flutter_riverpod: ^2.4.0
-  riverpod_annotation: ^2.3.0
   provider: ^6.0.0
 
   # Network & Connectivity
@@ -60,7 +51,6 @@ dependencies:
   intl: ^0.20.2
 
   # Backend - Supabase
-  flutter_dotenv: ^6.0.0
   http: ^1.1.0
   supabase_flutter: ^2.5.0
   supabase: ^2.1.0
@@ -71,6 +61,7 @@ dependencies:
   # Image handling & upload
   image_picker: ^1.0.0
   image_cropper: ^12.0.0
+  flutter_image_compress: ^2.3.0
 
   # Notifications push (OneSignal — pas Firebase, cf.
   # SUPABASE_VS_FIREBASE_DECISION.md : projet 100% Supabase, OneSignal évite

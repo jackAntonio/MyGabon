@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/kpay_service.dart';
 import '../../services/supabase_service.dart';
+import '../../widgets/app_scaffold.dart';
 import 'success_screen.dart';
 
 /// Écran de paiement Airtel Money (Gabon) avec intégration Kpay.
@@ -177,7 +178,7 @@ class _MobileMoneyScreenState extends State<MobileMoneyScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _step == 'waiting_server' || _step == 'error',
-      child: Scaffold(
+      child: AppScaffold(
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(

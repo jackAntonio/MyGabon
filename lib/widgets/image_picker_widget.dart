@@ -8,12 +8,14 @@ class ImagePickerWidget extends StatefulWidget {
   final Function(List<String>) onImagesSelected;
   final int maxImages;
   final String productId;
+  final String title;
 
   const ImagePickerWidget({
     super.key,
     required this.onImagesSelected,
     required this.productId,
     this.maxImages = 5,
+    this.title = 'Photos du produit',
   });
 
   @override
@@ -31,7 +33,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Photos du produit',
+          widget.title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),

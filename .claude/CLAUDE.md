@@ -1,17 +1,17 @@
-﻿# GabonConnect — Context projet
+﻿# MyGabon — Context projet
 
 ## Description
-Marketplace mobile Gabon en Flutter/Dart.
-Système de paiement dual : MyGabon wallet + Airtel Money.
+Marketplace mobile Gabon en Flutter/Dart (package `mygabon`, classe racine `MyGabonApp`).
+Système de paiement dual : MyGabon wallet + Airtel Money (via la gateway Kpay).
 
 ## Architecture
 - Frontend : Flutter (Dart)
 - Backend : Supabase (PostgreSQL + Auth + Storage)
-- Paiements : MyGabon API + Airtel Money API
+- Paiements : MyGabon Wallet (RPC Supabase) + Airtel Money (Edge Functions Kpay)
 
 ## Règles spécifiques
 - Jamais exposer les clés API paiement dans le code Flutter
-- Utiliser flutter_dotenv ou --dart-define pour les secrets
+- Secrets uniquement via `--dart-define-from-file=env.json` côté client, jamais via un package embarqué type flutter_dotenv (lisible en dézippant l'APK/IPA) ; les clés Kpay/Twilio vivent en secrets d'Edge Functions
 - Toujours tester les edge cases de paiement (échec, timeout, double débit)
 - Sécuriser les endpoints Supabase avec Row Level Security (RLS)
 

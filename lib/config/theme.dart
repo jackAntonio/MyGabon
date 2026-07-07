@@ -26,6 +26,14 @@ class AppColors {
   static const Color grey200 = Color(0xFFE5E7EB);
   static const Color grey100 = Color(0xFFF3F4F6);
   static const Color grey50 = Color(0xFFFAFAFA);
+
+  // Navigation flottante (item actif de la bottom nav bar)
+  static const Color navActive = Color(0xFF2563EB);
+
+  // Fond dégradé doux de l'app : blanc -> bleu très pâle -> gris très clair
+  static const Color bgGradientStart = Color(0xFFFFFFFF);
+  static const Color bgGradientMid = Color(0xFFEFF4FC);
+  static const Color bgGradientEnd = Color(0xFFF4F5F7);
 }
 
 class AppTheme {

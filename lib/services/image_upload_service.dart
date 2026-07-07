@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:io';
 
 /// Service d'upload d'images vers Supabase Storage
 class ImageUploadService {
@@ -67,8 +67,8 @@ class ImageUploadService {
     required String productId,
   }) async {
     try {
-      // Lire le fichier
-      final bytes = await imageFile.readAsBytes();
+      // Lire le fichier puis compresser si nécessaire avant upload
+      final bytes = await _compressIfNeeded(await imageFile.readAsBytes());
 
       // Générer un nom unique
       final fileName = '${productId}_${const Uuid().v4()}.jpg';
@@ -142,23 +142,28 @@ class ImageUploadService {
     return _client.storage.from(_bucketName).getPublicUrl(filePath);
   }
 
-  /// Compresser une image avant upload
-  Future<File?> compressImage(XFile imageFile) async {
+  /// Compresse les octets d'une image si elle dépasse 2MB (coût de stockage
+  /// Supabase). Utilise compressWithList (et non compressWithFile) pour
+  /// fonctionner aussi bien sur web (XFile sans vrai chemin disque) que sur
+  /// mobile. Renvoie les octets d'origine si la compression échoue plutôt
+  /// que de bloquer l'upload.
+  Future<Uint8List> _compressIfNeeded(Uint8List bytes) async {
+    if (bytes.length < 2 * 1024 * 1024) {
+      return bytes;
+    }
+
+    debugPrint(
+        '📦 Compression d\'image (${(bytes.length / 1024 / 1024).toStringAsFixed(2)}MB)');
     try {
-      final file = File(imageFile.path);
-      final fileSize = await file.length();
-
-      // Si fichier < 2MB, pas de compression nécessaire
-      if (fileSize < 2 * 1024 * 1024) {
-        return file;
-      }
-
-      debugPrint('📦 Compression d\'image (${(fileSize / 1024 / 1024).toStringAsFixed(2)}MB)');
-      // TODO: Implémenter compression avec un package comme flutter_image_compress
-      return file;
+      return await FlutterImageCompress.compressWithList(
+        bytes,
+        quality: 80,
+        minWidth: 1600,
+        minHeight: 1600,
+      );
     } catch (e) {
-      debugPrint('❌ Erreur compression: $e');
-      return null;
+      debugPrint('⚠️ Compression échouée, upload de l\'image originale: $e');
+      return bytes;
     }
   }
 }

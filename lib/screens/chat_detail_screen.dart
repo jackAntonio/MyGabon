@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../models/chat_model.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_scaffold.dart';
 import '../widgets/chat_bubble.dart';
 
 /// Fil de conversation avec un interlocuteur donné, avec envoi de message
@@ -115,7 +116,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget build(BuildContext context) {
     final myId = _service.currentUser?.id;
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: Row(
           children: [

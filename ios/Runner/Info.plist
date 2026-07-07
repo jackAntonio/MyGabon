@@ -29,6 +29,13 @@
 	<!-- Géolocalisation : tri "à proximité" du marketplace (lib/services/geolocation_service.dart) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MyGabon utilise votre position pour trier les produits et services à proximité.</string>
+	<!-- Caméra + photothèque : upload des photos d'annonces et de profil
+	     (image_picker/image_cropper, cf. lib/widgets/image_picker_widget.dart).
+	     Obligatoires : sans ces clés, crash à la première photo + rejet App Store. -->
+	<key>NSCameraUsageDescription</key>
+	<string>MyGabon utilise l'appareil photo pour prendre les photos de vos annonces et de votre profil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MyGabon accède à vos photos pour illustrer vos annonces et votre profil.</string>
 	<!-- Deep link de retour Auth (confirmation email, reset mot de passe) :
 	     même schéma que android/app/src/main/AndroidManifest.xml, à ajouter
 	     aussi aux Redirect URLs autorisées dans Supabase Dashboard. -->

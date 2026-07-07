@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/chat_provider.dart';
+import '../widgets/app_scaffold.dart';
 import 'chat_detail_screen.dart';
 
 /// Liste des conversations de l'utilisateur.
@@ -12,7 +13,7 @@ class ChatScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<ChatProvider>(context);
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Messages')),
       body: RefreshIndicator(
         onRefresh: provider.loadConversations,

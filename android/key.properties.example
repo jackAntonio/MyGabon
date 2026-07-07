@@ -1,0 +1,12 @@
+expl# Copier ce fichier vers android/key.properties (gitignoré — ne JAMAIS le commiter)
+# puis renseigner les valeurs de votre keystore de production.
+#
+# Générer le keystore (une seule fois, à sauvegarder précieusement hors du repo —
+# sa perte rend toute mise à jour Play Store impossible) :
+#   keytool -genkey -v -keystore %USERPROFILE%\mygabon-release.jks ^
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias mygabon
+#
+storeFile=C:/Users/VOTRE_USER/mygabon-release.jks
+storePassword=MOT_DE_PASSE_KEYSTORE
+keyAlias=mygabon
+keyPassword=MOT_DE_PASSE_CLE

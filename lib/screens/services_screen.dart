@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/service_provider.dart';
+import '../widgets/app_scaffold.dart';
 import '../widgets/service_card.dart';
 import '../widgets/skeleton_loader.dart';
+import 'post_service_screen.dart';
 
 /// Écran des services proposés par les prestataires gabonais.
 class ServicesScreen extends StatefulWidget {
@@ -40,8 +42,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ServiceProvider>(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Services')),
+    return AppScaffold(
+      appBar: AppBar(
+        title: const Text('Services'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Proposer un service',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PostServiceScreen()),
+              );
+              if (context.mounted) {
+                provider.refreshServices();
+              }
+            },
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: provider.refreshServices,
         child: CustomScrollView(

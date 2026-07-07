@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../utils/validators.dart';
+import '../widgets/app_scaffold.dart';
 
 /// Modifier les informations de profil (nom complet, téléphone).
 class EditProfileScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Modifier le profil')),
       body: Padding(
         padding: const EdgeInsets.all(24),

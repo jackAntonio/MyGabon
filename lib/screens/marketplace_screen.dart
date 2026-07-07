@@ -5,6 +5,7 @@ import '../widgets/product_card.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/marketplace_provider.dart';
+import '../widgets/app_scaffold.dart';
 import '../widgets/skeleton_loader.dart';
 
 class MarketplaceScreen extends StatelessWidget {
@@ -14,7 +15,7 @@ class MarketplaceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<MarketplaceProvider>(context);
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Marché')),
       body: Column(
         children: [

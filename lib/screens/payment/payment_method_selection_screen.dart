@@ -5,6 +5,7 @@ import '../../services/payment_service.dart';
 import '../../services/apple_pay_service.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/validators.dart';
+import '../../widgets/app_scaffold.dart';
 import 'mobile_money_screen.dart';
 import 'success_screen.dart';
 
@@ -50,7 +51,7 @@ class _PaymentMethodSelectionScreenState
   Widget build(BuildContext context) {
     final fees = PaymentService.calculateFees(widget.product.price);
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Méthode de paiement'),
         centerTitle: true,
