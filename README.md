@@ -81,6 +81,23 @@ supabase/
    supabase db push
    ```
 
+## Docker
+
+Build reproductible du bundle web, indépendant de la machine (pas besoin d'installer le SDK
+Flutter localement). Nécessite [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+cp .env.example .env   # renseigner SUPABASE_URL / SUPABASE_ANON_KEY / ONESIGNAL_APP_ID
+docker compose up --build
+```
+
+L'app est servie sur http://localhost:8080. Le `Dockerfile` compile via l'image Flutter de
+Cirrus Labs (stage `build`) puis sert le résultat statique via Caddy (stage final, `Caddyfile`) —
+HTTPS automatique dès que ce conteneur tourne derrière un vrai nom de domaine, sans config TLS
+supplémentaire. En local, seul HTTP (`:80` dans le conteneur, mappé sur `:8080` côté hôte) a un
+sens : un certificat pour une IP LAN reste non reconnu par les navigateurs (Safari iOS compris),
+Docker ne change rien à cette contrainte.
+
 ## Sécurité
 
 - RLS activée sur les tables sensibles (wallet, transactions, profils) — voir

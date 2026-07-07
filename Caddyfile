@@ -1,0 +1,15 @@
+# En local (docker compose), Caddy sert en clair sur :80 — le port est
+# mappé vers un port hôte au choix, HTTPS n'a de sens que derrière un
+# vrai nom de domaine. Pour la prod, remplacer ":80" par le domaine réel
+# (ex: app.mygabon.ga) : Caddy obtient et renouvelle alors automatiquement
+# un certificat Let's Encrypt, sans rien à changer d'autre ici.
+:80 {
+	root * /usr/share/caddy
+	encode gzip
+
+	# SPA Flutter : toute route inconnue retombe sur index.html (le
+	# routing se fait côté client), sinon un lien direct vers une route
+	# nommée renverrait 404 au lieu de charger l'app.
+	try_files {path} /index.html
+	file_server
+}

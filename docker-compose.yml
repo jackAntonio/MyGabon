@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        SUPABASE_URL: ${SUPABASE_URL}
+        SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+        ONESIGNAL_APP_ID: ${ONESIGNAL_APP_ID}
+    ports:
+      - "8080:80"
+    restart: unless-stopped

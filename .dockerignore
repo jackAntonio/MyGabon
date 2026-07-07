@@ -1,0 +1,27 @@
+# Secrets locaux : jamais copiés dans le contexte de build (le
+# Dockerfile reçoit les mêmes valeurs via --build-arg / docker-compose,
+# jamais en lisant ces fichiers directement).
+.env
+.env.*
+env.json
+android/key.properties
+
+# Artefacts de build (régénérés dans l'image, inutiles à copier depuis
+# l'hôte — copier .dart_tool/build local ralentit le build et peut
+# mélanger un cache Windows avec le conteneur Linux).
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+android/.gradle/
+android/app/build/
+ios/Pods/
+ios/.symlinks/
+macos/Pods/
+
+# Non nécessaire à l'image web.
+.git/
+.github/
+test/
+supabase/
+*.md
