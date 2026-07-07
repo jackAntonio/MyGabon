@@ -107,12 +107,12 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  // externalId peut référencer soit un achat marketplace (transactions),
-  // soit une recharge wallet (wallet_topups, cf. migration
-  // 20260629_wallet_topup.sql) — ces deux flux partagent le même webhook
-  // Kpay (un seul configurable côté dashboard marchand). On essaie d'abord
-  // confirm_external_payment/fail_external_payment ; si l'id ne correspond
-  // à aucune transaction, on retente sur wallet_topups.
+  // externalId peut référencer un achat marketplace (transactions), une
+  // recharge wallet (wallet_topups) ou un renouvellement d'abonnement
+  // (subscription_renewals, cf. migration 20260707_subscription_renewals.sql)
+  // — ces trois flux partagent le même webhook Kpay (un seul configurable
+  // côté dashboard marchand). On essaie transactions, puis wallet_topups,
+  // puis subscription_renewals.
   try {
     if (status === "COMPLETED") {
       const providerRef = String(payload.paymentId ?? payload.reference ?? transactionId);
@@ -125,7 +125,13 @@ Deno.serve(async (req) => {
           p_topup_id: transactionId,
           p_provider_reference: providerRef,
         });
-        if (topupError) throw topupError;
+        if (topupError) {
+          const { error: renewalError } = await supabase.rpc("confirm_subscription_renewal", {
+            p_renewal_id: transactionId,
+            p_provider_reference: providerRef,
+          });
+          if (renewalError) throw renewalError;
+        }
       }
     } else if (status === "FAILED" || status === "CANCELLED") {
       const reason = String(payload.failureReason ?? `Kpay status: ${status}`);
@@ -138,7 +144,13 @@ Deno.serve(async (req) => {
           p_topup_id: transactionId,
           p_reason: reason,
         });
-        if (topupError) throw topupError;
+        if (topupError) {
+          const { error: renewalError } = await supabase.rpc("fail_subscription_renewal", {
+            p_renewal_id: transactionId,
+            p_reason: reason,
+          });
+          if (renewalError) throw renewalError;
+        }
       }
     } else {
       // PENDING / PROCESSING / inconnu : rien à faire, on attend la
