@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../config/theme.dart';
 
 import '../providers/auth_provider.dart';
+import '../theme/gabon_theme.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/custom_textfield.dart';
 import '../widgets/custom_button.dart';
@@ -38,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'MyGabon',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppColors.primary,
+                        color: GabonTheme.ink,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Content de vous revoir',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.grey600,
+                        color: GabonTheme.muted,
                       ),
                 ),
                 const SizedBox(height: 32),

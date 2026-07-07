@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
@@ -23,6 +24,7 @@ import 'providers/monetization_provider.dart';
 import 'providers/analytics_provider.dart';
 
 import 'config/theme.dart';
+import 'theme/gabon_background.dart';
 import 'widgets/app_scaffold.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
 
@@ -54,6 +56,20 @@ const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Edge-to-edge : le dégradé Gabon (GabonBackground) doit remplir tout
+  // l'écran, y compris derrière les barres système.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ),
+  );
 
   if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
     throw Exception(
@@ -166,6 +182,9 @@ class _MyGabonAppState extends State<MyGabonApp> {
               '/register': (context) => const RegisterScreen(),
             },
             debugShowCheckedModeBanner: false,
+            // Dégradé Gabon appliqué une seule fois derrière chaque route
+            // (écran, dialog, bottom sheet) au lieu d'être répété partout.
+            builder: (context, child) => GabonBackground(child: child!),
           );
         },
       ),

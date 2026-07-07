@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../config/theme.dart';
 
 import '../providers/auth_provider.dart';
+import '../theme/gabon_theme.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/custom_textfield.dart';
 import '../widgets/custom_button.dart';
@@ -45,7 +46,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text('Rejoindre MyGabon',
-                    style: Theme.of(context).textTheme.titleLarge),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(color: GabonTheme.ink)),
                 const SizedBox(height: 24),
                 if (_error != null) ...[
                   Text(_error!, style: const TextStyle(color: AppColors.error)),

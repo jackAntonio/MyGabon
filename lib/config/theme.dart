@@ -40,6 +40,9 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    // Le dégradé Gabon (GabonBackground, monté globalement dans main.dart)
+    // doit rester visible derrière chaque écran.
+    scaffoldBackgroundColor: Colors.transparent,
     colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
       secondary: AppColors.accent,
@@ -127,17 +130,18 @@ class AppTheme {
       color: AppColors.white,
     ),
 
-    // AppBar
+    // AppBar transparente : laisse voir le dégradé Gabon derrière.
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: false,
+      foregroundColor: Colors.white,
       titleTextStyle: GoogleFonts.poppins(
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        color: AppColors.grey900,
+        color: Colors.white,
       ),
-      iconTheme: const IconThemeData(color: AppColors.grey900),
+      iconTheme: const IconThemeData(color: Colors.white),
     ),
 
     // Buttons
@@ -204,6 +208,13 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    scaffoldBackgroundColor: Colors.transparent,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      foregroundColor: Colors.white,
+      iconTheme: IconThemeData(color: Colors.white),
+    ),
     colorScheme: const ColorScheme.dark(
       primary: AppColors.accent,
       secondary: AppColors.primary,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'gradient_background.dart';
 
-/// Remplace `Scaffold` sur chaque écran : applique le dégradé de fond doux
-/// unifié de l'app (voir [GradientBackground]) derrière un Scaffold rendu
-/// transparent. Expose les mêmes paramètres que [Scaffold] pour un
+/// Remplace `Scaffold` sur chaque écran, avec un fond transparent pour
+/// laisser apparaître le dégradé Gabon monté globalement dans main.dart
+/// (voir GabonBackground, appliqué une seule fois via le `builder` du
+/// MaterialApp). Expose les mêmes paramètres que [Scaffold] pour un
 /// remplacement direct, sans dupliquer la logique de fond sur chaque page.
 class AppScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
@@ -33,20 +33,18 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GradientBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: appBar,
-        body: body,
-        bottomNavigationBar: bottomNavigationBar,
-        floatingActionButton: floatingActionButton,
-        floatingActionButtonLocation: floatingActionButtonLocation,
-        extendBodyBehindAppBar: extendBodyBehindAppBar,
-        extendBody: extendBody,
-        resizeToAvoidBottomInset: resizeToAvoidBottomInset,
-        drawer: drawer,
-        endDrawer: endDrawer,
-      ),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: appBar,
+      body: body,
+      bottomNavigationBar: bottomNavigationBar,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButtonLocation,
+      extendBodyBehindAppBar: extendBodyBehindAppBar,
+      extendBody: extendBody,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+      drawer: drawer,
+      endDrawer: endDrawer,
     );
   }
 }
