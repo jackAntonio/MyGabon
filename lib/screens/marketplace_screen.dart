@@ -7,6 +7,7 @@ import '../config/theme.dart';
 import '../providers/marketplace_provider.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/skeleton_loader.dart';
+import 'post_announcement_screen.dart';
 
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({super.key});
@@ -16,7 +17,24 @@ class MarketplaceScreen extends StatelessWidget {
     final provider = Provider.of<MarketplaceProvider>(context);
 
     return AppScaffold(
-      appBar: AppBar(title: const Text('Marché')),
+      appBar: AppBar(
+        title: const Text('Marché'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Publier une annonce',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PostAnnouncementScreen()),
+              );
+              if (context.mounted) {
+                provider.refreshProducts();
+              }
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
