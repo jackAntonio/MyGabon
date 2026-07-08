@@ -65,37 +65,34 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
         else
           _buildEmptyState(),
 
-        const SizedBox(height: 16),
-
-        // Bouton Upload (si images sélectionnées)
-        if (_selectedImageFiles.isNotEmpty && _selectedImageUrls.isEmpty)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isUploading ? null : _uploadImages,
-              icon: _isUploading
-                  ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.white,
-                  ),
+        // L'upload est automatique dès la sélection (cf. _pickFromGallery /
+        // _pickFromCamera) — ce bandeau n'est visible qu'en cas d'échec,
+        // pour permettre de relancer manuellement sans re-sélectionner.
+        if (_isUploading || _selectedImageFiles.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          if (_isUploading)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-              )
-                  : const Icon(Icons.cloud_upload),
-              label: Text(
-                _isUploading
-                    ? 'Upload en cours... (${_selectedImageFiles.length})'
-                    : 'Uploader ${_selectedImageFiles.length} image(s)',
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                backgroundColor: AppColors.primary,
+                SizedBox(width: 12),
+                Text('Upload des photos en cours...'),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _uploadImages,
+                icon: const Icon(Icons.refresh),
+                label: Text(
+                    'Réessayer l\'upload (${_selectedImageFiles.length})'),
               ),
             ),
-          ),
+        ],
       ],
     );
   }
@@ -324,20 +321,25 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
   }
 
   Future<void> _pickFromGallery() async {
+    final remaining = widget.maxImages - _selectedImageUrls.length;
+    if (remaining <= 0) return;
     final images = await imageUploadService.pickMultipleImages();
     if (images.isNotEmpty) {
       setState(() {
-        _selectedImageFiles.addAll(images);
+        _selectedImageFiles.addAll(images.take(remaining));
       });
+      await _uploadImages();
     }
   }
 
   Future<void> _pickFromCamera() async {
+    if (_selectedImageUrls.length >= widget.maxImages) return;
     final image = await imageUploadService.pickImageFromCamera();
     if (image != null) {
       setState(() {
         _selectedImageFiles.add(image);
       });
+      await _uploadImages();
     }
   }
 
@@ -347,13 +349,19 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
     setState(() => _isUploading = true);
 
     try {
+      final attempted = _selectedImageFiles.length;
       final urls = await imageUploadService.uploadMultipleImages(
         imageFiles: _selectedImageFiles,
         productId: widget.productId,
       );
+      final failedCount = attempted - urls.length;
 
       setState(() {
         _selectedImageUrls.addAll(urls);
+        // uploadMultipleImages ne dit pas quel(s) fichier(s) précis ont
+        // échoué : on ne peut pas cibler un retry, on vide la file et on
+        // laisse le bouton "Réessayer" ne réapparaître qu'en cas d'échec
+        // total (sinon l'utilisateur devra re-sélectionner les manquantes).
         _selectedImageFiles.clear();
         _isUploading = false;
       });
@@ -361,12 +369,23 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       widget.onImagesSelected(_selectedImageUrls);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${urls.length} image(s) uploadée(s) avec succès'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        if (failedCount > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(urls.isEmpty
+                  ? 'Échec de l\'upload des photos, réessayez'
+                  : '$failedCount photo(s) sur $attempted n\'a/n\'ont pas pu être envoyée(s)'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${urls.length} image(s) uploadée(s) avec succès'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
       }
     } catch (e) {
       setState(() => _isUploading = false);
