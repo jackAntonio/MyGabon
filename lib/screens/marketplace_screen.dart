@@ -5,6 +5,7 @@ import '../widgets/product_card.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/marketplace_provider.dart';
+import '../services/geolocation_service.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/skeleton_loader.dart';
 import 'post_announcement_screen.dart';
@@ -89,12 +90,23 @@ class MarketplaceScreen extends StatelessWidget {
                           : null,
                     ),
                     onPressed: () async {
-                      final success = await provider.sortByDistance();
-                      if (!success && context.mounted) {
+                      final error = await provider.sortByDistance();
+                      if (error != null && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Activez la localisation pour trier par proximité'),
+                          SnackBar(
+                            content: Text(GeolocationService.messageFor(error)),
+                            action: GeolocationService.needsSettings(error)
+                                ? SnackBarAction(
+                                    label: 'Paramètres',
+                                    onPressed: () {
+                                      if (error == LocationError.gpsDisabled) {
+                                        GeolocationService.openLocationSettings();
+                                      } else {
+                                        GeolocationService.openAppSettings();
+                                      }
+                                    },
+                                  )
+                                : null,
                           ),
                         );
                       }

@@ -23,6 +23,8 @@ class MarketplaceProvider extends ChangeNotifier {
   final ConnectivityService? _connectivityService;
   final GeolocationService _geolocationService = GeolocationService();
   Position? _userPosition;
+  // Raison du dernier échec de localisation (null = pas d'erreur ou pas encore tenté)
+  LocationError? _locationError;
 
   List<Product> get products =>
       _filteredProducts.isEmpty ? _products : _filteredProducts;
@@ -30,6 +32,8 @@ class MarketplaceProvider extends ChangeNotifier {
   bool get isLoadingMore => _loadingMore;
   bool get hasReachedEnd => _hasReachedEnd;
   bool get isSortedByDistance => _userPosition != null;
+  /// Raison du dernier échec de tri par proximité (null si succès ou non tenté).
+  LocationError? get locationError => _locationError;
   String? get selectedCategory => _selectedCategory;
   double? get minPrice => _minPrice;
   double? get maxPrice => _maxPrice;
@@ -199,13 +203,25 @@ class MarketplaceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Trie la liste actuellement affichée par proximité. Demande la
-  /// position si elle n'a pas déjà été récupérée. Renvoie false si la
-  /// position est indisponible (permission refusée, GPS désactivé) —
-  /// l'appelant doit alors informer l'utilisateur, la liste reste inchangée.
-  Future<bool> sortByDistance() async {
-    _userPosition ??= await _geolocationService.getCurrentLocation();
-    if (_userPosition == null) return false;
+  /// Trie la liste actuellement affichée par proximité.
+  ///
+  /// Demande la position si elle n'a pas déjà été récupérée.
+  /// Retourne null si le tri a réussi, ou un [LocationError] décrivant la
+  /// raison de l'échec (GPS désactivé, permission refusée, timeout…).
+  /// L'appelant doit afficher un message adapté et éventuellement ouvrir
+  /// les paramètres système.
+  Future<LocationError?> sortByDistance() async {
+    _locationError = null;
+
+    if (_userPosition == null) {
+      final result = await _geolocationService.getCurrentLocation();
+      if (result.isSuccess) {
+        _userPosition = result.position;
+      } else {
+        _locationError = result.error;
+        return result.error;
+      }
+    }
 
     final list = _filteredProducts.isEmpty ? _products : _filteredProducts;
     list.sort((a, b) {
@@ -217,7 +233,7 @@ class MarketplaceProvider extends ChangeNotifier {
       return distanceA.compareTo(distanceB);
     });
     notifyListeners();
-    return true;
+    return null; // null = succès
   }
 
   /// Distance en km entre l'utilisateur et [product], ou null si la

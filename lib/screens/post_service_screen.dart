@@ -231,21 +231,33 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
 
   Future<void> _useCurrentLocation() async {
     setState(() => _isLocating = true);
-    final position = await GeolocationService().getCurrentLocation();
+    final result = await GeolocationService().getCurrentLocation();
     if (!mounted) return;
 
     setState(() {
       _isLocating = false;
-      _latitude = position?.latitude;
-      _longitude = position?.longitude;
+      _latitude = result.position?.latitude;
+      _longitude = result.position?.longitude;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(position == null
-            ? 'Position indisponible : vérifiez que la localisation est activée'
-            : 'Position actuelle enregistrée'),
-        backgroundColor: position == null ? AppColors.error : AppColors.success,
+        content: Text(result.isSuccess
+            ? 'Position actuelle enregistrée'
+            : GeolocationService.messageFor(result.error!)),
+        backgroundColor: result.isSuccess ? AppColors.success : AppColors.error,
+        action: !result.isSuccess && GeolocationService.needsSettings(result.error!)
+            ? SnackBarAction(
+                label: 'Paramètres',
+                onPressed: () {
+                  if (result.error == LocationError.gpsDisabled) {
+                    GeolocationService.openLocationSettings();
+                  } else {
+                    GeolocationService.openAppSettings();
+                  }
+                },
+              )
+            : null,
       ),
     );
   }

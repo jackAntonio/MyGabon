@@ -19,6 +19,8 @@ class ServiceProvider extends ChangeNotifier {
   final ConnectivityService? _connectivityService;
   final GeolocationService _geolocationService = GeolocationService();
   Position? _userPosition;
+  // Raison du dernier échec de localisation (null = pas d'erreur ou pas encore tenté)
+  LocationError? _locationError;
 
   List<ServiceModel> get services =>
       _filteredServices.isEmpty ? _services : _filteredServices;
@@ -26,6 +28,8 @@ class ServiceProvider extends ChangeNotifier {
   bool get isLoadingMore => _loadingMore;
   bool get hasReachedEnd => _hasReachedEnd;
   bool get isSortedByDistance => _userPosition != null;
+  /// Raison du dernier échec de tri par proximité (null si succès ou non tenté).
+  LocationError? get locationError => _locationError;
 
   ServiceProvider(this._connectivityService) {
     _initializeServices();
@@ -167,9 +171,21 @@ class ServiceProvider extends ChangeNotifier {
 
   /// Trie la liste actuellement affichée par proximité. Voir
   /// MarketplaceProvider.sortByDistance pour la même logique côté produits.
-  Future<bool> sortByDistance() async {
-    _userPosition ??= await _geolocationService.getCurrentLocation();
-    if (_userPosition == null) return false;
+  ///
+  /// Retourne null si le tri a réussi, ou un [LocationError] décrivant la
+  /// raison de l'échec (GPS désactivé, permission refusée, timeout…).
+  Future<LocationError?> sortByDistance() async {
+    _locationError = null;
+
+    if (_userPosition == null) {
+      final result = await _geolocationService.getCurrentLocation();
+      if (result.isSuccess) {
+        _userPosition = result.position;
+      } else {
+        _locationError = result.error;
+        return result.error;
+      }
+    }
 
     final list = _filteredServices.isEmpty ? _services : _filteredServices;
     list.sort((a, b) {
@@ -181,7 +197,7 @@ class ServiceProvider extends ChangeNotifier {
       return distanceA.compareTo(distanceB);
     });
     notifyListeners();
-    return true;
+    return null; // null = succès
   }
 
   /// Distance en km entre l'utilisateur et [service], ou null si la
