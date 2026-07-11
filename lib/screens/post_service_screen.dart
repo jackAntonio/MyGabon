@@ -3,6 +3,7 @@ import '../config/theme.dart';
 import '../services/supabase_service.dart';
 import '../services/geolocation_service.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/gps_consent_dialog.dart';
 import '../widgets/image_picker_widget.dart';
 import 'package:uuid/uuid.dart';
 
@@ -160,6 +161,30 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                             : 'Utiliser ma position actuelle (recommandé)',
                       ),
                     ),
+                    // Rappel vie privée affiché une fois la position capturée
+                    if (_latitude != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 4),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.public_rounded,
+                              size: 13,
+                              color: AppColors.warning,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Cette position sera visible publiquement par tous les utilisateurs.',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.grey600,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -229,7 +254,16 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
     );
   }
 
+  /// Affiche le dialogue de consentement GPS, puis capture la position si confirmé.
   Future<void> _useCurrentLocation() async {
+    // Consentement explicite requis avant exposition publique des coordonnées
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const GpsConsentDialog(),
+    );
+    if (!mounted || confirmed != true) return;
+
     setState(() => _isLocating = true);
     final result = await GeolocationService().getCurrentLocation();
     if (!mounted) return;
