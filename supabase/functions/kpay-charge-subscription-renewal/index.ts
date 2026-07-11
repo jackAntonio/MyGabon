@@ -28,6 +28,23 @@ const KPAY_BASE_URL = "https://admin.kpay.site/api/v1";
 
 const GABON_PROVIDER = "AIRTEL_GAB";
 
+// Comparaison de chaînes en temps constant via HMAC — résistante aux timing
+// attacks (un `!==` JS court-circuite à la première différence de caractère).
+// crypto.subtle.verify est garanti constant-time par la spécification Web
+// Crypto API. On signe `a` avec une clé HMAC éphémère non exportable, puis
+// on vérifie que cette signature est valide pour `b` : vrai ssi a === b.
+async function timingSafeEqualStrings(a: string, b: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  // Clé HMAC éphémère (différente à chaque appel, jamais exportable)
+  const key = await crypto.subtle.generateKey(
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(a));
+  return crypto.subtle.verify("HMAC", key, signature, encoder.encode(b));
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -36,7 +53,12 @@ Deno.serve(async (req) => {
   // Pas de CORS ici : cette fonction n'est jamais appelée depuis un
   // navigateur/l'app Flutter, seulement server-to-server par pg_net.
   const authHeader = req.headers.get("Authorization") ?? "";
-  if (authHeader !== `Bearer ${SERVICE_ROLE_KEY}`) {
+  // Comparaison en temps constant pour éviter les timing attacks sur le token
+  const isAuthorized = await timingSafeEqualStrings(
+    authHeader,
+    `Bearer ${SERVICE_ROLE_KEY}`,
+  );
+  if (!isAuthorized) {
     console.error("kpay-charge-subscription-renewal: appel non autorisé (service_role attendu)");
     return new Response("Unauthorized", { status: 401 });
   }

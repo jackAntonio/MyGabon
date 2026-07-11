@@ -100,9 +100,31 @@ Deno.serve(async (req) => {
   // reference/paymentId sont des identifiants internes Kpay, pas les nôtres.
   const transactionId = String(payload.externalId ?? "");
   const status = String(payload.status ?? "").toUpperCase();
+  const event = String(payload.event ?? "");
 
   if (!transactionId) {
     return new Response("Missing externalId", { status: 400 });
+  }
+
+  // Observabilité : on vérifie si l'event Kpay fait partie des valeurs
+  // documentées dans KPAY_INTEGRATION.md. Si ce n'est pas le cas, on log un
+  // avertissement MAIS on ne bloque PAS le traitement — le champ `event` est
+  // un signal d'observabilité uniquement. La seule source de vérité pour
+  // décider confirmed/failed est le champ `status` (COMPLETED | FAILED |
+  // CANCELLED), traité ci-dessous. Cela protège contre un décalage entre nos
+  // hypothèses sur les noms d'events Kpay et la réalité prod (ex: Kpay
+  // enverrait "payment.failure" ou "payment.canceled" — le `status` reste
+  // fiable lui).
+  const KNOWN_EVENTS = new Set([
+    "payment.completed",
+    "payment.failed",
+    "payment.cancelled",
+  ]);
+  if (!KNOWN_EVENTS.has(event)) {
+    console.warn(
+      `kpay-webhook: event inattendu (non documenté) — traitement via status quand même. event="${event}", externalId="${transactionId}", status="${status}"`,
+    );
+    // Pas de return : on continue vers le bloc status ci-dessous.
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
