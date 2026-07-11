@@ -75,6 +75,28 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION review_driver_application(UUID, BOOLEAN, TEXT) TO authenticated;
 
+-- ✅ Table transactions créée ici (garde IF NOT EXISTS) pour la sécurité de
+-- rejeu : ce fichier (000000) tourne AVANT wallet_rpc (000001) qui contient
+-- la définition d'origine. Sur une base rejouée depuis zéro, les ALTER
+-- ci-dessous échoueraient sinon (table inexistante). Sur la base d'origine,
+-- ce CREATE est un no-op. Même convention que le pull-forward de users.rating
+-- dans wallet_rpc (cf. incident du 2026-06-27, migrations rejouées à neuf).
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  buyer_id UUID NOT NULL REFERENCES users(id),
+  seller_id UUID NOT NULL REFERENCES users(id),
+  product_id UUID NOT NULL REFERENCES products(id),
+  gross_amount DECIMAL(10, 2) NOT NULL,
+  visible_fee DECIMAL(10, 2) NOT NULL,
+  actual_fee DECIMAL(10, 2) NOT NULL,
+  net_to_seller DECIMAL(10, 2) NOT NULL,
+  payment_method TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  transaction_reference TEXT,
+  created_at TIMESTAMP DEFAULT now(),
+  completed_at TIMESTAMP
+);
+
 -- ✅ Frais et statut de livraison sur les transactions existantes.
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS delivery_fee NUMERIC NOT NULL DEFAULT 0;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS driver_id UUID REFERENCES users(id);
