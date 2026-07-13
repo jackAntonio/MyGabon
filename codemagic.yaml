@@ -1,0 +1,70 @@
+# Configuration Codemagic pour MyGabon
+# Deux workflows :
+#   - ios-unsigned  : IPA non signe (gratuit, pour sideloading via Sideloadly/AltStore)
+#   - ios-testflight : build signe + publication TestFlight (necessite Apple Developer 99$/an)
+#
+# Prerequis dans l'UI Codemagic (Teams > Personal Account > Environment variables) :
+#   groupe "mygabon_env" avec la variable ENV_JSON (contenu complet du env.json local, cochee "Secure")
+
+workflows:
+  ios-unsigned:
+    name: iOS IPA non signé (sideloading)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      groups:
+        - mygabon_env
+    scripts:
+      - name: Recréer env.json depuis le secret Codemagic
+        script: |
+          echo "$ENV_JSON" > "$CM_BUILD_DIR/env.json"
+      - name: Récupérer les dépendances
+        script: |
+          flutter pub get
+      - name: Build iOS sans signature
+        script: |
+          flutter build ios --release --no-codesign --dart-define-from-file=env.json
+      - name: Empaqueter Runner.app en IPA
+        script: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -qr MyGabon-unsigned.ipa Payload
+    artifacts:
+      - build/ios/iphoneos/MyGabon-unsigned.ipa
+
+  # A activer plus tard, une fois le compte Apple Developer (99$/an) souscrit :
+  # 1. Dans Codemagic : Teams > Integrations > App Store Connect (creer une cle API)
+  # 2. Creer l'app "MyGabon" dans App Store Connect avec le bundle com.mygabon.mygabon
+  ios-testflight:
+    name: iOS signé + TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: mygabon_asc_key   # nom de la cle API creee dans Codemagic
+    environment:
+      flutter: stable
+      groups:
+        - mygabon_env
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.mygabon.mygabon
+    scripts:
+      - name: Recréer env.json depuis le secret Codemagic
+        script: |
+          echo "$ENV_JSON" > "$CM_BUILD_DIR/env.json"
+      - name: Récupérer les dépendances
+        script: |
+          flutter pub get
+      - name: Build IPA signé
+        script: |
+          flutter build ipa --release \
+            --dart-define-from-file=env.json \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
