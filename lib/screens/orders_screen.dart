@@ -22,6 +22,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     'pending': 'En attente d\'un livreur',
     'claimed': 'Livreur en route',
     'delivered': 'Livré',
+    'returned': 'Retourné (non réglé)',
   };
 
   static const _deliveryIcons = {
@@ -29,6 +30,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
     'pending': Icons.hourglass_top,
     'claimed': Icons.local_shipping_outlined,
     'delivered': Icons.check_circle_outline,
+    'returned': Icons.assignment_return_outlined,
+  };
+
+  // Le statut brut de la base ('pending'/'success'/'failed') n'a rien à faire
+  // sous les yeux d'un acheteur, d'autant que le COD rend l'état 'failed'
+  // (paiement refusé à la remise) réellement visible.
+  static const _statusLabels = {
+    'pending': 'En attente',
+    'success': 'Payé',
+    'failed': 'Annulé',
   };
 
   @override
@@ -95,6 +106,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     final deliveryStatus = order['delivery_status'] as String? ?? 'none';
     final status = order['status'] as String? ?? 'pending';
+    final isCod = order['payment_method'] == 'cash_on_delivery';
+    // Ce que l'acheteur remettra en espèces au livreur : identique au total
+    // affiché à la commande, frais de livraison compris.
+    final codDue = grossAmount +
+        visibleFee +
+        ((order['delivery_fee'] as num?)?.toDouble() ?? 0);
+
+    final statusColor = switch (status) {
+      'success' => AppColors.success,
+      'failed' => AppColors.error,
+      _ => AppColors.warning,
+    };
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -174,23 +197,50 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: status == 'success'
-                      ? AppColors.success.withValues(alpha: 0.1)
-                      : AppColors.warning.withValues(alpha: 0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  status,
+                  _statusLabels[status] ?? status,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: status == 'success'
-                            ? AppColors.success
-                            : AppColors.warning,
+                        color: statusColor,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
             ],
           ),
+          // Rappel du montant à prévoir tant que le livreur n'a pas encaissé :
+          // c'est la seule commande où l'acheteur doit avoir des espèces prêtes.
+          if (isCod && status == 'pending') ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.payments_outlined,
+                      size: 16, color: AppColors.warning),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isSale
+                          ? 'Paiement à la livraison : vous serez crédité une fois le colis encaissé.'
+                          : 'À payer en espèces au livreur : ${codDue.toStringAsFixed(0)} FCFA',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.grey900,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

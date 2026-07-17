@@ -6,6 +6,7 @@ import '../providers/verification_provider.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/monetization_profile_section.dart';
+import 'admin_cash_remittance_screen.dart';
 import 'admin_driver_applications_screen.dart';
 import 'admin_reports_screen.dart';
 import 'become_driver_screen.dart';
@@ -321,6 +322,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const AdminReportsScreen()),
+                          );
+                        },
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: 'Recettes à remettre',
+                        subtitle: 'Confirmer les espèces remises par les livreurs',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const AdminCashRemittanceScreen()),
                           );
                         },
                       ),

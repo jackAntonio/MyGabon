@@ -10,8 +10,9 @@ import 'mobile_money_screen.dart';
 import 'success_screen.dart';
 
 /// Écran de sélection de méthode de paiement : MyGabon Wallet et Airtel Money
-/// en priorité (marché gabonais), Apple Pay / Google Pay en options
-/// additionnelles, paiement en espèces en dernier recours.
+/// en priorité (marché gabonais), paiement à la livraison quand un livreur
+/// est dans la boucle, Apple Pay / Google Pay en options additionnelles,
+/// paiement en espèces de gré à gré en dernier recours.
 class PaymentMethodSelectionScreen extends StatefulWidget {
   final Product product;
   final double deliveryFee;
@@ -33,11 +34,19 @@ class _PaymentMethodSelectionScreenState
   String _phoneNumber = '';
   bool _isProcessing = false;
   double? _walletBalance;
+  bool _codEligible = true;
+  String? _codReason;
+
+  /// Le paiement à la livraison suppose un livreur MyGabon pour encaisser :
+  /// sans frais de livraison sur cette commande, l'option n'a pas de sens
+  /// (le serveur la refuserait de toute façon).
+  bool get _codAvailable => widget.deliveryFee > 0;
 
   @override
   void initState() {
     super.initState();
     _loadWalletBalance();
+    if (_codAvailable) _loadCodEligibility();
   }
 
   Future<void> _loadWalletBalance() async {
@@ -45,6 +54,15 @@ class _PaymentMethodSelectionScreenState
     if (userId == null) return;
     final balance = await SupabaseService().getWalletBalance(userId);
     if (mounted) setState(() => _walletBalance = balance);
+  }
+
+  Future<void> _loadCodEligibility() async {
+    final result = await SupabaseService().checkCodEligibility();
+    if (!mounted) return;
+    setState(() {
+      _codEligible = result.eligible;
+      _codReason = result.reason;
+    });
   }
 
   @override
@@ -95,9 +113,25 @@ class _PaymentMethodSelectionScreenState
               value: 'airtel',
             ),
 
+            // Option 3: Paiement à la livraison (seulement si un livreur
+            // MyGabon est dans la boucle — c'est lui qui encaisse)
+            if (_codAvailable) ...[
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                context,
+                icon: '🛵',
+                title: 'Paiement à la livraison',
+                subtitle: _codEligible
+                    ? 'Payez en espèces au livreur à la remise du colis'
+                    : (_codReason ?? 'Indisponible sur votre compte'),
+                value: 'cash_on_delivery',
+                enabled: _codEligible,
+              ),
+            ],
+
             const SizedBox(height: 12),
 
-            // Option 3: Cash
+            // Option 4: Cash de gré à gré (sans livreur)
             _buildPaymentOption(
               context,
               icon: '💵',
@@ -337,108 +371,112 @@ class _PaymentMethodSelectionScreenState
     required String subtitle,
     required String value,
     bool isNew = false,
+    bool enabled = true,
   }) {
     final isSelected = _selectedMethod == value;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedMethod = value),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.grey200,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Icon
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.grey50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(icon, style: const TextStyle(fontSize: 24)),
-              ),
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: GestureDetector(
+        onTap: enabled ? () => setState(() => _selectedMethod = value) : null,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : AppColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.grey200,
+              width: isSelected ? 2 : 1,
             ),
-            const SizedBox(width: 16),
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(icon, style: const TextStyle(fontSize: 24)),
+                ),
+              ),
+              const SizedBox(width: 16),
 
-            // Texte
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+              // Texte
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      if (isNew)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'NOUVEAU',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.grey900,
+                        if (isNew)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'NOUVEAU',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.grey900,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.grey600,
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            // Radio button
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.grey300,
-                  width: isSelected ? 6 : 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.primary,
+              // Radio button
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.grey300,
+                    width: isSelected ? 6 : 2,
                   ),
                 ),
-              )
-                  : null,
-            ),
-          ],
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -462,10 +500,131 @@ class _PaymentMethodSelectionScreenState
         _handleMobileMoneyPayment(context, fees);
         break;
 
+      case 'cash_on_delivery':
+        _handleCashOnDeliveryOrder(context, fees);
+        break;
+
       case 'cash':
         _handleCashPayment(context, fees);
         break;
     }
+  }
+
+  /// Paiement à la livraison : la commande part sans qu'un centime ne bouge.
+  /// C'est le livreur qui encaissera les espèces à la remise du colis et qui,
+  /// seul, pourra créditer le vendeur (RPC confirm_cash_on_delivery) — d'où
+  /// le passage par create_cash_on_delivery_order plutôt que par
+  /// createTransaction : le serveur y dérive lui-même vendeur/prix/frais et
+  /// vérifie l'éligibilité de l'acheteur.
+  Future<void> _handleCashOnDeliveryOrder(
+    BuildContext context,
+    FeeCalculation fees,
+  ) async {
+    setState(() => _isProcessing = true);
+    try {
+      await SupabaseService().createCashOnDeliveryOrder(widget.product.id);
+
+      if (!context.mounted) return;
+      _showCashOnDeliveryModal(context, fees);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  void _showCashOnDeliveryModal(BuildContext context, FeeCalculation fees) {
+    final totalDue = fees.totalWithVisibleFee + widget.deliveryFee;
+
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (modalContext) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Commande confirmée',
+              style: Theme.of(modalContext).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'À préparer en espèces',
+                    style: Theme.of(modalContext).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${totalDue.toStringAsFixed(0)} FCFA',
+                    style: Theme.of(modalContext).textTheme.displaySmall?.copyWith(
+                          color: AppColors.success,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Frais de livraison inclus',
+                    style: Theme.of(modalContext).textTheme.bodySmall?.copyWith(
+                          color: AppColors.grey600,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Prochaines étapes :',
+              style: Theme.of(modalContext).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            _buildInstructionStep(
+                modalContext, 1, 'Un livreur prend en charge votre commande'),
+            _buildInstructionStep(
+                modalContext, 2, 'Vous êtes notifié quand il part'),
+            _buildInstructionStep(
+                modalContext, 3, 'Vous payez en espèces à la remise du colis'),
+            const SizedBox(height: 16),
+            Text(
+              'Suivez l\'avancement dans « Mes commandes ». Un refus de paiement '
+              'à la livraison peut suspendre votre accès à ce mode de paiement.',
+              style: Theme.of(modalContext).textTheme.bodySmall?.copyWith(
+                    color: AppColors.grey600,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(modalContext); // ferme le modal
+                  Navigator.pop(context); // quitte l'écran de paiement
+                },
+                child: const Text('Compris'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Paiement via le portefeuille MyGabon : débite l'acheteur, crédite le

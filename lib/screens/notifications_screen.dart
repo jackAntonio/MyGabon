@@ -77,6 +77,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     'delivery_status': Icons.local_shipping_outlined,
     'driver_application': Icons.badge_outlined,
     'report_verified': Icons.shield_outlined,
+    'cash_remittance': Icons.account_balance_wallet_outlined,
   };
 
   @override

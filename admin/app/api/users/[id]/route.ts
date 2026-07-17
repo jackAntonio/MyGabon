@@ -8,12 +8,14 @@ interface RouteParams {
   }>
 }
 
-// Champs qu'un admin est autorisé à modifier via cette route. wallet_balance
-// est volontairement exclu : tout crédit/débit doit passer par le workflow
-// wallet_adjustments (avec approbation et piste d'audit), jamais par un
-// update() direct qui écraserait le solde sans trace ni double contrôle.
-// email/id/total_orders/created_at/updated_at sont également exclus.
-const UPDATABLE_USER_FIELDS = ['full_name', 'phone_number', 'avatar_url', 'status'] as const
+// Champs réellement modifiables sur `users` via cette route. Le solde
+// (user_wallets) est volontairement exclu : tout crédit/débit doit passer
+// par un workflow tracé, jamais par un update() direct.
+const UPDATABLE_USER_FIELDS = ['full_name', 'phone_number', 'avatar_url'] as const
+
+function deriveStatus(blocked: boolean): 'active' | 'suspended' {
+  return blocked ? 'suspended' : 'active'
+}
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -21,18 +23,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (response) return response
 
     const { id } = await params
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single()
-
+    const { data, error } = await supabaseAdmin.from('users').select('*').eq('id', id).single()
     if (error) throw error
-    if (!data) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    if (!data) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    return NextResponse.json(data)
+    // Enrichissement solde + nb de commandes (cf. /api/users).
+    const [{ data: wallet }, { count: orders }] = await Promise.all([
+      supabaseAdmin.from('user_wallets').select('balance').eq('user_id', id).maybeSingle(),
+      supabaseAdmin
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('buyer_id', id),
+    ])
+
+    return NextResponse.json({
+      ...data,
+      status: deriveStatus(data.blocked as boolean),
+      wallet_balance: Number(wallet?.balance) || 0,
+      total_orders: orders || 0,
+    })
   } catch (error) {
     console.error('GET /api/users/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -47,41 +56,33 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
     const body = await request.json()
 
-    // Liste blanche : seuls les champs de UPDATABLE_USER_FIELDS sont retenus,
-    // tout le reste du body (wallet_balance, email, id, role...) est ignoré.
-    // Avant ce filtre, body était passé tel quel à .update(), ce qui, combiné
-    // à la clé service_role qui contourne RLS et les GRANT colonne, permettait
-    // à n'importe quel admin de modifier n'importe quel champ d'un user.
+    // Liste blanche des champs texte + traduction du `status` de l'UI vers la
+    // colonne réelle `blocked` (suspended <-> blocked=true).
     const updates: Record<string, unknown> = {}
     for (const field of UPDATABLE_USER_FIELDS) {
       if (field in body) updates[field] = body[field]
+    }
+    if ('status' in body) {
+      updates.blocked = body.status === 'suspended'
+      updates.blocked_reason = body.status === 'suspended' ? body.reason || 'Suspendu par un admin' : null
+      updates.blocked_at = body.status === 'suspended' ? new Date().toISOString() : null
     }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
     }
 
-    // Get current user to track changes
-    const { data: currentData } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single()
+    const { data: currentData } = await supabaseAdmin.from('users').select('*').eq('id', id).single()
 
-    // Update user
     const { data, error } = await supabaseAdmin
       .from('users')
       .update(updates)
       .eq('id', id)
       .select()
       .single()
-
     if (error) throw error
-    if (!data) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    if (!data) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Log audit
     const changes = Object.keys(updates).reduce((acc: any, key) => {
       if (currentData?.[key] !== updates[key]) {
         acc[key] = { from: currentData?.[key], to: updates[key] }
@@ -97,7 +98,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       changes,
     })
 
-    return NextResponse.json(data)
+    return NextResponse.json({ ...data, status: deriveStatus(data.blocked as boolean) })
   } catch (error) {
     console.error('PUT /api/users/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -111,28 +112,29 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params
 
-    // Soft delete (set status to 'deleted')
+    // Pas de suppression dure ni de colonne 'deleted' dans le schéma actif :
+    // on suspend (blocked=true), réversible depuis la fiche utilisateur.
     const { data, error } = await supabaseAdmin
       .from('users')
-      .update({ status: 'deleted' })
+      .update({
+        blocked: true,
+        blocked_reason: 'Suspendu par un admin',
+        blocked_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select()
       .single()
-
     if (error) throw error
-    if (!data) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    if (!data) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Log audit
     await supabaseAdmin.from('admin_audit_logs').insert({
       admin_id: (session!.user as any).id,
-      action: 'user_deleted',
+      action: 'user_suspended',
       resource_type: 'users',
       resource_id: id,
     })
 
-    return NextResponse.json({ message: 'User deleted successfully' })
+    return NextResponse.json({ message: 'Utilisateur suspendu' })
   } catch (error) {
     console.error('DELETE /api/users/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -1130,28 +1130,142 @@ class SupabaseService {
     }
   }
 
-  /// Réclamer une livraison disponible
-  Future<bool> claimDelivery(String transactionId) async {
-    try {
-      await _client
-          .rpc('claim_delivery', params: {'p_transaction_id': transactionId});
-      return true;
-    } catch (e) {
-      debugPrint('❌ Erreur réclamation livraison: $e');
-      return false;
-    }
+  /// Réclamer une livraison disponible. Lève une exception portant le motif
+  /// exact renvoyé par le serveur ("Plafond d'encours espèces atteint...",
+  /// "Vous ne pouvez pas livrer votre propre vente...") : un simple
+  /// false laisserait le livreur sans moyen de comprendre quoi faire.
+  Future<void> claimDelivery(String transactionId) async {
+    await _rpcOrThrow('claim_delivery', {'p_transaction_id': transactionId});
   }
 
   /// Marquer une livraison effectuée : crédite 50% des frais de livraison
   /// au livreur de façon atomique côté serveur (RPC complete_delivery).
-  Future<bool> completeDelivery(String transactionId) async {
+  /// Refusée côté serveur pour une commande à encaisser — voir
+  /// [confirmCashOnDelivery].
+  Future<void> completeDelivery(String transactionId) async {
+    await _rpcOrThrow('complete_delivery', {'p_transaction_id': transactionId});
+  }
+
+  // ========== PAIEMENT À LA LIVRAISON ==========
+
+  /// Commander en paiement à la livraison (RPC create_cash_on_delivery_order).
+  /// Le serveur dérive vendeur, prix et frais depuis le produit et vérifie
+  /// l'éligibilité de l'acheteur — rien n'est fait confiance au client ici.
+  /// Retourne l'id de la transaction créée, ou lève avec le motif de refus.
+  Future<String> createCashOnDeliveryOrder(String productId) async {
+    final result = await _rpcOrThrow(
+      'create_cash_on_delivery_order',
+      {'p_product_id': productId},
+    );
+    return result as String;
+  }
+
+  /// Éligibilité de l'utilisateur courant au paiement à la livraison.
+  /// Purement indicatif (l'autorité reste le serveur au moment de la
+  /// commande) : sert à griser l'option avec un motif compréhensible
+  /// plutôt qu'à laisser l'acheteur se heurter à une erreur en validant.
+  Future<({bool eligible, String? reason})> checkCodEligibility() async {
     try {
-      await _client.rpc('complete_delivery',
-          params: {'p_transaction_id': transactionId});
-      return true;
+      final result = await _client.rpc('check_cod_eligibility');
+      final data = Map<String, dynamic>.from(result as Map);
+      return (
+        eligible: data['eligible'] == true,
+        reason: data['reason'] as String?,
+      );
     } catch (e) {
-      debugPrint('❌ Erreur finalisation livraison: $e');
-      return false;
+      debugPrint('⚠️ Erreur vérification éligibilité COD: $e');
+      // En cas d'échec du pré-contrôle, on laisse l'option active : le
+      // serveur refusera de toute façon si l'acheteur n'est pas éligible.
+      return (eligible: true, reason: null);
+    }
+  }
+
+  /// Le livreur confirme avoir encaissé les espèces à la remise : crédite le
+  /// vendeur et inscrit la recette au ledger des espèces dues à MyGabon
+  /// (RPC confirm_cash_on_delivery, atomique côté serveur).
+  Future<void> confirmCashOnDelivery(String transactionId) async {
+    await _rpcOrThrow(
+      'confirm_cash_on_delivery',
+      {'p_transaction_id': transactionId},
+    );
+  }
+
+  /// Le livreur signale que l'acheteur n'a pas réglé à la remise : la
+  /// commande est annulée et le colis retourné au vendeur.
+  Future<void> reportCashOnDeliveryRefused(
+    String transactionId, {
+    String? reason,
+  }) async {
+    await _rpcOrThrow('report_cash_on_delivery_refused', {
+      'p_transaction_id': transactionId,
+      'p_reason': reason,
+    });
+  }
+
+  /// Encours d'espèces du livreur connecté : ce qu'il a encaissé en
+  /// paiement à la livraison et doit encore remettre à MyGabon, et ce qu'il
+  /// lui reste avant de buter sur le plafond.
+  Future<({double owed, double limit, double remaining})>
+      getMyDriverCashSummary() async {
+    try {
+      final result = await _client.rpc('my_driver_cash_summary');
+      final data = Map<String, dynamic>.from(result as Map);
+      return (
+        owed: (data['owed'] as num).toDouble(),
+        limit: (data['limit'] as num).toDouble(),
+        remaining: (data['remaining'] as num).toDouble(),
+      );
+    } catch (e) {
+      debugPrint('⚠️ Erreur récupération encours espèces: $e');
+      return (owed: 0.0, limit: 0.0, remaining: 0.0);
+    }
+  }
+
+  /// (Admin) Recettes COD encaissées par les livreurs et pas encore remises
+  /// à MyGabon, profil livreur attaché. La RLS "Read own or admin all cash
+  /// collections" n'autorise cette lecture globale qu'aux admins — un
+  /// utilisateur lambda ne verrait que ses propres lignes.
+  Future<List<Map<String, dynamic>>> getOutstandingCashCollections() async {
+    try {
+      final rows = await _client
+          .from('driver_cash_collections')
+          .select()
+          .eq('remitted', false)
+          .order('created_at', ascending: true);
+      return _attachPublicProfiles(
+        List<Map<String, dynamic>>.from(rows),
+        idField: 'driver_id',
+        attachAs: 'driver',
+      );
+    } catch (e) {
+      debugPrint('❌ Erreur récupération recettes à remettre: $e');
+      return [];
+    }
+  }
+
+  /// (Admin) Confirme la remise physique d'une recette par un livreur, ce qui
+  /// libère d'autant son plafond d'encours (RPC confirm_cash_remittance,
+  /// réservée aux admins côté serveur).
+  Future<void> confirmCashRemittance(String collectionId) async {
+    await _rpcOrThrow(
+      'confirm_cash_remittance',
+      {'p_collection_id': collectionId},
+    );
+  }
+
+  /// Appelle une RPC en remontant le message d'erreur PostgreSQL tel quel.
+  /// Les RAISE EXCEPTION des RPC sont rédigés en français et destinés à
+  /// l'utilisateur ; sans ça, l'UI afficherait le `PostgrestException(...)`
+  /// brut au lieu du motif.
+  Future<dynamic> _rpcOrThrow(
+    String function,
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      return await _client.rpc(function, params: params);
+    } on PostgrestException catch (e) {
+      debugPrint('❌ Erreur RPC $function: ${e.message}');
+      throw Exception(e.message);
     }
   }
 
