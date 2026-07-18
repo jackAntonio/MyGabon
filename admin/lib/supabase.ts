@@ -1,5 +1,5 @@
 import 'server-only'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -10,11 +10,37 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 // exister que côté serveur (route handlers / NextAuth), jamais dans un bundle
 // envoyé au navigateur.
 
-// Client-side Supabase client
+// Client anon (clé publique). Créé au chargement : l'URL et la clé anon sont
+// fournies au build (NEXT_PUBLIC_*), donc toujours présentes ici.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Server-side Supabase client (with service role)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+// Client service_role, créé PARESSEUSEMENT au premier accès plutôt qu'au
+// chargement du module : la clé service_role n'est lue qu'à l'exécution, ce
+// qui permet à `next build` de réussir même si SUPABASE_SERVICE_ROLE_KEY
+// n'est pas encore configurée (le build n'exécute aucune requête admin). Le
+// Proxy conserve l'API `supabaseAdmin.from(...)` inchangée pour tous les
+// appelants existants.
+let _admin: SupabaseClient | null = null
+function getAdmin(): SupabaseClient {
+  if (!_admin) {
+    if (!supabaseServiceKey) {
+      throw new Error(
+        'SUPABASE_SERVICE_ROLE_KEY manquante : configurez-la dans les variables ' +
+          "d'environnement (locale .env.local ou Vercel Project Settings)."
+      )
+    }
+    _admin = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return _admin
+}
+
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_target, prop, receiver) {
+    const client = getAdmin()
+    const value = Reflect.get(client as object, prop, receiver)
+    return typeof value === 'function' ? value.bind(client) : value
+  },
+})
 
 export type Database = {
   public: {
